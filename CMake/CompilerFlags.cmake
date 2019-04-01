@@ -3,7 +3,40 @@
 if (NOT MSVC) # GCC and Clang
 
   # warning flags
-  list(APPEND TTK_COMPILER_FLAGS -Wall -Wshadow)
+  list(APPEND TTK_COMPILER_FLAGS
+    -Wall
+    -Wshadow
+    -Wextra
+    -Wno-unused-parameter       # TODO
+    # -Wpedantic
+    # -Wconversion
+    # -Wsign-conversion
+    -Wshadow
+    -Wnon-virtual-dtor
+    -Wcast-align
+    -Wunused
+    -Woverloaded-virtual
+    -Wnull-dereference
+    -Wformat=2
+    )
+
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    list(APPEND TTK_COMPILER_FLAGS
+      -Wmisleading-indentation
+      -Wduplicated-cond
+      -Wduplicated-branches
+      -Wlogical-op
+      -Wuseless-cast
+      # -Wextra-semi              # TODO?
+      )
+  endif()
+
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    list(APPEND TTK_COMPILER_FLAGS
+      -Wpedantic
+      -Wno-extra-semi
+      )
+  endif()
 
   # performance and debug flags
   if(TTK_ENABLE_CPU_OPTIMIZATION AND CMAKE_BUILD_TYPE MATCHES Release)
