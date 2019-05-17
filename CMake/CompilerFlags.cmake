@@ -33,7 +33,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" AND "x${CMAKE_CXX_SIMULATE_ID}"
 else() # MSVC
 
   # warning flags
-  list(APPEND TTK_COMPILER_FLAGS /W4)
+  list(APPEND TTK_COMPILER_FLAGS /W4 /permissive /w14640)
 
   # disabled warnings
   list(APPEND TTK_COMPILER_FLAGS /bigobj /wd4005 /wd4061 /wd4100
