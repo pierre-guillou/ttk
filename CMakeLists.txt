@@ -75,6 +75,8 @@ include(config.cmake)
 # Use folder as configured by the distribution
 include(GNUInstallDirs)
 
+set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
+
 # Base code
 # ---------
 
