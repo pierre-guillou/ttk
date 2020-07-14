@@ -11,6 +11,16 @@ using ttkSimplexIdTypeArray = vtkLongLongArray;
 using ttkSimplexIdTypeArray = vtkIntArray;
 #endif
 
+#ifdef vtkTemplateMacro
+#undef vtkTemplateMacro
+#define vtkTemplateMacro(call)                    \
+  vtkTemplateMacroCase(VTK_DOUBLE, double, call); \
+  vtkTemplateMacroCase(VTK_FLOAT, float, call);   \
+  vtkTemplateMacroCase(VTK_INT, int, call);       \
+  vtkTemplateMacroCase(VTK_LONG_LONG, long long, call);
+
+#endif
+
 #define ttkVtkTemplateMacroCase(                         \
   dataType, triangulationType, triangulationClass, call) \
   case triangulationType: {                              \
