@@ -286,8 +286,6 @@ namespace ttk {
     int flush();
 
     inline const Arc *getArc(const int &arcId) const {
-      if((arcId < 0) || (arcId >= (int)arcList_.size()))
-        return NULL;
       return &(arcList_[arcId]);
     }
 
@@ -299,37 +297,27 @@ namespace ttk {
     }
 
     inline const Node *getNode(const int &nodeId) const {
-      if((nodeId < 0) || (nodeId >= (int)nodeList_.size()))
-        return NULL;
       return &(nodeList_[nodeId]);
     }
 
     inline const Node *getNodeDownNeighbor(const Node *n,
                                            const int &neighborId) const {
-      if(!n)
-        return NULL;
       return getNodeDownNeighbor(n - &(nodeList_[0]), neighborId);
     }
 
     inline const Node *getNodeDownNeighbor(const int &nodeId,
                                            const int &neighborId) const {
-      if((nodeId < 0) || (nodeId >= (int)nodeList_.size()))
-        return NULL;
       return &(nodeList_[arcList_[nodeList_[nodeId].getDownArcId(neighborId)]
                            .getDownNodeId()]);
     }
 
     inline const Node *getNodeUpNeighbor(const Node *n,
                                          const int &neighborId) const {
-      if(!n)
-        return NULL;
       return getNodeUpNeighbor(n - &(nodeList_[0]), neighborId);
     }
 
     inline const Node *getNodeUpNeighbor(const int &nodeId,
                                          const int &neighborId) const {
-      if((nodeId < 0) || (nodeId >= (int)nodeList_.size()))
-        return NULL;
       return &(nodeList_[arcList_[nodeList_[nodeId].getUpArcId(neighborId)]
                            .getUpNodeId()]);
     }
@@ -376,8 +364,6 @@ namespace ttk {
       = nullptr) const;
 
     inline const SuperArc *getSuperArc(const int &superArcId) const {
-      if((superArcId < 0) || (superArcId >= (int)superArcList_.size()))
-        return NULL;
       return &(superArcList_[superArcId]);
     }
 
@@ -396,17 +382,10 @@ namespace ttk {
     }
 
     inline const SuperArc *getVertexSuperArc(const int &vertexId) const {
-      if((vertexId < 0) || (vertexId >= vertexNumber_))
-        return NULL;
-      if(vertex2superArc_[vertexId] == -1)
-        return NULL;
-
       return &(superArcList_[vertex2superArc_[vertexId]]);
     }
 
     inline int getVertexSuperArcId(const int &vertexId) const {
-      if((vertexId < 0) || (vertexId >= vertexNumber_))
-        return -1;
       return vertex2superArc_[vertexId];
     }
 
