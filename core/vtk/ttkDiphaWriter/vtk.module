@@ -1,0 +1,4 @@
+NAME
+ ttkDiphaWriter
+DEPENDS
+  ttkAlgorithm

@@ -1,0 +1,8 @@
+NAME
+  ttkDiphaWriter
+SOURCES
+  ttkDiphaWriter.cpp
+HEADERS
+  ttkDiphaWriter.h
+DEPENDS
+  ttkAlgorithm
