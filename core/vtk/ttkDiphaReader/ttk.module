@@ -1,0 +1,9 @@
+NAME
+  ttkDiphaReader
+SOURCES
+  ttkDiphaReader.cpp
+HEADERS
+  ttkDiphaReader.h
+DEPENDS
+  ttkAlgorithm
+  common

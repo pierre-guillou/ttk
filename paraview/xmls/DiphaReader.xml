@@ -1,0 +1,32 @@
+<ServerManagerConfiguration>
+
+   <ProxyGroup name="sources">
+      <!-- ================================================================== -->
+      <SourceProxy name="ttkDiphaReader"
+                   class="ttkDiphaReader"
+                   label="TTK Dipha File Format Reader">
+         <Documentation
+            long_help="Import a Dipha File Format to a VTK Unstructured Grid."
+            short_help="Read a .dipha file.">
+           Import a Dipha File Format mesh into a VTK Unstructured Grid.
+         </Documentation>
+         <StringVectorProperty
+            name="FileName"
+            animateable="0"
+            command="SetFileName"
+            number_of_elements="1">
+            <FileListDomain name="files"/>
+            <Documentation>
+               This property specifies the file name for the Dipha reader.
+            </Documentation>
+         </StringVectorProperty>
+
+         <Hints>
+            <ReaderFactory extensions="dipha"
+               file_description="Dipha File Format" />
+         </Hints>
+      </SourceProxy>
+      <!-- End Reader -->
+   </ProxyGroup>
+
+</ServerManagerConfiguration>
