@@ -169,7 +169,7 @@ private:
   vtkDataArray *vtkInputScalars_{};
   double deltaScalar_{};
   ttk::SimplexId numberOfVertices_{};
-  ttk::Triangulation *triangulation_{};
+  ttk::AbstractTriangulation *triangulation_{};
   ttk::SimplexId *vertexSoSoffsets_{};
   std::vector<ttk::SimplexId> criticalPoints_{};
   std::vector<double> vertexScalars_{};

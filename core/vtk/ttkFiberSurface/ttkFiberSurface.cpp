@@ -39,7 +39,7 @@ int ttkFiberSurface::FillOutputPortInformation(int port, vtkInformation *info) {
 }
 
 template <typename VTK_T1, typename VTK_T2>
-int ttkFiberSurface::dispatch(ttk::Triangulation *const triangulation) {
+int ttkFiberSurface::dispatch(ttk::AbstractTriangulation *const triangulation) {
 
 #ifdef TTK_ENABLE_FIBER_SURFACE_WITH_RANGE_OCTREE
   if(RangeOctree) {

@@ -56,7 +56,7 @@ int ttkScalarFieldCriticalPoints::RequestData(
   vtkDataSet *input = vtkDataSet::GetData(inputVector[0]);
   vtkPolyData *output = vtkPolyData::GetData(outputVector, 0);
 
-  ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(input);
+  auto triangulation = ttkAlgorithm::GetTriangulation(input);
   if(!triangulation)
     return 0;
 

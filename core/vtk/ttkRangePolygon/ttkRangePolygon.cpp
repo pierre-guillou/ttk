@@ -145,7 +145,7 @@ int ttkRangePolygon::processTriangles(vtkUnstructuredGrid *input,
   if(NumberOfIterations > 0) {
 
     // set up the triangulation
-    Triangulation *triangulation = ttkAlgorithm::GetTriangulation(output);
+    auto triangulation = ttkAlgorithm::GetTriangulation(output);
 
     ScalarFieldSmoother smoother;
     smoother.setDimensionNumber(3);
