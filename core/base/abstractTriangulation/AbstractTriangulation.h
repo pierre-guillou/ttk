@@ -31,14 +31,14 @@
     call;                                                                 \
   }; break
 
-#define ttkTemplateMacro(triangulationType, call)                            \
-  switch(triangulationType) {                                                \
-    ttkTemplateMacroCase(                                                    \
-      ttk::Triangulation::Type::EXPLICIT, ttk::ExplicitTriangulation, call); \
-    ttkTemplateMacroCase(                                                    \
-      ttk::Triangulation::Type::IMPLICIT, ttk::ImplicitTriangulation, call); \
-    ttkTemplateMacroCase(ttk::Triangulation::Type::PERIODIC,                 \
-                         ttk::PeriodicImplicitTriangulation, call);          \
+#define ttkTemplateMacro(triangulationType, call)                    \
+  switch(triangulationType) {                                        \
+    ttkTemplateMacroCase(ttk::AbstractTriangulation::Type::EXPLICIT, \
+                         ttk::ExplicitTriangulation, call);          \
+    ttkTemplateMacroCase(ttk::AbstractTriangulation::Type::IMPLICIT, \
+                         ttk::ImplicitTriangulation, call);          \
+    ttkTemplateMacroCase(ttk::AbstractTriangulation::Type::PERIODIC, \
+                         ttk::PeriodicImplicitTriangulation, call);  \
   }
 
 namespace ttk {
@@ -49,6 +49,15 @@ namespace ttk {
     AbstractTriangulation();
 
     virtual ~AbstractTriangulation();
+
+    enum class Type { EXPLICIT, IMPLICIT, PERIODIC };
+
+    virtual inline Type getType() const {
+      return type_;
+    }
+    virtual inline AbstractTriangulation *getData() {
+      return this;
+    }
 
     /// Reset the triangulation data-structures.
     /// \return Returns 0 upon success, negative values otherwise.
@@ -3215,6 +3224,8 @@ namespace ttk {
     std::vector<std::vector<SimplexId>> cellEdgeVector_{};
     std::vector<std::vector<SimplexId>> cellTriangleVector_{};
     std::vector<std::vector<SimplexId>> triangleEdgeVector_{};
+
+    Type type_;
   };
 } // namespace ttk
 

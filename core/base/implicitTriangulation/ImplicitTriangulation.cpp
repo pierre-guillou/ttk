@@ -57,6 +57,7 @@ using namespace ttk;
 ImplicitTriangulation::ImplicitTriangulation()
   : dimensionality_{-1}, cellNumber_{}, vertexNumber_{}, edgeNumber_{},
     triangleNumber_{}, tetrahedronNumber_{}, isAccelerated_{} {
+  type_ = Type::IMPLICIT;
   setDebugMsgPrefix("ImplicitTriangulation");
 }
 

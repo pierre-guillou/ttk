@@ -9,6 +9,8 @@ using namespace ttk;
 
 ExplicitTriangulation::ExplicitTriangulation() {
 
+  type_ = Type::EXPLICIT;
+
   setDebugMsgPrefix("ExplicitTriangulation");
 
   clear();
