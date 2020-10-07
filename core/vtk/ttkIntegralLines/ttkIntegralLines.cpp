@@ -42,7 +42,7 @@ int ttkIntegralLines::FillOutputPortInformation(int port,
 }
 
 int ttkIntegralLines::getTrajectories(vtkDataSet *input,
-                                      ttk::Triangulation *triangulation,
+                                      ttk::AbstractTriangulation *triangulation,
                                       vector<vector<SimplexId>> &trajectories,
                                       vtkUnstructuredGrid *output) {
   vtkSmartPointer<vtkUnstructuredGrid> ug
@@ -124,7 +124,7 @@ int ttkIntegralLines::RequestData(vtkInformation *request,
   vtkPointSet *seeds = vtkPointSet::GetData(inputVector[1], 0);
   vtkUnstructuredGrid *output = vtkUnstructuredGrid::GetData(outputVector, 0);
 
-  ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(domain);
+  auto triangulation = ttkAlgorithm::GetTriangulation(domain);
   vtkDataArray *inputScalars = this->GetInputArrayToProcess(0, domain);
 
   vtkDataArray *inputOffsets

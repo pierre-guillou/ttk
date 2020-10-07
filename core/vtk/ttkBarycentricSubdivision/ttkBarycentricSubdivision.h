@@ -62,7 +62,7 @@ protected:
   int InterpolateScalarFields(
     vtkDataSet *const input,
     vtkUnstructuredGrid *const output,
-    ttk::Triangulation &inputTriangulation,
+    ttk::AbstractTriangulation &inputTriangulation,
     ttk::ExplicitTriangulation &outputTriangulation) const;
 
 private:

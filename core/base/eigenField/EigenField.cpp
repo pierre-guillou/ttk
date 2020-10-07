@@ -142,9 +142,9 @@ int ttk::EigenField::execute(const TriangulationType &triangulation,
 
 // explicit template specializations for double and float types
 #define EIGENFIELD_SPECIALIZE(TYPE)                                            \
-  template int ttk::EigenField::execute<TYPE>(                                 \
-    const Triangulation &, TYPE *const, const unsigned int, bool, TYPE *const) \
-    const
+  template int ttk::EigenField::execute<TYPE>(const AbstractTriangulation &,   \
+                                              TYPE *const, const unsigned int, \
+                                              bool, TYPE *const) const
 
 EIGENFIELD_SPECIALIZE(double);
 EIGENFIELD_SPECIALIZE(float);

@@ -47,7 +47,7 @@ int ttkDistanceField::RequestData(vtkInformation *request,
   vtkPointSet *sources = vtkPointSet::GetData(inputVector[1]);
   vtkDataSet *output = vtkDataSet::GetData(outputVector);
 
-  ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(domain);
+  auto triangulation = ttkAlgorithm::GetTriangulation(domain);
   this->preconditionTriangulation(triangulation);
   Modified();
 

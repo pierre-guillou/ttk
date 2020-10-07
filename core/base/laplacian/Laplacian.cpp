@@ -183,11 +183,11 @@ int ttk::Laplacian::cotanWeights(SparseMatrixType &output,
   return 0;
 }
 
-#define LAPLACIAN_SPECIALIZE(TYPE)                       \
-  template int ttk::Laplacian::discreteLaplacian<TYPE>(  \
-    Eigen::SparseMatrix<TYPE> &, const Triangulation &); \
-  template int ttk::Laplacian::cotanWeights<TYPE>(       \
-    Eigen::SparseMatrix<TYPE> &, const Triangulation &)
+#define LAPLACIAN_SPECIALIZE(TYPE)                               \
+  template int ttk::Laplacian::discreteLaplacian<TYPE>(          \
+    Eigen::SparseMatrix<TYPE> &, const AbstractTriangulation &); \
+  template int ttk::Laplacian::cotanWeights<TYPE>(               \
+    Eigen::SparseMatrix<TYPE> &, const AbstractTriangulation &)
 
 // explicit intantiations for floating-point types
 LAPLACIAN_SPECIALIZE(float);

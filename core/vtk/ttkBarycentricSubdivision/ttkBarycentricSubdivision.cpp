@@ -60,7 +60,7 @@ vtkSmartPointer<vtkDataArray> ttkBarycentricSubdivision::AllocateScalarField(
 int ttkBarycentricSubdivision::InterpolateScalarFields(
   vtkDataSet *const input,
   vtkUnstructuredGrid *const output,
-  ttk::Triangulation &inputTriangulation,
+  ttk::AbstractTriangulation &inputTriangulation,
   ttk::ExplicitTriangulation &outputTriangulation) const {
 
   const size_t npointdata = input->GetPointData()->GetNumberOfArrays();
@@ -80,16 +80,16 @@ int ttkBarycentricSubdivision::InterpolateScalarFields(
       static_cast<TYPE *>(ttkUtils::GetVoidPointer(inputScalarField)),   \
       static_cast<TYPE *>(ttkUtils::GetVoidPointer(outputScalarField))); \
     break
-#define DISPATCH_INTERPOLATE_CONT(CASE, TYPE)                                 \
-  case CASE:                                                                  \
-    switch(inputTriangulation.getType()) {                                    \
-      BARYSUBD_TRIANGL_CALLS(                                                 \
-        TYPE, ttk::Triangulation::Type::EXPLICIT, ttk::ExplicitTriangulation) \
-      BARYSUBD_TRIANGL_CALLS(                                                 \
-        TYPE, ttk::Triangulation::Type::IMPLICIT, ttk::ImplicitTriangulation) \
-      BARYSUBD_TRIANGL_CALLS(TYPE, ttk::Triangulation::Type::PERIODIC,        \
-                             ttk::PeriodicImplicitTriangulation)              \
-    }                                                                         \
+#define DISPATCH_INTERPOLATE_CONT(CASE, TYPE)                                  \
+  case CASE:                                                                   \
+    switch(inputTriangulation.getType()) {                                     \
+      BARYSUBD_TRIANGL_CALLS(TYPE, ttk::AbstractTriangulation::Type::EXPLICIT, \
+                             ttk::ExplicitTriangulation)                       \
+      BARYSUBD_TRIANGL_CALLS(TYPE, ttk::AbstractTriangulation::Type::IMPLICIT, \
+                             ttk::ImplicitTriangulation)                       \
+      BARYSUBD_TRIANGL_CALLS(TYPE, ttk::AbstractTriangulation::Type::PERIODIC, \
+                             ttk::PeriodicImplicitTriangulation)               \
+    }                                                                          \
     break;
 #define BARYSUBD_TRIANGL_CALLS(DATATYPE, TRIANGL_CASE, TRIANGL_TYPE)          \
   case TRIANGL_CASE: {                                                        \

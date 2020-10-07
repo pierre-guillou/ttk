@@ -84,7 +84,7 @@ protected:
   template <class dataTypeU, class dataTypeV>
   int dispatch(const dataTypeU *const uField,
                const dataTypeV *const vField,
-               ttk::Triangulation *const triangulation);
+               ttk::AbstractTriangulation *const triangulation);
 
 private:
   bool ForceInputOffsetScalarField{false};

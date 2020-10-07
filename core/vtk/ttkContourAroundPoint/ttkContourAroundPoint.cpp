@@ -80,7 +80,7 @@ int Class::RequestData(vtkInformation *request,
 //----------------------------------------------------------------------------//
 
 bool Class::preprocessFld(vtkDataSet *dataset) {
-  ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(dataset);
+  auto triangulation = ttkAlgorithm::GetTriangulation(dataset);
   if(!triangulation)
     return false;
 

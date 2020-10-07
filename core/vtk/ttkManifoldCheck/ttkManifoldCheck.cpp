@@ -45,7 +45,7 @@ int ttkManifoldCheck::RequestData(vtkInformation *request,
   vtkDataSet *input = vtkDataSet::GetData(inputVector[0]);
   vtkDataSet *output = vtkDataSet::GetData(outputVector);
 
-  Triangulation *triangulation = ttkAlgorithm::GetTriangulation(input);
+  auto triangulation = ttkAlgorithm::GetTriangulation(input);
 
   if(!triangulation)
     return 0;

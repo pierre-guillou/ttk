@@ -55,8 +55,7 @@ int ttkPeriodicGrid::RequestData(vtkInformation *request,
 
   // Get ttk::triangulation of the input vtkDataSet (will create one if does
   // not exist already)
-  ttk::Triangulation *triangulation
-    = ttkAlgorithm::GetTriangulation(inputDataSet);
+  auto triangulation = ttkAlgorithm::GetTriangulation(inputDataSet);
 
   bool before = triangulation->hasPeriodicBoundaries();
 

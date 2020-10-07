@@ -48,7 +48,7 @@ int ttkReebSpace::FillOutputPortInformation(int port, vtkInformation *info) {
 template <class dataTypeU, class dataTypeV>
 int ttkReebSpace::dispatch(const dataTypeU *const uField,
                            const dataTypeV *const vField,
-                           ttk::Triangulation *const triangulation) {
+                           ttk::AbstractTriangulation *const triangulation) {
 
   bool VaryingValues = this->setRangeDrivenOctree(UseOctreeAcceleration);
 

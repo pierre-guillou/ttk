@@ -203,7 +203,7 @@ int ttk::HarmonicField::execute(const TriangulationType &triangulation,
 // explicit template specializations for double and float types
 #define HARMONICFIELD_SPECIALIZE(TYPE)                                       \
   template int ttk::HarmonicField::execute<TYPE>(                            \
-    const Triangulation &, const SimplexId, const SimplexId *const,          \
+    const AbstractTriangulation &, const SimplexId, const SimplexId *const,  \
     const TYPE *const, TYPE *const, const bool, const SolvingMethodUserType, \
     const double) const
 
