@@ -6,6 +6,7 @@ using namespace ttk;
 PeriodicImplicitTriangulation::PeriodicImplicitTriangulation()
   : dimensionality_{-1}, cellNumber_{}, vertexNumber_{}, edgeNumber_{},
     triangleNumber_{}, tetrahedronNumber_{}, isAccelerated_{} {
+  type_ = Type::PERIODIC;
   setDebugMsgPrefix("PeriodicImplicitTriangulation");
   hasPeriodicBoundaries_ = true;
 }

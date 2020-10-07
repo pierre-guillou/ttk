@@ -55,8 +55,6 @@ namespace ttk {
     Triangulation &operator=(Triangulation &&) noexcept;
     ~Triangulation();
 
-    enum class Type { EXPLICIT, IMPLICIT, PERIODIC };
-
     /// Reset the triangulation data-structures.
     /// \return Returns 0 upon success, negative values otherwise.
     inline int clear() {
