@@ -28,7 +28,7 @@ class vtkInformationIntegerKey;
 #include <Debug.h>
 
 namespace ttk {
-  class Triangulation;
+  class AbstractTriangulation;
 }
 
 class TTKALGORITHM_EXPORT ttkAlgorithm : public vtkAlgorithm,
@@ -153,7 +153,7 @@ public:
    * To pass the triangulation along the pipeline, filters have to perform a
    * shallow or deep copy of an input that already has a triangulation.
    */
-  ttk::Triangulation *GetTriangulation(vtkDataSet *object);
+  ttk::AbstractTriangulation *GetTriangulation(vtkDataSet *object);
 
   /**
    * This key can be used during the FillOutputPortInfomration() call to

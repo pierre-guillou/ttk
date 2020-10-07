@@ -12,10 +12,10 @@ class vtkPointSet;
 class vtkPoints;
 class vtkCellArray;
 namespace ttk {
-  class Triangulation;
+  class AbstractTriangulation;
 }
 
-using RegistryTriangulation = std::unique_ptr<ttk::Triangulation>;
+using RegistryTriangulation = std::unique_ptr<ttk::AbstractTriangulation>;
 
 struct RegistryValue {
   RegistryTriangulation triangulation;
@@ -28,7 +28,8 @@ struct RegistryValue {
   double spacing[3];
   int dimensions[3];
 
-  RegistryValue(vtkDataSet *dataSet, ttk::Triangulation *triangulation_);
+  RegistryValue(vtkDataSet *dataSet,
+                ttk::AbstractTriangulation *triangulation_);
   bool isValid(vtkDataSet *dataSet) const;
 };
 
@@ -37,8 +38,8 @@ using Registry = std::unordered_map<RegistryKey, RegistryValue>;
 
 class TTKALGORITHM_EXPORT ttkTriangulationFactory : public ttk::Debug {
 public:
-  static ttk::Triangulation *GetTriangulation(int debugLevel,
-                                              vtkDataSet *object);
+  static ttk::AbstractTriangulation *GetTriangulation(int debugLevel,
+                                                      vtkDataSet *object);
 
   static ttkTriangulationFactory Instance;
   static RegistryKey GetKey(vtkDataSet *dataSet);
@@ -55,7 +56,7 @@ private:
   RegistryTriangulation CreateImplicitTriangulation(vtkImageData *image);
   RegistryTriangulation CreateExplicitTriangulation(vtkPointSet *pointSet);
   RegistryTriangulation CreateTriangulation(vtkDataSet *dataSet);
-  int FindImplicitTriangulation(ttk::Triangulation *&triangulation,
+  int FindImplicitTriangulation(ttk::AbstractTriangulation *&triangulation,
                                 vtkImageData *image);
 
   ttkTriangulationFactory();

@@ -93,7 +93,7 @@ struct ttkOnDeleteCommand : public vtkCommand {
 };
 
 RegistryValue::RegistryValue(vtkDataSet *dataSet,
-                             ttk::Triangulation *triangulation_)
+                             ttk::AbstractTriangulation *triangulation_)
   : triangulation(triangulation_), owner(dataSet) {
   auto cells = GetCells(dataSet);
   if(cells)
@@ -154,7 +154,8 @@ RegistryTriangulation
   this->printMsg("Initializing Implicit Triangulation", 0, 0,
                  ttk::debug::LineMode::REPLACE, ttk::debug::Priority::DETAIL);
 
-  auto triangulation = RegistryTriangulation(new ttk::Triangulation());
+  auto triangulation = std::unique_ptr<ttk::AbstractTriangulation>(
+    new ttk::ImplicitTriangulation());
 
   int extent[6];
   image->GetExtent(extent);
@@ -173,9 +174,10 @@ RegistryTriangulation
   firstPoint[1] = origin[1] + extent[2] * spacing[1];
   firstPoint[2] = origin[2] + extent[4] * spacing[2];
 
-  triangulation->setInputGrid(firstPoint[0], firstPoint[1], firstPoint[2],
-                              spacing[0], spacing[1], spacing[2], dimensions[0],
-                              dimensions[1], dimensions[2]);
+  static_cast<ttk::ImplicitTriangulation *>(triangulation.get())
+    ->setInputGrid(firstPoint[0], firstPoint[1], firstPoint[2], spacing[0],
+                   spacing[1], spacing[2], dimensions[0], dimensions[1],
+                   dimensions[2]);
 
   this->printMsg("Initializing Implicit Triangulation", 1,
                  timer.getElapsedTime(), ttk::debug::LineMode::NEW,
@@ -202,20 +204,22 @@ RegistryTriangulation
     return nullptr;
   }
 
-  auto triangulation = RegistryTriangulation(new ttk::Triangulation());
+  auto triangulation = std::unique_ptr<ttk::AbstractTriangulation>(
+    new ttk::ExplicitTriangulation());
 
   // Points
   {
     auto pointDataType = points->GetDataType();
     if(pointDataType != VTK_FLOAT && pointDataType != VTK_DOUBLE) {
-      this->printErr("Unable to initialize 'ttk::Triangulation' for point "
-                     "precision other than 'float' or 'double'.");
+      this->printErr("Unable to initialize 'ttk::ExplicitTriangulation' for "
+                     "point precision other than 'float' or 'double'.");
       return {};
     }
 
     void *pointDataArray = ttkUtils::GetVoidPointer(points);
-    triangulation->setInputPoints(
-      points->GetNumberOfPoints(), pointDataArray, pointDataType == VTK_DOUBLE);
+    static_cast<ttk::ExplicitTriangulation *>(triangulation.get())
+      ->setInputPoints(points->GetNumberOfPoints(), pointDataArray,
+                       pointDataType == VTK_DOUBLE);
   }
 
   // check if cell types are simplices
@@ -254,7 +258,8 @@ RegistryTriangulation
     auto offsets = static_cast<vtkIdType *>(
       ttkUtils::GetVoidPointer(cells->GetOffsetsArray()));
 
-    int status = triangulation->setInputCells(nCells, connectivity, offsets);
+    int status = static_cast<ttk::ExplicitTriangulation *>(triangulation.get())
+                   ->setInputCells(nCells, connectivity, offsets);
 
     if(status != 0) {
       this->printErr(
@@ -290,7 +295,7 @@ RegistryTriangulation
   return nullptr;
 };
 
-ttk::Triangulation *
+ttk::AbstractTriangulation *
   ttkTriangulationFactory::GetTriangulation(int debugLevel,
                                             vtkDataSet *object) {
   auto instance = &ttkTriangulationFactory::Instance;
@@ -298,7 +303,7 @@ ttk::Triangulation *
 
   auto key = ttkTriangulationFactory::GetKey(object);
 
-  ttk::Triangulation *triangulation{nullptr};
+  ttk::AbstractTriangulation *triangulation{nullptr};
   auto it = instance->registry.find(key);
   if(it != instance->registry.end()) {
     // object is the owner of the explicit or implicit triangulation
@@ -341,7 +346,7 @@ ttk::Triangulation *
 };
 
 int ttkTriangulationFactory::FindImplicitTriangulation(
-  ttk::Triangulation *&triangulation, vtkImageData *image) {
+  ttk::AbstractTriangulation *&triangulation, vtkImageData *image) {
 
   for(const auto &it : this->registry) {
     if(it.second.owner->IsA("vtkImageData")) {
