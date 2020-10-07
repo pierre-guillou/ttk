@@ -123,7 +123,7 @@ int ttkTrackingFromFields::RequestData(vtkInformation *ttkNotUsed(request),
   auto input = vtkDataSet::GetData(inputVector[0]);
   auto output = vtkUnstructuredGrid::GetData(outputVector);
 
-  ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(input);
+  auto triangulation = ttkAlgorithm::GetTriangulation(input);
   if(!triangulation)
     return 0;
 

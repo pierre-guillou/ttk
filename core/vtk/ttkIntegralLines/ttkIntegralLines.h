@@ -85,7 +85,7 @@ public:
   vtkGetMacro(ForceInputOffsetScalarField, bool);
 
   int getTrajectories(vtkDataSet *input,
-                      ttk::Triangulation *triangulation,
+                      ttk::AbstractTriangulation *triangulation,
                       std::vector<std::vector<ttk::SimplexId>> &trajectories,
                       vtkUnstructuredGrid *output);
 

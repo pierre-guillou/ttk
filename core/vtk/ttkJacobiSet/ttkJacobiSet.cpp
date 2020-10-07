@@ -42,7 +42,7 @@ int ttkJacobiSet::FillOutputPortInformation(int port, vtkInformation *info) {
 template <class dataTypeU, class dataTypeV>
 int ttkJacobiSet::dispatch(const dataTypeU *const uField,
                            const dataTypeV *const vField,
-                           ttk::Triangulation *const triangulation) {
+                           ttk::AbstractTriangulation *const triangulation) {
   ttkTemplateMacro(
     triangulation->getType(),
     this->execute(jacobiSet_, uField, vField,

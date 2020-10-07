@@ -122,7 +122,7 @@ private:
 
   int nbCC_;
   std::vector<vtkSmartPointer<vtkDataSet>> connected_components_;
-  std::vector<ttk::Triangulation *> triangulation_;
+  std::vector<ttk::AbstractTriangulation *> triangulation_;
   std::vector<ttk::ftm::LocalFTM> ftmTree_;
   std::vector<vtkDataArray *> inputScalars_;
   std::vector<std::vector<ttk::SimplexId>> offsets_;

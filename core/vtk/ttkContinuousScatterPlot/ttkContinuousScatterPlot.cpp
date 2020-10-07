@@ -63,7 +63,7 @@ int ttkContinuousScatterPlot::RequestData(vtkInformation *ttkNotUsed(request),
   if(!input || !output)
     return 0;
 
-  ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(input);
+  auto triangulation = ttkAlgorithm::GetTriangulation(input);
   if(!triangulation)
     return 0;
 

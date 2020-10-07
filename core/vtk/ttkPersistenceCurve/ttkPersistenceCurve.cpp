@@ -218,7 +218,7 @@ int ttkPersistenceCurve::RequestData(vtkInformation *ttkNotUsed(request),
   vtkTable *outputSTPersistenceCurve = vtkTable::GetData(outputVector, 2);
   vtkTable *outputCTPersistenceCurve = vtkTable::GetData(outputVector, 3);
 
-  ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(input);
+  auto triangulation = ttkAlgorithm::GetTriangulation(input);
 #ifndef TTK_ENABLE_KAMIKAZE
   if(!triangulation) {
     this->printErr("Wrong triangulation");

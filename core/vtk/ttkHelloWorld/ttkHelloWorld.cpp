@@ -173,8 +173,7 @@ int ttkHelloWorld::RequestData(vtkInformation *ttkNotUsed(request),
 
   // Get ttk::triangulation of the input vtkDataSet (will create one if one does
   // not exist already).
-  ttk::Triangulation *triangulation
-    = ttkAlgorithm::GetTriangulation(inputDataSet);
+  auto triangulation = ttkAlgorithm::GetTriangulation(inputDataSet);
   if(!triangulation)
     return 0;
 

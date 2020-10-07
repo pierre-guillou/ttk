@@ -151,7 +151,7 @@ namespace ttk {
       inline void fillArrayCell(const SimplexId pos,
                                 const idSuperArc arcId,
                                 LocalFTM &ftmTree,
-                                Triangulation *triangulation,
+                                AbstractTriangulation *triangulation,
                                 Params params) {
         const idNode idOffset = ftmTree.offset;
         FTMTree_MT *tree = ftmTree.tree.getTree(params.treeType);
@@ -263,7 +263,7 @@ namespace ttk {
                                  const idNode nodeId,
                                  LocalFTM &ftmTree,
                                  vtkDataArray *idMapper,
-                                 Triangulation *triangulation,
+                                 AbstractTriangulation *triangulation,
                                  Params params) {
         const idNode idOffset = ftmTree.offset;
         FTMTree_MT *tree = ftmTree.tree.getTree(params.treeType);
@@ -384,7 +384,7 @@ namespace ttk {
 
       void fillArrayPoint(const idSuperArc arcId,
                           LocalFTM &l_tree,
-                          Triangulation *triangulation,
+                          AbstractTriangulation *triangulation,
                           vtkDataArray *idMapper,
                           Params params) {
         if(!params.segm)

@@ -113,7 +113,7 @@ private:
   ttk::ftr::Params params_{};
 
   vtkDataSet *mesh_{};
-  ttk::Triangulation *triangulation_{};
+  ttk::AbstractTriangulation *triangulation_{};
   vtkDataArray *inputScalars_{};
   vtkDataArray *offsets_{};
 };
