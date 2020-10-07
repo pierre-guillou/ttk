@@ -2,8 +2,8 @@
 #include <ttkMacros.h>
 #include <ttkUtils.h>
 
+#include <AbstractTriangulation.h>
 #include <OrderDisambiguation.h>
-#include <Triangulation.h>
 #include <ttkTriangulationFactory.h>
 
 #include <vtkCellTypes.h>
@@ -32,7 +32,8 @@ ttkAlgorithm::ttkAlgorithm() {
 ttkAlgorithm::~ttkAlgorithm() {
 }
 
-ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
+ttk::AbstractTriangulation *
+  ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
 
   this->printMsg("Requesting triangulation for '"
                    + std::string(dataSet->GetClassName()) + "'",
