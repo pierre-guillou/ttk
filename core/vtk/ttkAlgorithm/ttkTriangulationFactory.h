@@ -3,6 +3,7 @@
 #include <ttkAlgorithmModule.h>
 
 #include <Debug.h>
+#include <array>
 #include <unordered_map>
 #include <vtkType.h>
 
@@ -15,7 +16,9 @@ namespace ttk {
   class AbstractTriangulation;
 }
 
-using RegistryTriangulation = std::unique_ptr<ttk::AbstractTriangulation>;
+// allow to store 2 triangulation pointers (for implicit + periodic)
+using RegistryTriangulation
+  = std::array<std::unique_ptr<ttk::AbstractTriangulation>, 2>;
 
 struct RegistryValue {
   RegistryTriangulation triangulation;
@@ -29,7 +32,8 @@ struct RegistryValue {
   int dimensions[3];
 
   RegistryValue(vtkDataSet *dataSet,
-                ttk::AbstractTriangulation *triangulation_);
+                ttk::AbstractTriangulation *triangulation0_,
+                ttk::AbstractTriangulation *triangulation1_ = nullptr);
   bool isValid(vtkDataSet *dataSet) const;
 };
 
@@ -40,6 +44,8 @@ class TTKALGORITHM_EXPORT ttkTriangulationFactory : public ttk::Debug {
 public:
   static ttk::AbstractTriangulation *GetTriangulation(int debugLevel,
                                                       vtkDataSet *object);
+  static int
+    SwitchToPeriodicTriangulation(ttk::AbstractTriangulation *triangulation);
 
   static ttkTriangulationFactory Instance;
   static RegistryKey GetKey(vtkDataSet *dataSet);

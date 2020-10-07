@@ -155,6 +155,9 @@ public:
    */
   ttk::AbstractTriangulation *GetTriangulation(vtkDataSet *object);
 
+  int SetPeriodicBoundaryConditions(ttk::AbstractTriangulation *triangulation,
+                                    bool Periodicity);
+
   /**
    * This key can be used during the FillOutputPortInfomration() call to
    * specify that an output port should produce the same data type as a
