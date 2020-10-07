@@ -93,8 +93,11 @@ struct ttkOnDeleteCommand : public vtkCommand {
 };
 
 RegistryValue::RegistryValue(vtkDataSet *dataSet,
-                             ttk::AbstractTriangulation *triangulation_)
-  : triangulation(triangulation_), owner(dataSet) {
+                             ttk::AbstractTriangulation *triangulation0_,
+                             ttk::AbstractTriangulation *triangulation1_)
+  : owner(dataSet) {
+  this->triangulation[0].reset(triangulation0_);
+  this->triangulation[1].reset(triangulation1_);
   auto cells = GetCells(dataSet);
   if(cells)
     this->cellModTime = cells->GetMTime();
@@ -154,8 +157,19 @@ RegistryTriangulation
   this->printMsg("Initializing Implicit Triangulation", 0, 0,
                  ttk::debug::LineMode::REPLACE, ttk::debug::Priority::DETAIL);
 
-  auto triangulation = std::unique_ptr<ttk::AbstractTriangulation>(
-    new ttk::ImplicitTriangulation());
+  // one implicit triangulation in the first place, followed by the
+  // corresponding periodic triangulation
+  RegistryTriangulation triangulation{
+    std::unique_ptr<ttk::AbstractTriangulation>{
+      new ttk::ImplicitTriangulation{}},
+    std::unique_ptr<ttk::AbstractTriangulation>{
+      new ttk::PeriodicImplicitTriangulation{}},
+  };
+
+  auto implicit
+    = static_cast<ttk::ImplicitTriangulation *>(triangulation[0].get());
+  auto periodic
+    = static_cast<ttk::PeriodicImplicitTriangulation *>(triangulation[1].get());
 
   int extent[6];
   image->GetExtent(extent);
@@ -174,10 +188,13 @@ RegistryTriangulation
   firstPoint[1] = origin[1] + extent[2] * spacing[1];
   firstPoint[2] = origin[2] + extent[4] * spacing[2];
 
-  static_cast<ttk::ImplicitTriangulation *>(triangulation.get())
-    ->setInputGrid(firstPoint[0], firstPoint[1], firstPoint[2], spacing[0],
-                   spacing[1], spacing[2], dimensions[0], dimensions[1],
-                   dimensions[2]);
+  // initialize the two triangulations with the same arguments
+  implicit->setInputGrid(firstPoint[0], firstPoint[1], firstPoint[2],
+                         spacing[0], spacing[1], spacing[2], dimensions[0],
+                         dimensions[1], dimensions[2]);
+  periodic->setInputGrid(firstPoint[0], firstPoint[1], firstPoint[2],
+                         spacing[0], spacing[1], spacing[2], dimensions[0],
+                         dimensions[1], dimensions[2]);
 
   this->printMsg("Initializing Implicit Triangulation", 1,
                  timer.getElapsedTime(), ttk::debug::LineMode::NEW,
@@ -195,17 +212,23 @@ RegistryTriangulation
   auto points = pointSet->GetPoints();
   if(!points) {
     this->printErr("DataSet has uninitialized `vtkPoints`.");
-    return nullptr;
+    return {};
   }
 
   auto cells = GetCells(pointSet);
   if(!cells) {
     this->printErr("DataSet has uninitialized `vtkCellArray`.");
-    return nullptr;
+    return {};
   }
 
-  auto triangulation = std::unique_ptr<ttk::AbstractTriangulation>(
-    new ttk::ExplicitTriangulation());
+  // the explicit triangulation at the first place, followed by nullptr
+  RegistryTriangulation triangulation{
+    std::unique_ptr<ttk::AbstractTriangulation>(
+      new ttk::ExplicitTriangulation()),
+    {}};
+
+  auto expltri
+    = static_cast<ttk::ExplicitTriangulation *>(triangulation[0].get());
 
   // Points
   {
@@ -217,9 +240,8 @@ RegistryTriangulation
     }
 
     void *pointDataArray = ttkUtils::GetVoidPointer(points);
-    static_cast<ttk::ExplicitTriangulation *>(triangulation.get())
-      ->setInputPoints(points->GetNumberOfPoints(), pointDataArray,
-                       pointDataType == VTK_DOUBLE);
+    expltri->setInputPoints(
+      points->GetNumberOfPoints(), pointDataArray, pointDataType == VTK_DOUBLE);
   }
 
   // check if cell types are simplices
@@ -258,8 +280,7 @@ RegistryTriangulation
     auto offsets = static_cast<vtkIdType *>(
       ttkUtils::GetVoidPointer(cells->GetOffsetsArray()));
 
-    int status = static_cast<ttk::ExplicitTriangulation *>(triangulation.get())
-                   ->setInputCells(nCells, connectivity, offsets);
+    int status = expltri->setInputCells(nCells, connectivity, offsets);
 
     if(status != 0) {
       this->printErr(
@@ -292,8 +313,25 @@ RegistryTriangulation
     }
   }
 
-  return nullptr;
+  return {};
 };
+
+int ttkTriangulationFactory::SwitchToPeriodicTriangulation(
+  ttk::AbstractTriangulation *triangulation) {
+
+  if(triangulation->getType() != ttk::AbstractTriangulation::Type::EXPLICIT) {
+    auto &instance = ttkTriangulationFactory::Instance;
+    for(auto &pair : instance.registry) {
+      if(pair.second.triangulation[0].get() == triangulation) {
+        // swap the two triangulation pointers
+        pair.second.triangulation[0].swap(pair.second.triangulation[1]);
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
 
 ttk::AbstractTriangulation *
   ttkTriangulationFactory::GetTriangulation(int debugLevel,
@@ -310,7 +348,7 @@ ttk::AbstractTriangulation *
     if(it->second.isValid(object)) {
       instance->printMsg(
         "Retrieving Existing Triangulation", ttk::debug::Priority::DETAIL);
-      triangulation = it->second.triangulation.get();
+      triangulation = it->second.triangulation[0].get();
     } else {
       instance->printMsg(
         "Existing Triangulation No Longer Valid", ttk::debug::Priority::DETAIL);
@@ -327,11 +365,13 @@ ttk::AbstractTriangulation *
   }
 
   if(!triangulation) {
-    triangulation = instance->CreateTriangulation(object).release();
+    auto triangulations = instance->CreateTriangulation(object);
+    triangulation = triangulations[0].get();
     if(triangulation) {
-      instance->registry.emplace(std::piecewise_construct,
-                                 std::forward_as_tuple(key),
-                                 std::forward_as_tuple(object, triangulation));
+      instance->registry.emplace(
+        std::piecewise_construct, std::forward_as_tuple(key),
+        std::forward_as_tuple(
+          object, triangulations[0].release(), triangulations[1].release()));
     }
   }
 
@@ -351,7 +391,7 @@ int ttkTriangulationFactory::FindImplicitTriangulation(
   for(const auto &it : this->registry) {
     if(it.second.owner->IsA("vtkImageData")) {
       if(it.second.isValid(image)) {
-        triangulation = it.second.triangulation.get();
+        triangulation = it.second.triangulation[0].get();
         return 1;
       }
     }

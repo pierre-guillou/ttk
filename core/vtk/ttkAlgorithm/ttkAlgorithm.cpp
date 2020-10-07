@@ -50,6 +50,18 @@ ttk::AbstractTriangulation *
   return nullptr;
 };
 
+int ttkAlgorithm::SetPeriodicBoundaryConditions(
+  ttk::AbstractTriangulation *triangulation, bool Periodicity) {
+  if((triangulation->getType() == ttk::AbstractTriangulation::Type::IMPLICIT
+      && Periodicity)
+     || (triangulation->getType() == ttk::AbstractTriangulation::Type::PERIODIC
+         && !Periodicity)) {
+    return ttkTriangulationFactory::SwitchToPeriodicTriangulation(
+      triangulation);
+  }
+  return 0;
+}
+
 vtkDataArray *ttkAlgorithm::GetOptionalArray(const bool &enforceArrayIndex,
                                              const int &arrayIndex,
                                              const std::string &arrayName,

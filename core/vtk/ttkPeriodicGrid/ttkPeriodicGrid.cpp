@@ -59,7 +59,7 @@ int ttkPeriodicGrid::RequestData(vtkInformation *request,
 
   bool before = triangulation->hasPeriodicBoundaries();
 
-  triangulation->setPeriodicBoundaryConditions(Periodicity);
+  this->SetPeriodicBoundaryConditions(triangulation, Periodicity);
 
   printMsg("Switching regular grid periodicity from "
            + (before ? std::string("ON") : std::string("OFF")) + " to "

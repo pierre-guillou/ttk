@@ -352,6 +352,14 @@ namespace ttk {
                      const SimplexId &yDim,
                      const SimplexId &zDim);
 
+    void getInputGrid(std::array<float, 3> &origin,
+                      std::array<float, 3> &spacing,
+                      std::array<SimplexId, 3> &dimensions) const {
+      origin = {origin_[0], origin_[1], origin_[2]};
+      spacing = {spacing_[0], spacing_[1], spacing_[2]};
+      dimensions = {dimensions_[0], dimensions_[1], dimensions_[2]};
+    }
+
     int preconditionVerticesInternal();
     int preconditionVertexNeighborsInternal() override;
     int preconditionEdgesInternal() override;
