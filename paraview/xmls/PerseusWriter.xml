@@ -1,0 +1,43 @@
+<ServerManagerConfiguration>
+
+  <ProxyGroup name="writers">
+    <!-- ================================================================== -->
+    <WriterProxy
+        name="ttkPerseusWriter"
+        class="ttkPerseusWriter"
+        label="TTK Perseus Writer">
+        <Documentation
+          long_help="Export a VTK Data Set into the Perseus format."
+          short_help="Write a .pers file.">
+          Export a VTK Data Set into the Perseus format (Cubical Grid
+          for Image Data, Simplicial Toplex for Unstructured Grids).
+        </Documentation>
+        <InputProperty name="Input" command="SetInputConnection">
+          <ProxyGroupDomain name="groups">
+            <Group name="sources"/>
+            <Group name="filters"/>
+          </ProxyGroupDomain>
+          <DataTypeDomain name="input_type" composite_data_supported="0">
+            <DataType value="vtkDataSet"/>
+          </DataTypeDomain>
+        </InputProperty>
+        <StringVectorProperty
+          name="FileName"
+          command="SetFilename"
+          number_of_elements="1">
+          <FileListDomain name="files"/>
+          <Documentation>
+              This property specifies the file name for the Perseus writer.
+          </Documentation>
+        </StringVectorProperty>
+        <Hints>
+          <Property name="Input" show="0"/>
+          <Property name="FileName" show="0"/>
+          <WriterFactory extensions="pers"
+                         file_description="Perseus File Format" />
+        </Hints>
+    </WriterProxy>
+    <!-- End Writer -->
+  </ProxyGroup>
+
+</ServerManagerConfiguration>

@@ -1,0 +1,8 @@
+NAME
+  ttkPerseusWriter
+SOURCES
+  ttkPerseusWriter.cpp
+HEADERS
+  ttkPerseusWriter.h
+DEPENDS
+  ttkAlgorithm
