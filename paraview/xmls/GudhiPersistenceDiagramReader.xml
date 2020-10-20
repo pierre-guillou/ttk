@@ -1,0 +1,32 @@
+<ServerManagerConfiguration>
+
+   <ProxyGroup name="sources">
+      <!-- ================================================================== -->
+      <SourceProxy name="ttkGudhiPersistenceDiagramReader"
+                   class="ttkGudhiPersistenceDiagramReader"
+                   label="TTK Gudhi Persistence Diagram Reader">
+         <Documentation
+            long_help="Import a Gudhi Persistence Diagram Format to a VTK Unstructured Grid."
+            short_help="Read a .gudhi file.">
+           Import an Object File Format mesh into a VTK Unstructured Grid.
+         </Documentation>
+         <StringVectorProperty
+            name="FileName"
+            animateable="0"
+            command="SetFileName"
+            number_of_elements="1">
+            <FileListDomain name="files"/>
+            <Documentation>
+               This property specifies the file name for the OFF reader.
+            </Documentation>
+         </StringVectorProperty>
+
+         <Hints>
+            <ReaderFactory extensions="gudhi"
+               file_description="Gudhi Persistence Diagram Format" />
+         </Hints>
+      </SourceProxy>
+      <!-- End Reader -->
+   </ProxyGroup>
+
+</ServerManagerConfiguration>

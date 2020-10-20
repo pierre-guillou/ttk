@@ -1,0 +1,9 @@
+NAME
+  ttkGudhiPersistenceDiagramReader
+SOURCES
+  ttkGudhiPersistenceDiagramReader.cpp
+HEADERS
+  ttkGudhiPersistenceDiagramReader.h
+DEPENDS
+  ttkAlgorithm
+  common
