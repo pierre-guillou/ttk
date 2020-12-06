@@ -86,3 +86,8 @@ jobs:
       run: |
         cd build
         cpack -G productbuild
+        ls -l
+        cpack -G DragNDrop
+        ls -l
+        cpack -G Bundle
+        ls -l
