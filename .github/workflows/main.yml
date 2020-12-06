@@ -85,9 +85,10 @@ jobs:
     - name: Package TTK
       run: |
         cd build
-        cpack -G productbuild
-        ls -l
         cpack -G DragNDrop
-        ls -l
-        cpack -G Bundle
-        ls -l
+
+    - name: Upload .pkg package
+      uses: actions/upload-artifact@v2
+      with:
+        name: ttk.pkg
+        path: build/ttk.dmg
