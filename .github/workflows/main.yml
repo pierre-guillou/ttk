@@ -206,6 +206,7 @@ jobs:
         cd build
         cmake \
           -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX=/Applications \
           -DQt5_DIR=$(brew --prefix qt)/lib/cmake/Qt5 \
           -DTTK_BUILD_PARAVIEW_PLUGINS=TRUE \
           -DTTK_BUILD_VTK_WRAPPERS=TRUE \
