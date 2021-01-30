@@ -314,8 +314,7 @@ jobs:
     - name: Install dependencies with conda
       shell: bash
       run: |
-        conda install -c anaconda qt boost
-        conda install -c conda-forge eigen=3.3.8 spectralib zfp scikit-learn openmp embree3
+        conda install -c conda-forge qt boost eigen=3.3.8 spectralib zfp scikit-learn openmp embree3
 
     - name: Fetch ParaView installer
       run: |
@@ -386,8 +385,7 @@ jobs:
     - name: Install run-time dependencies with conda
       shell: bash
       run: |
-        conda install -c anaconda qt boost
-        conda install -c conda-forge zfp scikit-learn openmp embree3
+        conda install -c conda-forge qt boost zfp scikit-learn openmp embree3
 
     - name: Fetch ParaView installer
       run: |
