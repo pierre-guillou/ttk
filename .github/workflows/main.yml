@@ -63,13 +63,13 @@ jobs:
 
     - uses: dsaltares/fetch-gh-release-asset@master
       with:
-        repo: "topology-tool-kit/ttk-paraview"
-        version: "tags/v5.8.1"
-        file: "ttk-paraview-${{ matrix.os }}.deb"
+        repo: "pierre-guillou/paraview-ttk"
+        version: "tags/5.8.1"
+        file: "ttk-paraview-5.8.1-${{ matrix.os }}.deb"
 
     - name: Install ParaView .deb
       run: |
-        sudo apt install ./ttk-paraview-${{ matrix.os }}.deb
+        sudo apt install ./ttk-paraview-5.8.1-${{ matrix.os }}.deb
 
     - name: Create & configure TTK build directory
       run: |
@@ -122,9 +122,9 @@ jobs:
 
     - uses: dsaltares/fetch-gh-release-asset@master
       with:
-        repo: "topology-tool-kit/ttk-paraview"
-        version: "tags/v5.8.1"
-        file: "ttk-paraview-${{ matrix.os }}.deb"
+        repo: "pierre-guillou/paraview-ttk"
+        version: "tags/5.8.1"
+        file: "ttk-paraview-5.8.1-${{ matrix.os }}.deb"
 
     - name: Fetch TTK .deb artifact
       uses: actions/download-artifact@v2
@@ -134,7 +134,7 @@ jobs:
     - name: Install generated .deb packages
       run: |
         sudo apt update
-        sudo apt install ./ttk-paraview-${{ matrix.os }}.deb
+        sudo apt install ./ttk-paraview-5.8.1-${{ matrix.os }}.deb
         sudo apt install ./ttk-${{ matrix.os }}.deb
 
     - name: Test TTK examples
@@ -203,8 +203,8 @@ jobs:
 
     - name: Fetch & install ttk-paraview
       run: |
-        wget https://github.com/topology-tool-kit/ttk-paraview/releases/download/v5.8.1/ttk-paraview.pkg
-        sudo installer -pkg ttk-paraview.pkg -target /
+        wget https://github.com/pierre-guillou/paraview-ttk/releases/download/5.8.1/ttk-paraview-5.8.1.pkg
+        sudo installer -pkg ttk-paraview-5.8.1.pkg -target /
 
     - name: Create & configure TTK build directory
       run: |
@@ -265,7 +265,7 @@ jobs:
 
     - name: Fetch ttk-paraview
       run: |
-        wget https://github.com/topology-tool-kit/ttk-paraview/releases/download/v5.8.1/ttk-paraview.pkg
+        wget https://github.com/pierre-guillou/paraview-ttk/releases/download/5.8.1/ttk-paraview-5.8.1.pkg
 
     - name: Fetch TTK .pkg artifact
       uses: actions/download-artifact@v2
@@ -274,7 +274,7 @@ jobs:
 
     - name: Install .pkg packages
       run: |
-        sudo installer -pkg ttk-paraview.pkg -target /
+        sudo installer -pkg ttk-paraview-5.8.1.pkg -target /
         sudo installer -pkg ttk.pkg -target /
 
     - name: Test TTK examples
@@ -321,7 +321,7 @@ jobs:
       run: |
         Invoke-WebRequest `
         -OutFile ttk-paraview.exe `
-        -Uri https://github.com/topology-tool-kit/ttk-paraview/releases/download/v5.8.1/ttk-paraview.exe
+        -Uri https://github.com/pierre-guillou/paraview-ttk/releases/download/5.8.1/ttk-paraview-5.8.1.exe
 
     - name: Install ParaView .exe
       shell: cmd
@@ -393,7 +393,7 @@ jobs:
       run: |
         Invoke-WebRequest `
         -OutFile ttk-paraview.exe `
-        -Uri https://github.com/topology-tool-kit/ttk-paraview/releases/download/v5.8.1/ttk-paraview.exe
+        -Uri https://github.com/pierre-guillou/paraview-ttk/releases/download/5.8.1/ttk-paraview-5.8.1.exe
 
     - name: Fetch TTK .exe artifact
       uses: actions/download-artifact@v2
