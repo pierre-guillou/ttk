@@ -35,7 +35,7 @@ Triangulation::Triangulation(Triangulation &&rhs) noexcept
     periodicImplicitTriangulation_{
       std::move(rhs.periodicImplicitTriangulation_)} {
 
-  gridDimensions_ = std::move(rhs.gridDimensions_);
+  gridDimensions_ = rhs.gridDimensions_;
   hasPeriodicBoundaries_ = rhs.hasPeriodicBoundaries_;
 
   if(rhs.abstractTriangulation_ == &rhs.explicitTriangulation_) {
@@ -71,14 +71,13 @@ Triangulation &Triangulation::operator=(const Triangulation &rhs) {
 
 Triangulation &Triangulation::operator=(Triangulation &&rhs) noexcept {
   if(this != &rhs) {
-    AbstractTriangulation::operator=(std::move(rhs));
-    gridDimensions_ = std::move(rhs.gridDimensions_);
+    gridDimensions_ = rhs.gridDimensions_;
     abstractTriangulation_ = nullptr;
     explicitTriangulation_ = std::move(rhs.explicitTriangulation_);
     implicitTriangulation_ = std::move(rhs.implicitTriangulation_);
     periodicImplicitTriangulation_
       = std::move(rhs.periodicImplicitTriangulation_);
-    hasPeriodicBoundaries_ = std::move(rhs.hasPeriodicBoundaries_);
+    hasPeriodicBoundaries_ = rhs.hasPeriodicBoundaries_;
 
     if(rhs.abstractTriangulation_ == &rhs.explicitTriangulation_) {
       abstractTriangulation_ = &explicitTriangulation_;
@@ -89,6 +88,8 @@ Triangulation &Triangulation::operator=(Triangulation &&rhs) noexcept {
       abstractTriangulation_ = &periodicImplicitTriangulation_;
     }
   }
+  AbstractTriangulation::operator=(std::move(rhs));
+
   return *this;
 }
 
