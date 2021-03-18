@@ -144,10 +144,18 @@ int DimensionReduction::execute() const {
 #endif
   gc.push_back(pPath);
 
-  if(ModulePath == "default")
-    modulePath = VALUE(TTK_SCRIPTS_PATH);
-  else
+  if(ModulePath == "default") {
+    // first try to load the TTK_SCRIPTS_PATH environment variable
+    if(std::getenv("TTK_SCRIPTS_PATH") != nullptr) {
+      modulePath = std::getenv("TTK_SCRIPTS_PATH");
+    }
+    if(modulePath.empty()) {
+      // if not set, use the compile-time baked installation path
+      modulePath = VALUE(TTK_SCRIPTS_PATH);
+    }
+  } else {
     modulePath = ModulePath;
+  }
 
   this->printMsg("Loading Python script from: " + modulePath);
   PyList_Append(pPath, PyUnicode_FromString(modulePath.data()));
