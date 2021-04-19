@@ -13,6 +13,7 @@
 
 // base code includes
 #include <Cache.h>
+#include <FlatJaggedArray.h>
 #include <Geometry.h>
 #include <Wrapper.h>
 
@@ -3738,23 +3739,25 @@ namespace ttk {
 
     std::array<SimplexId, 3> gridDimensions_;
 
-    std::vector<bool> boundaryEdges_, boundaryTriangles_, boundaryVertices_;
-    std::vector<std::array<SimplexId, 6>> tetraEdgeList_;
-    std::vector<std::vector<SimplexId>> cellNeighborList_;
-    std::vector<std::array<SimplexId, 4>> tetraTriangleList_;
-    std::vector<std::vector<SimplexId>> edgeLinkList_;
-    std::vector<std::array<SimplexId, 2>> edgeList_;
-    std::vector<std::vector<SimplexId>> edgeStarList_;
-    std::vector<std::vector<SimplexId>> edgeTriangleList_;
-    std::vector<std::array<SimplexId, 3>> triangleList_;
-    std::vector<std::array<SimplexId, 3>> triangleEdgeList_;
-    std::vector<std::vector<SimplexId>> triangleLinkList_;
-    std::vector<std::vector<SimplexId>> triangleStarList_;
-    std::vector<std::vector<SimplexId>> vertexEdgeList_;
-    std::vector<std::vector<SimplexId>> vertexLinkList_;
-    std::vector<std::vector<SimplexId>> vertexNeighborList_;
-    std::vector<std::vector<SimplexId>> vertexStarList_;
-    std::vector<std::vector<SimplexId>> vertexTriangleList_;
+    std::vector<std::array<SimplexId, 2>> edgeList_{};
+    std::vector<std::array<SimplexId, 3>> triangleList_{};
+    std::vector<std::array<SimplexId, 3>> triangleEdgeList_{};
+    std::vector<std::array<SimplexId, 6>> tetraEdgeList_{};
+    std::vector<std::array<SimplexId, 4>> tetraTriangleList_{};
+    FlatJaggedArray vertexNeighborList_{};
+    FlatJaggedArray cellNeighborList_{};
+    FlatJaggedArray vertexEdgeList_{};
+    FlatJaggedArray vertexTriangleList_{};
+    FlatJaggedArray edgeTriangleList_{};
+    FlatJaggedArray vertexStarList_{};
+    FlatJaggedArray edgeStarList_{};
+    FlatJaggedArray triangleStarList_{};
+    FlatJaggedArray vertexLinkList_{};
+    FlatJaggedArray edgeLinkList_{};
+    FlatJaggedArray triangleLinkList_{};
+    std::vector<bool> boundaryVertices_{};
+    std::vector<bool> boundaryEdges_{};
+    std::vector<bool> boundaryTriangles_{};
 
     // keep compatibility between getCellEdges(), getCellTriangles(),
     // getCellNeighbors() and getTriangleEdges()
