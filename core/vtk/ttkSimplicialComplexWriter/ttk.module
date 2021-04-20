@@ -1,0 +1,8 @@
+NAME
+  ttkSimplicialComplexWriter
+SOURCES
+  ttkSimplicialComplexWriter.cpp
+HEADERS
+  ttkSimplicialComplexWriter.h
+DEPENDS
+  ttkAlgorithm

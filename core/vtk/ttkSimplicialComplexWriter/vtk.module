@@ -1,0 +1,4 @@
+NAME
+ ttkSimplicialComplexWriter
+DEPENDS
+  ttkAlgorithm
