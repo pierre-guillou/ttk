@@ -1250,11 +1250,7 @@ float ttk::ContourTreeAlignment::editCost(
     if(t1 == nullptr && t2 == nullptr)
       return 0;
 
-    else if(t1 == nullptr)
-      return weightCombinatorialMatch + weightArcMatch * 1
-             + weightScalarValueMatch;
-
-    else if(t2 == nullptr)
+    else if(t1 == nullptr || t2 == nullptr)
       return weightCombinatorialMatch + weightArcMatch * 1
              + weightScalarValueMatch;
 

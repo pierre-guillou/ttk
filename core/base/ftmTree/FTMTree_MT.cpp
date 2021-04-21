@@ -805,6 +805,7 @@ void FTMTree_MT::sortLeaves(const bool para) {
       getNode(a)->getVertexId(), getNode(b)->getVertexId());
   };
 
+  // NOLINTNEXTLINE (bugprone-branch-clone)
   if(para) {
 #ifdef __clang__
     std::sort(mt_data_.leaves->begin(), mt_data_.leaves->end(), indirect_sort);
@@ -834,6 +835,7 @@ vector<idNode> FTMTree_MT::sortedNodes(const bool para) {
       getNode(a)->getVertexId(), getNode(b)->getVertexId());
   };
 
+  // NOLINTNEXTLINE (bugprone-branch-clone)
   if(para) {
 #ifdef __clang__
     std::sort(sortedNodes.begin(), sortedNodes.end(), indirect_sort);
