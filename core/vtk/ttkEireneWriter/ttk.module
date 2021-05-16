@@ -1,0 +1,8 @@
+NAME
+  ttkEireneWriter
+SOURCES
+  ttkEireneWriter.cpp
+HEADERS
+  ttkEireneWriter.h
+DEPENDS
+  ttkAlgorithm
