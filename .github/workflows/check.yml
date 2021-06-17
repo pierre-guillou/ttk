@@ -8,7 +8,6 @@ on:
     tags:
       - 'v*'
       - 'dev*'
-      - 'ci*'
   pull_request:
     # also triggered by pull requests on the "dev" branch
     branches:
