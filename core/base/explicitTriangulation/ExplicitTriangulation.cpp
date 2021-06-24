@@ -201,15 +201,9 @@ int ExplicitTriangulation::preconditionCellEdgesInternal() {
     return 1;
   }
 
-  OneSkeleton os;
-  os.setWrapper(this);
-
-  if(tetraEdgeList_.empty() && getDimensionality() == 3) {
-    os.buildEdgeList(
-      vertexNumber_, *cellArray_, nullptr, nullptr, &tetraEdgeList_);
-  } else if(triangleEdgeList_.empty() && getDimensionality() == 2) {
-    os.buildEdgeList(
-      vertexNumber_, *cellArray_, nullptr, nullptr, &triangleEdgeList_);
+  if((tetraEdgeList_.empty() && getDimensionality() == 3)
+     || (triangleEdgeList_.empty() && getDimensionality() == 2)) {
+    this->preconditionEdgesInternal();
   }
 
   return 0;
@@ -295,8 +289,8 @@ int ExplicitTriangulation::preconditionEdgesInternal() {
     oneSkeleton.setWrapper(this);
     // also computes edgeStar and triangleEdge / tetraEdge lists for free...
     if(getDimensionality() == 1) {
-      return oneSkeleton.buildEdgeList<1>(vertexNumber_, *cellArray_, &edgeList_,
-                                       &edgeStarData_, nullptr);
+      return oneSkeleton.buildEdgeList<1>(
+        vertexNumber_, *cellArray_, &edgeList_, &edgeStarData_, nullptr);
     } else if(getDimensionality() == 2) {
       return oneSkeleton.buildEdgeList(vertexNumber_, *cellArray_, &edgeList_,
                                        &edgeStarData_, &triangleEdgeList_);
@@ -353,15 +347,7 @@ int ExplicitTriangulation::preconditionEdgeStarsInternal() {
   }
 
   if(edgeStarData_.empty()) {
-    OneSkeleton oneSkeleton;
-    oneSkeleton.setWrapper(this);
-    if(this->getDimensionality() == 3) {
-      return oneSkeleton.buildEdgeList<6>(
-        vertexNumber_, *cellArray_, nullptr, &edgeStarData_, nullptr);
-    } else { // 2D and 1D
-      return oneSkeleton.buildEdgeList<3>(
-        vertexNumber_, *cellArray_, nullptr, &edgeStarData_, nullptr);
-    }
+    this->preconditionEdgesInternal();
   }
   return 0;
 }
@@ -482,9 +468,7 @@ int ExplicitTriangulation::preconditionVertexEdgesInternal() {
     ZeroSkeleton zeroSkeleton;
 
     if(edgeList_.empty()) {
-      OneSkeleton oneSkeleton;
-      oneSkeleton.setWrapper(this);
-      oneSkeleton.buildEdgeList(vertexNumber_, *cellArray_, &edgeList_);
+      this->preconditionEdgesInternal();
     }
 
     zeroSkeleton.setWrapper(this);
