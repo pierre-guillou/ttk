@@ -289,14 +289,15 @@ int ExplicitTriangulation::preconditionEdgesInternal() {
     oneSkeleton.setWrapper(this);
     // also computes edgeStar and triangleEdge / tetraEdge lists for free...
     if(getDimensionality() == 1) {
+      std::vector<std::array<SimplexId, 1>> tmp{};
       return oneSkeleton.buildEdgeList<1>(
-        vertexNumber_, *cellArray_, &edgeList_, &edgeStarData_, nullptr);
+        vertexNumber_, *cellArray_, edgeList_, edgeStarData_, tmp);
     } else if(getDimensionality() == 2) {
-      return oneSkeleton.buildEdgeList(vertexNumber_, *cellArray_, &edgeList_,
-                                       &edgeStarData_, &triangleEdgeList_);
+      return oneSkeleton.buildEdgeList(vertexNumber_, *cellArray_, edgeList_,
+                                       edgeStarData_, triangleEdgeList_);
     } else if(getDimensionality() == 3) {
-      return oneSkeleton.buildEdgeList(vertexNumber_, *cellArray_, &edgeList_,
-                                       &edgeStarData_, &tetraEdgeList_);
+      return oneSkeleton.buildEdgeList(
+        vertexNumber_, *cellArray_, edgeList_, edgeStarData_, tetraEdgeList_);
     }
   }
 
