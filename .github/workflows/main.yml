@@ -43,22 +43,8 @@ jobs:
           zlib1g-dev \
           dpkg-dev
 
-    - name: Install Spectra dependency
-      run: |
-        git clone --depth 1 https://github.com/yixuan/spectra
-        mkdir build_spectra && cd build_spectra
-        cmake ../spectra
-        sudo make install
-
-    - name: Install ZFP dependency
-      run: |
-        git clone --depth 1 https://github.com/LLNL/zfp
-        mkdir build_zfp && cd build_zfp
-        cmake \
-          -DBUILD_SHARED_LIBS=OFF \
-          -DBUILD_TESTING=OFF \
-          ../zfp
-        sudo make -j$(nproc) install
+    - name: Install optional dependencies
+      uses: ./.github/actions/install-deps-unix
 
     - uses: dsaltares/fetch-gh-release-asset@0.0.5
       with:
