@@ -63,7 +63,7 @@ jobs:
         ! git ls-files \
           | grep "core/base" \
           | grep -E "\.cpp$|\.cxx$|\.h$|\.hpp$" \
-          | xargs grep -e "^#include.*vtk"
+          | xargs grep -e "^#include.*[vt]tk"
 
 
   # ------------- #
