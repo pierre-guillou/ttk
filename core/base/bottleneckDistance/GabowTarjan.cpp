@@ -1,10 +1,10 @@
-#pragma once
+#include <GabowTarjan.h>
 
-#include "MatchingGraph.h"
 #include <iostream>
 #include <vector>
 
-template <typename dataType>
+using ttk::GabowTarjan;
+
 bool GabowTarjan::DFS(int v) {
   if(v < 0)
     return true;
@@ -13,7 +13,7 @@ bool GabowTarjan::DFS(int v) {
   for(unsigned int i = 0; i < Connections[v].size(); ++i) {
     int u = Connections[v][i];
     if(Layers[Pair[u] + 1] == Layers[v + 1] + 1) {
-      if(DFS<dataType>(Pair[u])) {
+      if(DFS(Pair[u])) {
         Pair[u] = v;
         Pair[v] = u;
         return true;
@@ -26,7 +26,6 @@ bool GabowTarjan::DFS(int v) {
   return false;
 }
 
-template <typename dataType>
 bool GabowTarjan::BFS() {
   std::queue<int> vertexQueue;
 
@@ -69,19 +68,17 @@ bool GabowTarjan::BFS() {
   return Layers[0] != -1;
 }
 
-template <typename dataType>
 void GabowTarjan::HopcroftKarp(unsigned int &matching) {
-  while(BFS<dataType>())
+  while(BFS())
     for(unsigned int vertex = 0; vertex < MaxSize; ++vertex) {
       if(Pair[vertex] == -1) {
-        if(DFS<dataType>(vertex))
+        if(DFS(vertex))
           ++matching;
       }
     }
 }
 
-template <typename dataType>
-dataType GabowTarjan::Distance(dataType ttkNotUsed(maxLevel)) {
+double GabowTarjan::Distance(double ttkNotUsed(maxLevel)) {
   // Clear the pairing
   Pair.clear();
   Pair.assign(2 * MaxSize, -1);
@@ -159,7 +156,7 @@ dataType GabowTarjan::Distance(dataType ttkNotUsed(maxLevel)) {
     this->printMsg("Guessing for " + std::to_string(guessEdge) + "...");
 
     matching = 0;
-    HopcroftKarp<dataType>(matching);
+    HopcroftKarp(matching);
     // printCurrentMatching<dataType>();
 
     if(matching >= MaxSize) {
@@ -202,7 +199,6 @@ dataType GabowTarjan::Distance(dataType ttkNotUsed(maxLevel)) {
   return -1;
 }
 
-template <typename dataType>
 void GabowTarjan::printCurrentMatching() {
   int size = 2 * MaxSize;
   std::vector<int> missedPlaces;
@@ -235,15 +231,13 @@ void GabowTarjan::printCurrentMatching() {
   }
 }
 
-template <typename dataType>
-int GabowTarjan::run(std::vector<matchingTuple> &matchings) {
+int GabowTarjan::run(std::vector<MatchingType> &matchings) {
   // Compute distance.
-  double dist = Distance<dataType>(1);
+  double dist = Distance(1.0);
   this->printMsg("Computed distance " + std::to_string(dist));
 
   // Fill matchings.
   matchings.clear();
-  auto C = (std::vector<std::vector<dataType>> *)Cptr;
 
   for(unsigned int i = 0; i < Size1; ++i) {
     if(Pair[i] == -1)
@@ -256,10 +250,10 @@ int GabowTarjan::run(std::vector<matchingTuple> &matchings) {
     }
 
     if(j >= (int)Size2) {
-      matchingTuple t = std::make_tuple(i, j, (*C)[i][Size2]);
+      MatchingType t = std::make_tuple(i, j, (*Cptr)[i][Size2]);
       matchings.push_back(t);
     } else {
-      matchingTuple t = std::make_tuple(i, j, (*C)[i][j]);
+      MatchingType t = std::make_tuple(i, j, (*Cptr)[i][j]);
       matchings.push_back(t);
     }
   }
@@ -275,11 +269,11 @@ int GabowTarjan::run(std::vector<matchingTuple> &matchings) {
     }
 
     if(i <= -1) {
-      matchingTuple t = std::make_tuple(i, j - Size1, (*C)[Size1][j - Size1]);
+      MatchingType t = std::make_tuple(i, j - Size1, (*Cptr)[Size1][j - Size1]);
       matchings.push_back(t);
     } else {
       // Already added by symmetry.
-      matchingTuple t = std::make_tuple(i, j - Size1, (*C)[i][j - Size1]);
+      MatchingType t = std::make_tuple(i, j - Size1, (*Cptr)[i][j - Size1]);
       matchings.push_back(t);
     }
   }
