@@ -63,19 +63,19 @@ int ttkPersistenceDiagram::setPersistenceDiagram(
   nodeTypeScalars->SetName(ttk::PersistenceCriticalTypeName);
   nodeTypeScalars->SetNumberOfTuples(2 * diagram.size());
 
-  vtkNew<vtkFloatArray> coordsScalars{};
   vtkSmartPointer<vtkDataArray> birthScalars{inputScalarsArray->NewInstance()};
+  birthScalars->SetNumberOfComponents(1);
+  birthScalars->SetName(ttk::PersistenceBirthName);
+  birthScalars->SetNumberOfTuples(2 * diagram.size());
+
   vtkSmartPointer<vtkDataArray> deathScalars{inputScalarsArray->NewInstance()};
+  deathScalars->SetNumberOfComponents(1);
+  deathScalars->SetName(ttk::PersistenceDeathName);
+  deathScalars->SetNumberOfTuples(2 * diagram.size());
 
-  if(this->ShowInsideDomain) {
-    birthScalars->SetNumberOfComponents(1);
-    birthScalars->SetName(ttk::PersistenceBirthName);
-    birthScalars->SetNumberOfTuples(2 * diagram.size());
+  vtkNew<vtkFloatArray> coordsScalars{};
 
-    deathScalars->SetNumberOfComponents(1);
-    deathScalars->SetName(ttk::PersistenceDeathName);
-    deathScalars->SetNumberOfTuples(2 * diagram.size());
-  } else {
+  if(!this->ShowInsideDomain) {
     coordsScalars->SetNumberOfComponents(3);
     coordsScalars->SetName(ttk::PersistenceCoordinatesName);
     coordsScalars->SetNumberOfTuples(2 * diagram.size());
@@ -141,13 +141,12 @@ int ttkPersistenceDiagram::setPersistenceDiagram(
     vertexIdentifierScalars->SetTuple1(2 * i + 1, b);
     nodeTypeScalars->SetTuple1(2 * i, static_cast<ttk::SimplexId>(ta));
     nodeTypeScalars->SetTuple1(2 * i + 1, static_cast<ttk::SimplexId>(tb));
+    birthScalars->SetTuple1(2 * i, sa);
+    birthScalars->SetTuple1(2 * i + 1, sa);
+    deathScalars->SetTuple1(2 * i, sa);
+    deathScalars->SetTuple1(2 * i + 1, sb);
 
-    if(this->ShowInsideDomain) {
-      birthScalars->SetTuple1(2 * i, sa);
-      birthScalars->SetTuple1(2 * i + 1, sa);
-      deathScalars->SetTuple1(2 * i, sa);
-      deathScalars->SetTuple1(2 * i + 1, sb);
-    } else {
+    if(!this->ShowInsideDomain) {
       std::array<float, 3> coords{};
       triangulation->getVertexPoint(a, coords[0], coords[1], coords[2]);
       coordsScalars->SetTuple3(2 * i, coords[0], coords[1], coords[2]);
@@ -192,10 +191,9 @@ int ttkPersistenceDiagram::setPersistenceDiagram(
   // add data arrays
   persistenceDiagram->GetPointData()->AddArray(vertexIdentifierScalars);
   persistenceDiagram->GetPointData()->AddArray(nodeTypeScalars);
-  if(this->ShowInsideDomain) {
-    persistenceDiagram->GetPointData()->AddArray(birthScalars);
-    persistenceDiagram->GetPointData()->AddArray(deathScalars);
-  } else {
+  persistenceDiagram->GetPointData()->AddArray(birthScalars);
+  persistenceDiagram->GetPointData()->AddArray(deathScalars);
+  if(!this->ShowInsideDomain) {
     persistenceDiagram->GetPointData()->AddArray(coordsScalars);
   }
   persistenceDiagram->GetCellData()->AddArray(pairIdentifierScalars);
