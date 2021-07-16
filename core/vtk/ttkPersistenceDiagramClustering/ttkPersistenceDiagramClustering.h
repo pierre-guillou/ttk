@@ -174,7 +174,7 @@ protected:
                        const double spacing,
                        const double max_persistence) const;
 
-  void VTUToDiagram(diagramType &diagram, vtkUnstructuredGrid *vtu) const;
+  int VTUToDiagram(diagramType &diagram, vtkUnstructuredGrid *vtu) const;
   void diagramToVTU(vtkUnstructuredGrid *output,
                     const diagramType &diagram,
                     const int cid,

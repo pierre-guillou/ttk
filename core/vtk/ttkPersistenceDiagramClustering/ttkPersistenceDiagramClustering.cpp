@@ -93,7 +93,12 @@ int ttkPersistenceDiagramClustering::RequestData(
     std::vector<double> max_persistences(numInputs);
 
     for(int i = 0; i < numInputs; i++) {
-      this->VTUToDiagram(this->intermediateDiagrams_[i], input[i]);
+      const auto ret
+        = this->VTUToDiagram(this->intermediateDiagrams_[i], input[i]);
+      if(ret < 0) {
+        this->printErr("Could not read Persistence Diagram");
+        return 0;
+      }
       max_persistences[i] = std::get<4>(intermediateDiagrams_[i][0]);
     }
 
@@ -200,19 +205,24 @@ int ttkPersistenceDiagramClustering::RequestData(
   return 1;
 }
 
-void ttkPersistenceDiagramClustering::VTUToDiagram(
+int ttkPersistenceDiagramClustering::VTUToDiagram(
   diagramType &diagram, vtkUnstructuredGrid *vtu) const {
 
   const auto pd = vtu->GetPointData();
   const auto cd = vtu->GetCellData();
+  const auto points = vtu->GetPoints();
 
   if(pd == nullptr) {
     this->printErr("VTU diagram with NULL Point Data");
-    return;
+    return -1;
   }
   if(cd == nullptr) {
     this->printErr("VTU diagram with NULL Cell Data");
-    return;
+    return -2;
+  }
+  if(points == nullptr) {
+    this->printErr("VTU with no points");
+    return -3;
   }
 
   // cell data
@@ -229,14 +239,7 @@ void ttkPersistenceDiagramClustering::VTUToDiagram(
   const auto deathScalars = vtkDoubleArray::SafeDownCast(pd->GetArray("Death"));
   const auto coords = vtkFloatArray::SafeDownCast(pd->GetArray("Coordinates"));
 
-  const auto points = vtu->GetPoints();
-
-  const bool embed = birthScalars != nullptr && deathScalars != nullptr;
-
-  if(!embed && coords == nullptr) {
-    this->printErr("Missing coordinates array on non-embedded diagram");
-    return;
-  }
+  const bool embed = coords == nullptr;
 
   int nPairs = pairId->GetNumberOfTuples();
 
@@ -249,14 +252,15 @@ void ttkPersistenceDiagramClustering::VTUToDiagram(
 
   // skip diagram diagonal if present (assuming it's the last pair in the
   // diagram)
-  if(pairId->GetTuple1(nPairs - 1) == -1)
+  if(pairId->GetTuple1(nPairs - 1) == -1) {
     nPairs -= 1;
+  }
 
   if(nPairs < 1 || vertexId == nullptr || pairId == nullptr
      || critType == nullptr || pairPers == nullptr || pairType == nullptr
-     || points == nullptr) {
+     || birthScalars == nullptr || deathScalars == nullptr) {
     this->printErr("Either no pairs in diagram or some array is NULL");
-    return;
+    return -4;
   }
 
   if(NumberOfClusters == 1) {
@@ -271,28 +275,29 @@ void ttkPersistenceDiagramClustering::VTUToDiagram(
   // skip diagonal cell (corresponding points already dealt with)
   for(int i = 0; i < nPairs; ++i) {
 
-    const int v0 = vertexId->GetValue(2 * i);
-    const int v1 = vertexId->GetValue(2 * i + 1);
-    const int ct0 = critType->GetValue(2 * i);
-    const int ct1 = critType->GetValue(2 * i + 1);
+    const auto i0 = 2 * i + 0;
+    const auto i1 = 2 * i + 1;
 
-    const int pId = pairId->GetValue(i);
-    const int pType = pairType->GetValue(i);
-    const double pers = pairPers->GetValue(i);
+    const auto v0 = vertexId->GetValue(i0);
+    const auto v1 = vertexId->GetValue(i1);
+    const auto ct0 = static_cast<ttk::CriticalType>(critType->GetValue(i0));
+    const auto ct1 = static_cast<ttk::CriticalType>(critType->GetValue(i1));
+
+    const auto pId = pairId->GetValue(i);
+    const auto pType = pairType->GetValue(i);
+    const auto pers = pairPers->GetValue(i);
+
+    const auto birth = birthScalars->GetValue(i0);
+    const auto death = deathScalars->GetValue(i1);
 
     std::array<double, 3> coordsBirth{}, coordsDeath{};
-    double birth, death;
 
     if(embed) {
-      points->GetPoint(2 * i + 0, coordsBirth.data());
-      points->GetPoint(2 * i + 1, coordsDeath.data());
-      birth = birthScalars->GetValue(2 * i + 0);
-      death = deathScalars->GetValue(2 * i + 1);
+      points->GetPoint(i0, coordsBirth.data());
+      points->GetPoint(i1, coordsDeath.data());
     } else {
-      coords->GetTuple(2 * i + 0, coordsBirth.data());
-      coords->GetTuple(2 * i + 1, coordsDeath.data());
-      birth = points->GetPoint(2 * i + 0)[0];
-      death = points->GetPoint(2 * i + 1)[1];
+      coords->GetTuple(i0, coordsBirth.data());
+      coords->GetTuple(i1, coordsDeath.data());
     }
 
     if(pId != -1 && pId < nPairs) {
@@ -322,11 +327,10 @@ void ttkPersistenceDiagramClustering::VTUToDiagram(
 
       } else {
         // all other pairs
-        diagram[pId] = std::make_tuple(
-          v0, static_cast<CriticalType>(ct0), v1,
-          static_cast<CriticalType>(ct1), pers, pType, birth, coordsBirth[0],
-          coordsBirth[1], coordsBirth[2], death, coordsDeath[0], coordsDeath[1],
-          coordsDeath[2]);
+        diagram[pId] = std::make_tuple(v0, ct0, v1, ct1, pers, pType, birth,
+                                       coordsBirth[0], coordsBirth[1],
+                                       coordsBirth[2], death, coordsDeath[0],
+                                       coordsDeath[1], coordsDeath[2]);
       }
     }
 
@@ -339,6 +343,8 @@ void ttkPersistenceDiagramClustering::VTUToDiagram(
     this->printWrn("Missed " + std::to_string(nbNonCompact)
                    + " pairs due to non-compactness.");
   }
+
+  return 0;
 }
 
 void ttkPersistenceDiagramClustering::diagramToVTU(
