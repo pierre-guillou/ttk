@@ -69,31 +69,6 @@ int ttkProjectionFromField::projectDiagramInsideDomain(
   diagonalLess->GetPoints()->SetData(coords);
   diagonalLessData->RemoveArray("Coordinates");
 
-  const auto inputPoints = inputDiagram->GetPoints();
-  const auto nPoints = inputDiagram->GetNumberOfPoints();
-
-  // generate a birth and death arrays from diagram points coordinates
-  vtkNew<vtkFloatArray> births{}, deaths{};
-  births->SetNumberOfComponents(1);
-  births->SetName("Birth");
-  births->SetNumberOfTuples(nPoints);
-  deaths->SetNumberOfComponents(1);
-  deaths->SetName("Death");
-  deaths->SetNumberOfTuples(nPoints);
-
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(this->threadNumber_)
-#endif // TTK_ENABLE_OPENMP
-  for(int i = 0; i < nPoints; ++i) {
-    std::array<double, 3> pt{};
-    inputPoints->GetPoint(i, pt.data());
-    births->SetTuple1(i, pt[0]);
-    deaths->SetTuple1(i, pt[1]);
-  }
-
-  diagonalLessData->AddArray(births);
-  diagonalLessData->AddArray(deaths);
-
   outputDiagram->ShallowCopy(diagonalLess);
 
   // don't forget to forward the Field Data
@@ -155,10 +130,6 @@ int ttkProjectionFromField::projectDiagramIn2D(
   // 2 * persistence of min-max pair
   persistenceScalars->InsertNextTuple1(2 * persistenceScalars->GetTuple1(0));
 
-  // remove birth and death arrays
-  pointData->RemoveArray("Birth");
-  pointData->RemoveArray("Death");
-
   // don't forget to forward the Field Data
   outputDiagram->GetFieldData()->ShallowCopy(inputDiagram->GetFieldData());
 
@@ -182,14 +153,7 @@ int ttkProjectionFromField::projectPersistenceDiagram(
   const auto inputDeaths
     = vtkDataArray::SafeDownCast(pointData->GetAbstractArray("Death"));
 
-  if(critCoordinates == nullptr && inputBirths == nullptr
-     && inputDeaths == nullptr) {
-    this->printErr("Missing either `Coordinates' or `Birth' and `Death' "
-                   "vtkPointData arrays");
-    return 0;
-  }
-
-  bool embed = inputBirths != nullptr && inputDeaths != nullptr;
+  bool embed = critCoordinates == nullptr;
 
   if(embed) {
     switch(inputBirths->GetDataType()) {
