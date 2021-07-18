@@ -624,7 +624,7 @@ namespace ttk {
 
         segment.resize(propagation->segmentSize);
         IT segmentIndex = 0;
-        {
+        if(propagation->segmentSize > 0) {
           std::vector<IT> queue(propagation->segmentSize);
           IT queueIndex = 0;
 
