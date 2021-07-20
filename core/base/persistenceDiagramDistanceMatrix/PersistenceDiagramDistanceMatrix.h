@@ -74,7 +74,7 @@ namespace ttk {
     template <typename T>
     double getMostPersistent(const std::vector<T> &bidder_diags) const;
     template <typename T>
-    double computeDistance(const T &D1, const T &D2) const;
+    double computePowerDistance(const T &D1, const T &D2) const;
     template <typename T>
     void getDiagramsDistMat(const std::array<size_t, 2> &nInputs,
                             std::vector<std::vector<double>> &distanceMatrix,
