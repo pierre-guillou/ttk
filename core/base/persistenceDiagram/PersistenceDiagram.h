@@ -306,22 +306,27 @@ int ttk::PersistenceDiagram::executePersistentSimplex(
   for(const auto &p : pairs) {
     const auto isFinite = (p.death >= 0);
     const auto death = isFinite ? p.death : globmax;
+    const auto pers
+      = static_cast<double>(inputScalars[death] - inputScalars[p.birth]);
     if(p.type == 0) {
-      CTDiagram.emplace_back(
-        p.birth, CriticalType::Local_minimum, death,
-        (isFinite && p.type < dim - 1) ? CriticalType::Saddle1
-                                       : CriticalType::Local_maximum,
-        inputScalars[death] - inputScalars[p.birth], p.type);
+      const auto deathType = (isFinite && dim > 1)
+                               ? CriticalType::Saddle1
+                               : CriticalType::Local_maximum;
+      CTDiagram.emplace_back(PersistencePair{
+        CriticalVertex{p.birth, CriticalType::Local_minimum, {}, {}},
+        CriticalVertex{p.death, deathType, {}, {}}, pers, p.type, isFinite});
     } else if(p.type == 1) {
-      CTDiagram.emplace_back(
-        p.birth, CriticalType::Saddle1, death,
-        (isFinite && dim == 3) ? CriticalType::Saddle2
-                               : CriticalType::Local_maximum,
-        inputScalars[death] - inputScalars[p.birth], p.type);
+      const auto deathType = (isFinite && dim == 3)
+                               ? CriticalType::Saddle2
+                               : CriticalType::Local_maximum;
+      CTDiagram.emplace_back(PersistencePair{
+        CriticalVertex{p.birth, CriticalType::Saddle1, {}, {}},
+        CriticalVertex{p.death, deathType, {}, {}}, pers, p.type, isFinite});
     } else if(p.type == 2) {
-      CTDiagram.emplace_back(
-        p.birth, CriticalType::Saddle2, death, CriticalType::Local_maximum,
-        inputScalars[death] - inputScalars[p.birth], p.type);
+      CTDiagram.emplace_back(PersistencePair{
+        CriticalVertex{p.birth, CriticalType::Saddle2, {}, {}},
+        CriticalVertex{p.death, CriticalType::Local_maximum, {}, {}}, pers,
+        p.type, isFinite});
     }
   }
 
