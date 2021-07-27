@@ -1,0 +1,9 @@
+NAME
+  ttkDiscreteMorseFunction
+SOURCES
+  ttkDiscreteMorseFunction.cpp
+HEADERS
+  ttkDiscreteMorseFunction.h
+DEPENDS
+  discreteMorseFunction
+  ttkAlgorithm

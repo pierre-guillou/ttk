@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+  <ProxyGroup name="filters">
+    <SourceProxy name="ttkDiscreteMorseFunction"
+                 class="ttkDiscreteMorseFunction"
+                 label="TTK DiscreteMorseFunction">
+      <Documentation long_help="Computes the Discrete Morse Function of a Simplicial Complex"
+                     short_help="Computes the Discrete Morse Function">
+        This filter computes the Discrete Morse Function of a Simplicial Complex.
+      </Documentation>
+
+      <!-- INPUT DATA OBJECTS -->
+      <InputProperty name="Input" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkUnstructuredGrid" />
+        </DataTypeDomain>
+        <InputArrayDomain name="input_array" attribute_type="point" number_of_components="1" />
+        <Documentation>
+          A vtkUnstructuredGrid that has at least one point data scalar array
+          that can be used to compute the Discrete Morse Function.
+        </Documentation>
+      </InputProperty>
+
+      <!-- INPUT PARAMETER WIDGETS -->
+
+      <StringVectorProperty name="InputArray"
+                            label="Input Array"
+                            command="SetInputArrayToProcess"
+                            element_types="0 0 0 0 2"
+                            number_of_elements="5">
+        <ArrayListDomain attribute_type="Scalars" name="array_list">
+          <RequiredProperties>
+            <Property function="Input" name="Input" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>
+          The scalar array that will be used to compute the Discrete Morse Function.
+        </Documentation>
+      </StringVectorProperty>
+
+      <IntVectorProperty
+        name="ForceInputOffsetScalarField"
+        command="SetForceInputOffsetScalarField"
+        label="Force Input Offset Field"
+        number_of_elements="1"
+        panel_visibility="advanced"
+        default_values="0">
+        <BooleanDomain name="bool"/>
+        <Documentation>
+          Check this box to force the usage of a specific input scalar field
+          as vertex offset (used to disambiguate flat plateaus).
+        </Documentation>
+      </IntVectorProperty>
+
+      <StringVectorProperty name="Offset Field"
+                            command="SetInputArrayToProcess"
+                            element_types="0 0 0 0 2"
+                            number_of_elements="5"
+                            default_values="1"
+                            animateable="0"
+                            panel_visibility="advanced" >
+        <ArrayListDomain name="array_list"
+                         default_values="0" >
+          <RequiredProperties>
+            <Property name="Input" function="Input" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="ForceInputOffsetScalarField"
+                                   value="1" />
+        </Hints>
+        <Documentation>
+          Select the input offset field (to disambiguate flat plateaus).
+        </Documentation>
+      </StringVectorProperty>
+
+      <PropertyGroup panel_widget="Line" label="Input Options">
+        <Property name="InputArray" />
+        <Property name="ForceInputOffsetScalarField"/>
+        <Property name="Offset Field"/>
+      </PropertyGroup>
+
+      <!-- OUTPUT PARAMETER WIDGETS -->
+
+      <StringVectorProperty name="DMFArrayName"
+                            label="DMF Array Name"
+                            command="SetDMFArrayName"
+                            number_of_elements="1"
+                            default_values="DiscreteMorseFunction" />
+
+      <StringVectorProperty name="FiltrArrayName"
+                            label="Filtration Array Name"
+                            command="SetFiltrArrayName"
+                            number_of_elements="1"
+                            default_values="FiltrationOrder" />
+
+      <PropertyGroup panel_widget="Line" label="Output Options">
+        <Property name="DMFArrayName" />
+        <Property name="FiltrArrayName" />
+      </PropertyGroup>
+
+      <!-- DEBUG -->
+      ${DEBUG_WIDGETS}
+
+      <!-- MENU CATEGORY -->
+      <Hints>
+        <ShowInMenu category="TTK - Scalar Data" />
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>
