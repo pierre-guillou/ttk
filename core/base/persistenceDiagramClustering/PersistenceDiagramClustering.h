@@ -66,10 +66,6 @@ namespace ttk {
       std::vector<std::vector<diagramTuple>> &centroids,
       std::vector<std::vector<std::vector<matchingTuple>>> &all_matchings);
 
-    std::array<double, 3> getDistances() const {
-      return this->distances;
-    }
-
     template <class dataType>
     static dataType abs(const dataType var) {
       return (var >= 0) ? var : -var;
@@ -78,9 +74,6 @@ namespace ttk {
   protected:
     // Critical pairs used for clustering
     // 0:min-saddles ; 1:saddles-saddles ; 2:sad-max ; else : all
-
-    // distance results per pair type
-    std::array<double, 3> distances{};
 
     int DistanceWritingOptions{0};
     int PairTypeClustering{-1};
@@ -225,10 +218,7 @@ namespace ttk {
       = KMeans.execute(final_centroids, all_matchings_per_type_and_cluster);
     vector<vector<int>> centroids_sizes = KMeans.get_centroids_sizes();
 
-    this->distances = KMeans.getDistances();
-
-    /// Reconstruct matchings
-    //
+    // Reconstruct matchings
     std::vector<int> cluster_size;
     std::vector<int> idxInCluster(numberOfInputs_);
 
