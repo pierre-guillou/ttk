@@ -164,23 +164,6 @@ int ttkPersistenceDiagramClustering::RequestData(
     this->all_matchings_, this->final_centroids_, this->inv_clustering_,
     this->DisplayMethod, this->Spacing, this->max_dimension_total_);
 
-  // forward input diagrams FieldData to output_clusters blocks
-  for(size_t i = 0; i < input.size(); ++i) {
-    const auto diag{input[i]};
-    const auto block{
-      vtkUnstructuredGrid::SafeDownCast(output_clusters->GetBlock(i))};
-    if(block != nullptr && block->GetFieldData() != nullptr
-       && diag->GetFieldData() != nullptr) {
-      block->GetFieldData()->ShallowCopy(diag->GetFieldData());
-      // add clusterId to FieldData
-      vtkNew<vtkIntArray> cid{};
-      cid->SetName("ClusterId");
-      cid->SetNumberOfTuples(1);
-      cid->SetTuple1(0, this->inv_clustering_[i]);
-      block->GetFieldData()->AddArray(cid);
-    }
-  }
-
   // add distance results to output_matchings FieldData
   vtkNew<vtkDoubleArray> minSad{};
   minSad->SetName("MinSaddleCost");
@@ -256,6 +239,14 @@ void ttkPersistenceDiagramClustering::outputClusteredDiagrams(
     clusterId->SetNumberOfTuples(vtu->GetNumberOfPoints());
     clusterId->Fill(inv_clustering[i]);
     vtu->GetPointData()->AddArray(clusterId);
+
+    // add clusterId to FieldData too (only 1 tuple)
+    vtkNew<vtkIntArray> cidFieldData{};
+    cidFieldData->SetName("ClusterID");
+    cidFieldData->SetNumberOfComponents(1);
+    cidFieldData->SetNumberOfTuples(1);
+    cidFieldData->Fill(inv_clustering[i]);
+    vtu->GetFieldData()->AddArray(cidFieldData);
 
     // add Persistence data array on vertices
     vtkNew<vtkDoubleArray> pointPers{};
