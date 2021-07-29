@@ -153,56 +153,52 @@ int ttkPersistenceDiagramClustering::RequestData(
     }
   }
 
-  outputClusteredDiagrams(output_clusters, input, this->inv_clustering_,
+  outputClusteredDiagrams(output_clusters, input, this->intermediateDiagrams_,
+                          this->all_matchings_, this->inv_clustering_,
                           this->DisplayMethod, this->Spacing,
                           this->max_dimension_total_);
-  outputCentroids(output_centroids, this->final_centroids_, input[0],
-                  this->DisplayMethod, this->Spacing,
-                  this->max_dimension_total_);
+  outputCentroids(output_centroids, this->final_centroids_,
+                  this->all_matchings_, input[0], this->DisplayMethod,
+                  this->Spacing, this->max_dimension_total_);
   outputMatchings(
     output_matchings, this->NumberOfClusters, this->intermediateDiagrams_,
     this->all_matchings_, this->final_centroids_, this->inv_clustering_,
     this->DisplayMethod, this->Spacing, this->max_dimension_total_);
 
-  // add distance results to output_matchings FieldData
+  return 1;
+}
+
+void addCostsAsFieldData(vtkUnstructuredGrid *vtu,
+                         const double minSadCost,
+                         const double sadSadCost,
+                         const double sadMaxCost) {
+
+  // add global matchings cost as FieldData (only 1 tuple per array)
   vtkNew<vtkDoubleArray> minSad{};
   minSad->SetName("MinSaddleCost");
   minSad->SetNumberOfTuples(1);
-  minSad->SetTuple1(0, this->distances[0]);
+  minSad->SetTuple1(0, minSadCost);
+  vtu->GetFieldData()->AddArray(minSad);
 
   vtkNew<vtkDoubleArray> sadSad{};
   sadSad->SetName("SaddleSaddleCost");
   sadSad->SetNumberOfTuples(1);
-  sadSad->SetTuple1(0, this->distances[1]);
+  sadSad->SetTuple1(0, sadSadCost);
+  vtu->GetFieldData()->AddArray(sadSad);
 
   vtkNew<vtkDoubleArray> sadMax{};
   sadMax->SetName("SaddleMaxCost");
   sadMax->SetNumberOfTuples(1);
-  sadMax->SetTuple1(0, this->distances[2]);
-
-  vtkNew<vtkDoubleArray> wass{};
-  wass->SetName("WassersteinDistance");
-  wass->SetNumberOfTuples(1);
-  wass->SetTuple1(
-    0, std::accumulate(this->distances.begin(), this->distances.end(), 0.0));
-
-  for(size_t i = 0; i < output_matchings->GetNumberOfBlocks(); ++i) {
-    const auto block{
-      vtkUnstructuredGrid::SafeDownCast(output_matchings->GetBlock(i))};
-    if(block != nullptr && block->GetFieldData() != nullptr) {
-      block->GetFieldData()->AddArray(minSad);
-      block->GetFieldData()->AddArray(sadSad);
-      block->GetFieldData()->AddArray(sadMax);
-      block->GetFieldData()->AddArray(wass);
-    }
-  }
-
-  return 1;
+  sadMax->SetTuple1(0, sadMaxCost);
+  vtu->GetFieldData()->AddArray(sadMax);
 }
 
 void ttkPersistenceDiagramClustering::outputClusteredDiagrams(
   vtkMultiBlockDataSet *output,
-  const std::vector<vtkUnstructuredGrid *> &diags,
+  const std::vector<vtkUnstructuredGrid *> &diagsVTU,
+  const std::vector<ttk::DiagramType> &diags,
+  const std::vector<std::vector<std::vector<ttk::MatchingType>>>
+    &matchingsPerCluster,
   const std::vector<int> &inv_clustering,
   const DISPLAY dm,
   const double spacing,
@@ -219,7 +215,7 @@ void ttkPersistenceDiagramClustering::outputClusteredDiagrams(
     const auto nClusters
       = 1 + *std::max_element(inv_clustering.begin(), inv_clustering.end());
     clustSize.resize(nClusters, 0);
-    diagIdInClust.resize(diags.size());
+    diagIdInClust.resize(diagsVTU.size());
     for(size_t i = 0; i < inv_clustering.size(); ++i) {
       auto &diagsInClust = clustSize[inv_clustering[i]];
       diagIdInClust[i] = diagsInClust;
@@ -227,11 +223,11 @@ void ttkPersistenceDiagramClustering::outputClusteredDiagrams(
     }
   }
 
-  output->SetNumberOfBlocks(diags.size());
+  output->SetNumberOfBlocks(diagsVTU.size());
 
-  for(size_t i = 0; i < diags.size(); ++i) {
+  for(size_t i = 0; i < diagsVTU.size(); ++i) {
     vtkNew<vtkUnstructuredGrid> vtu{};
-    vtu->ShallowCopy(diags[i]);
+    vtu->ShallowCopy(diagsVTU[i]);
 
     vtkNew<vtkIntArray> clusterId{};
     clusterId->SetName("ClusterID");
@@ -261,6 +257,34 @@ void ttkPersistenceDiagramClustering::outputClusteredDiagrams(
       pointPers->SetTuple1(2 * j + 0, pers);
       pointPers->SetTuple1(2 * j + 1, pers);
     }
+
+    const auto cid = inv_clustering[i];
+    const auto &matchings{matchingsPerCluster[cid][i]};
+    double minSadCost{}, sadSadCost{}, sadMaxCost{};
+    const auto &diag{diags[i]};
+
+    for(size_t j = 0; j < matchings.size(); ++j) {
+      const auto &m{matchings[j]};
+      const auto bidderId{std::get<0>(m)};
+
+      // avoid out-of-bound accesses
+      if(bidderId >= static_cast<ttk::SimplexId>(diag.size())) {
+        this->printWrn("Out-of-bounds access averted");
+        continue;
+      }
+
+      const auto &p1{diag[bidderId]};
+      if(p1.birth.type == ttk::CriticalType::Local_minimum) {
+        minSadCost += std::get<2>(m);
+      } else if(p1.birth.type == ttk::CriticalType::Saddle1
+                && p1.death.type == ttk::CriticalType::Saddle2) {
+        sadSadCost += std::get<2>(m);
+      } else if(p1.death.type == ttk::CriticalType::Local_maximum) {
+        sadMaxCost += std::get<2>(m);
+      }
+    }
+
+    addCostsAsFieldData(vtu, minSadCost, sadSadCost, sadMaxCost);
 
     if(dm == DISPLAY::MATCHINGS && spacing > 0) {
       // translate diagrams along the Z axis
@@ -296,6 +320,8 @@ void ttkPersistenceDiagramClustering::outputClusteredDiagrams(
 void ttkPersistenceDiagramClustering::outputCentroids(
   vtkMultiBlockDataSet *output,
   const std::vector<DiagramType> &final_centroids,
+  const std::vector<std::vector<std::vector<ttk::MatchingType>>>
+    &matchingsPerCluster,
   vtkUnstructuredGrid *const someInputDiag,
   const DISPLAY dm,
   const double spacing,
@@ -341,6 +367,25 @@ void ttkPersistenceDiagramClustering::outputCentroids(
       pointPers->SetTuple1(2 * j + 1, pair.persistence);
     }
 
+    double minSadCost{}, sadSadCost{}, sadMaxCost{};
+
+    for(const auto &matchingsPerDiag : matchingsPerCluster[i]) {
+      for(const auto &m : matchingsPerDiag) {
+        const auto goodId{std::get<1>(m)};
+        const auto &p0{final_centroids[i][goodId]};
+        if(p0.birth.type == ttk::CriticalType::Local_minimum) {
+          minSadCost += std::get<2>(m);
+        } else if(p0.birth.type == ttk::CriticalType::Saddle1
+                  && p0.death.type == ttk::CriticalType::Saddle2) {
+          sadSadCost += std::get<2>(m);
+        } else if(p0.death.type == ttk::CriticalType::Local_maximum) {
+          sadMaxCost += std::get<2>(m);
+        }
+      }
+    }
+
+    addCostsAsFieldData(vtu, minSadCost, sadSadCost, sadMaxCost);
+
     if(dm == DISPLAY::STARS && spacing > 0) {
       // shift centroid along the X axis
       vtkNew<vtkTransform> tr{};
@@ -362,7 +407,7 @@ void ttkPersistenceDiagramClustering::outputMatchings(
   vtkMultiBlockDataSet *output,
   const size_t nClusters,
   const std::vector<DiagramType> &diags,
-  const std::vector<std::vector<std::vector<matchingType>>>
+  const std::vector<std::vector<std::vector<ttk::MatchingType>>>
     &matchingsPerCluster,
   const std::vector<DiagramType> &centroids,
   const std::vector<int> &inv_clustering,
@@ -438,6 +483,8 @@ void ttkPersistenceDiagramClustering::outputMatchings(
     pairType->SetNumberOfTuples(nCells);
     matchingsGrid->GetCellData()->AddArray(pairType);
 
+    double minSadCost{}, sadSadCost{}, sadMaxCost{};
+
     for(size_t j = 0; j < matchings.size(); ++j) {
       const auto &m{matchings[j]};
       const auto bidderId{std::get<0>(m)};
@@ -488,8 +535,20 @@ void ttkPersistenceDiagramClustering::outputMatchings(
       pointId->SetTuple1(2 * j + 0, goodId);
       pointId->SetTuple1(2 * j + 1, bidderId);
       pairType->SetTuple1(j, p1.dim);
+
+      if(p1.birth.type == ttk::CriticalType::Local_minimum) {
+        minSadCost += std::get<2>(m);
+      } else if(p1.birth.type == ttk::CriticalType::Saddle1
+                && p1.death.type == ttk::CriticalType::Saddle2) {
+        sadSadCost += std::get<2>(m);
+      } else if(p1.death.type == ttk::CriticalType::Local_maximum) {
+        sadMaxCost += std::get<2>(m);
+      }
     }
 
+    addCostsAsFieldData(matchingsGrid, minSadCost, sadSadCost, sadMaxCost);
+
+    // add diagram matchings to multi-block
     output->SetBlock(i, matchingsGrid);
   }
 
