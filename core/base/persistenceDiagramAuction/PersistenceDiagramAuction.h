@@ -1,15 +1,8 @@
 #pragma once
 
-#include <Debug.h>
-#include <KDTree.h>
 #include <PersistenceDiagramAuctionActor.h>
 
-#include <cmath>
-#include <iostream>
 #include <limits>
-#include <queue>
-#include <unordered_map>
-#include <utility>
 
 namespace ttk {
   class PersistenceDiagramAuction : public Debug {
@@ -85,21 +78,21 @@ namespace ttk {
     }
 
     void runAuctionRound(int &n_biddings, const int kdt_index = 0);
-    double getMatchingsAndDistance(std::vector<MatchingType> *matchings,
+    double getMatchingsAndDistance(std::vector<MatchingType> &matchings,
                                    bool get_diagonal_matches = false);
-    double run(std::vector<MatchingType> *matchings);
+    double run(std::vector<MatchingType> &matchings);
     double run() {
       std::vector<MatchingType> matchings{};
-      return this->run(&matchings);
+      return this->run(matchings);
     }
     double getMaximalPrice();
 
-    void BuildAuctionDiagrams(const BidderDiagram *BD, const GoodDiagram *GD) {
-      n_bidders_ = BD->size();
-      n_goods_ = GD->size();
+    void BuildAuctionDiagrams(const BidderDiagram &BD, const GoodDiagram &GD) {
+      this->n_bidders_ = BD.size();
+      this->n_goods_ = GD.size();
       // delete_kdTree_ = false;
-      bidders_ = *BD;
-      goods_ = *GD;
+      this->bidders_ = BD;
+      this->goods_ = GD;
 
       for(int i = 0; i < n_bidders_; i++) {
         // Add diagonal goods
@@ -158,11 +151,9 @@ namespace ttk {
     }
 
     void setBidders(const DiagramType &diagram1) {
-      int d1Size = (int)diagram1.size();
-
-      for(int i = 0; i < d1Size; i++) {
+      for(size_t i = 0; i < diagram1.size(); i++) {
         // Add bidder to bidders
-        Bidder b{diagram1[i], i, lambda_};
+        Bidder b{diagram1[i], static_cast<int>(i), lambda_};
         b.setPositionInAuction(bidders_.size());
         bidders_.emplace_back(b);
       }
@@ -170,11 +161,9 @@ namespace ttk {
     }
 
     void setGoods(const DiagramType &diagram2) {
-      int d2Size = (int)diagram2.size();
-
-      for(int i = 0; i < d2Size; i++) {
+      for(size_t i = 0; i < diagram2.size(); i++) {
         // Add bidder to bidders
-        Good g{diagram2[i], i, lambda_};
+        Good g{diagram2[i], static_cast<int>(i), lambda_};
         goods_.emplace_back(g);
       }
       n_goods_ = goods_.size();
@@ -202,22 +191,19 @@ namespace ttk {
         = kdt_.build(coordinates.data(), goods_.size(), dimension);
     }
 
-    void setEpsilon(double epsilon) {
+    void setEpsilon(const double epsilon) {
       epsilon_ = epsilon;
     }
 
     void initializeEpsilon() {
       double max_persistence = 0;
-      for(size_t i = 0; i < bidders_.size(); i++) {
-        Bidder &b = bidders_[i];
+      for(const auto &b : this->bidders_) {
         double persistence = b.getPersistence();
         if(persistence > max_persistence) {
           max_persistence = persistence;
         }
       }
-
-      for(size_t i = 0; i < goods_.size(); i++) {
-        Good &g = goods_[i];
+      for(const auto &g : this->goods_) {
         double persistence = g.getPersistence();
         if(persistence > max_persistence) {
           max_persistence = persistence;
@@ -235,12 +221,10 @@ namespace ttk {
     }
 
     void reinitializeGoods() {
-      for(size_t i = 0; i < goods_.size(); i++) {
-        Good &g = goods_[i];
+      for(auto &g : this->goods_) {
         g.setOwner(-1);
       }
-      for(size_t i = 0; i < diagonal_goods_.size(); i++) {
-        Good &g = diagonal_goods_[i];
+      for(auto &g : this->diagonal_goods_) {
         g.setOwner(-1);
       }
     }
@@ -286,15 +270,6 @@ namespace ttk {
         }
       }
       return min_price;
-    }
-
-    void setEpsilonconst(double epsilon) {
-      epsilon_ = epsilon;
-    }
-
-    template <typename type>
-    static type abs(const type var) {
-      return (var >= 0) ? var : -var;
     }
 
   protected:
