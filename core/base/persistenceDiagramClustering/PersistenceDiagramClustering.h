@@ -72,14 +72,15 @@ namespace ttk {
               std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
                 &all_matchings);
 
-    double getMostPersistent(int type = -1);
+    double getMostPersistent(const int type = -1) const;
+    double getLessPersistent(const int type = -1) const;
 
-    std::vector<std::vector<int>> get_centroids_sizes() {
+    inline const std::vector<std::vector<int>> &get_centroids_sizes() const {
       return this->centroids_sizes_;
     }
-    double getLessPersistent(int type = -1);
-    std::vector<std::vector<double>> getMinDiagonalPrices();
-    std::vector<std::vector<double>> getMinPrices();
+
+    std::vector<std::vector<double>> getMinDiagonalPrices() const;
+    std::vector<std::vector<double>> getMinPrices() const;
 
     void correctMatchings(
       std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
@@ -87,27 +88,27 @@ namespace ttk {
 
     inline double computeDistance(const BidderDiagram &D1,
                                   const BidderDiagram &D2,
-                                  const double delta_lim) {
+                                  const double delta_lim) const {
       const auto D2_bis = diagramToCentroid(D2);
       return computeDistance(D1, D2_bis, delta_lim);
     }
     double computeDistance(const BidderDiagram &D1,
                            const GoodDiagram &D2,
-                           const double delta_lim);
+                           const double delta_lim) const;
     double computeDistance(BidderDiagram *const D1,
                            const GoodDiagram *const D2,
-                           const double delta_lim);
+                           const double delta_lim) const;
     inline double computeDistance(const GoodDiagram &D1,
                                   const GoodDiagram &D2,
-                                  const double delta_lim) {
+                                  const double delta_lim) const {
       const auto D1_bis = centroidToDiagram(D1);
       return computeDistance(D1_bis, D2, delta_lim);
     }
 
-    GoodDiagram centroidWithZeroPrices(const GoodDiagram &centroid);
-    BidderDiagram centroidToDiagram(const GoodDiagram &centroid);
-    GoodDiagram diagramToCentroid(const BidderDiagram &diagram);
-    BidderDiagram diagramWithZeroPrices(const BidderDiagram &diagram);
+    GoodDiagram centroidWithZeroPrices(const GoodDiagram &centroid) const;
+    BidderDiagram centroidToDiagram(const GoodDiagram &centroid) const;
+    GoodDiagram diagramToCentroid(const BidderDiagram &diagram) const;
+    BidderDiagram diagramWithZeroPrices(const BidderDiagram &diagram) const;
 
     void setBidderDiagrams();
     inline void initializeEmptyClusters() {
@@ -118,22 +119,23 @@ namespace ttk {
     void initializeCentroidsKMeanspp();
     void initializeAcceleratedKMeans();
     void initializeBarycenterComputers();
-    void printDistancesToFile();
-    void printMatchings(std::vector<std::vector<std::vector<MatchingType>>>);
-    void printRealDistancesToFile();
-    void printPricesToFile(int);
-    double computeRealCost();
+    void printDistancesToFile() const;
+    void printMatchings(
+      const std::vector<std::vector<std::vector<MatchingType>>> &) const;
+    void printRealDistancesToFile() const;
+    void printPricesToFile(const int) const;
+    double computeRealCost() const;
 
     std::vector<double> enrichCurrentBidderDiagrams(
-      std::vector<double> previous_min_persistence,
-      std::vector<double> min_persistence,
-      std::vector<std::vector<double>> initial_diagonal_prices,
-      std::vector<std::vector<double>> initial_off_diagonal_points,
-      std::vector<int> min_points_to_add,
-      bool add_points_to_barycenter,
-      bool first_enrichment);
+      const std::vector<double> &previous_min_persistence,
+      const std::vector<double> &min_persistence,
+      const std::vector<std::vector<double>> &initial_diagonal_prices,
+      const std::vector<std::vector<double>> &initial_off_diagonal_points,
+      const std::vector<int> &min_points_to_add,
+      const bool add_points_to_barycenter,
+      const bool first_enrichment);
 
-    std::vector<std::vector<double>> getDistanceMatrix();
+    std::vector<std::vector<double>> getDistanceMatrix() const;
     void getCentroidDistanceMatrix();
     void computeDistanceToCentroid();
 
@@ -145,11 +147,11 @@ namespace ttk {
 
     void acceleratedUpdateClusters();
     std::vector<double> updateCentroidsPosition(
-      std::vector<std::vector<double>> *min_price,
-      std::vector<std::vector<double>> *min_diag_price,
+      std::vector<std::vector<double>> &min_price,
+      std::vector<std::vector<double>> &min_diag_price,
       std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
         &all_matchings,
-      int only_matchings);
+      const int only_matchings);
 
     inline void resetDosToOriginalValues() {
       do_min_ = original_dos[0];
@@ -230,7 +232,7 @@ namespace ttk {
       deltaLim_ = deltaLim;
     }
 
-    inline void printClustering() {
+    inline void printClustering() const {
       std::string msg = "";
       for(int c = 0; c < k_; ++c) {
         msg.append(" Cluster " + std::to_string(c) + " = {");
