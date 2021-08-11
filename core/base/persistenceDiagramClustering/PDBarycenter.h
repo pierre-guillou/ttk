@@ -12,141 +12,113 @@
 ///
 /// \sa PersistenceDiagramClustering
 
-#ifndef _PDBARYCENTER_H
-#define _PDBARYCENTER_H
+#pragma once
 
-#include <PersistenceDiagramAuction.h>
-//
+#include "DataTypes.h"
 #include <KDTree.h>
-//
-#include <limits>
-//
+#include <PersistenceDiagramAuction.h>
 #include <PersistenceDiagramBarycenter.h>
 
-using namespace std;
-using namespace ttk;
+#include <limits>
 
 namespace ttk {
-  template <typename dataType>
+
   class PDBarycenter : public Debug {
+    enum class ComputeMethod { PARTIAL_BIDDING, MUNKRES, AUCTION };
 
   public:
     PDBarycenter() {
-      wasserstein_ = 2;
-      geometrical_factor_ = 1;
-      method_ = "Partial Bidding";
-      threadNumber_ = 1;
-      use_progressive_ = true;
-      time_limit_ = std::numeric_limits<double>::max();
-      epsilon_min_ = 1e-5;
-      reinit_prices_ = true;
-      deterministic_ = false;
-      epsilon_decreases_ = true;
-      early_stoppage_ = true;
       this->setDebugMsgPrefix("PersistenceDiagramBarycenter");
     }
 
-    ~PDBarycenter() = default;
-
-    std::vector<std::vector<matchingTuple>>
-      execute(std::vector<diagramTuple> &barycenter);
-    std::vector<std::vector<matchingTuple>>
-      executeMunkresBarycenter(std::vector<diagramTuple> &barycenter);
-    std::vector<std::vector<matchingTuple>>
-      executeAuctionBarycenter(std::vector<diagramTuple> &barycenter);
-    std::vector<std::vector<matchingTuple>>
-      executePartialBiddingBarycenter(std::vector<diagramTuple> &barycenter);
+    std::vector<std::vector<MatchingType>> execute(DiagramType &barycenter);
+    std::vector<std::vector<MatchingType>>
+      executeMunkresBarycenter(DiagramType &barycenter);
+    std::vector<std::vector<MatchingType>>
+      executeAuctionBarycenter(DiagramType &barycenter);
+    std::vector<std::vector<MatchingType>>
+      executePartialBiddingBarycenter(DiagramType &barycenter);
 
     void setBidderDiagrams();
-    dataType
-      enrichCurrentBidderDiagrams(dataType previous_min_persistence,
-                                  dataType min_persistence,
-                                  std::vector<dataType> initial_diagonal_prices,
-                                  std::vector<dataType> initial_prices,
+    double
+      enrichCurrentBidderDiagrams(double previous_min_persistence,
+                                  double min_persistence,
+                                  std::vector<double> initial_diagonal_prices,
+                                  std::vector<double> initial_prices,
                                   int min_points_to_add,
                                   bool add_points_to_barycenter = true);
-    void setInitialBarycenter(dataType min_persistence);
-    dataType getMaxPersistence();
-    dataType getLowestPersistence();
-    dataType getMinimalPrice(int i);
-    using KDTreePair = std::pair<typename KDTree<dataType>::KDTreeRoot,
-                                 typename KDTree<dataType>::KDTreeMap>;
+    void setInitialBarycenter(double min_persistence);
+    double getMaxPersistence();
+    double getLowestPersistence();
+    double getMinimalPrice(int i);
+    using KDTreePair = std::pair<typename KDTree<double>::KDTreeRoot,
+                                 typename KDTree<double>::KDTreeMap>;
     KDTreePair getKDTree() const;
 
-    void runMatching(dataType *total_cost,
-                     dataType epsilon,
+    void runMatching(double *total_cost,
+                     double epsilon,
                      std::vector<int> sizes,
-                     KDTree<dataType> &kdt,
-                     std::vector<KDTree<dataType> *> &correspondance_kdt_map,
-                     std::vector<dataType> *min_diag_price,
-                     std::vector<dataType> *min_price,
-                     std::vector<std::vector<matchingTuple>> *all_matchings,
+                     KDTree<double> &kdt,
+                     std::vector<KDTree<double> *> &correspondance_kdt_map,
+                     std::vector<double> *min_diag_price,
+                     std::vector<double> *min_price,
+                     std::vector<std::vector<MatchingType>> *all_matchings,
                      bool use_kdt,
                      int compute_only_distance);
 
-    void runMatchingAuction(
-      dataType *total_cost,
-      std::vector<int> sizes,
-      KDTree<dataType> &kdt,
-      std::vector<KDTree<dataType> *> &correspondance_kdt_map,
-      std::vector<dataType> *min_diag_price,
-      std::vector<std::vector<matchingTuple>> *all_matchings,
-      bool use_kdt);
+    void
+      runMatchingAuction(double *total_cost,
+                         std::vector<int> sizes,
+                         KDTree<double> &kdt,
+                         std::vector<KDTree<double> *> &correspondance_kdt_map,
+                         std::vector<double> *min_diag_price,
+                         std::vector<std::vector<MatchingType>> *all_matchings,
+                         bool use_kdt);
 
-    dataType
-      updateBarycenter(std::vector<std::vector<matchingTuple>> &matchings);
+    double updateBarycenter(std::vector<std::vector<MatchingType>> &matchings);
 
-    dataType computeRealCost();
-    bool isPrecisionObjectiveMet(dataType, int);
+    double computeRealCost();
+    bool isPrecisionObjectiveMet(double, int);
     bool hasBarycenterConverged(
-      std::vector<std::vector<matchingTuple>> &matchings,
-      std::vector<std::vector<matchingTuple>> &previous_matchings);
-    std::vector<std::vector<matchingTuple>> correctMatchings(
-      std::vector<std::vector<matchingTuple>> previous_matchings);
+      std::vector<std::vector<MatchingType>> &matchings,
+      std::vector<std::vector<MatchingType>> &previous_matchings);
+
+    std::vector<std::vector<MatchingType>> correctMatchings(
+      std::vector<std::vector<MatchingType>> previous_matchings);
 
     bool is_matching_stable();
 
-    dataType getEpsilon(dataType rho);
-    dataType getRho(dataType epsilon);
-
-    // 		inline int setDiagram(int idx, void* data){
-    // 			if(idx < numberOfInputs_){
-    // 			inputData_[idx] = data;
-    // 			}
-    // 			else{
-    // 			return -1;
-    // 			}
-    // 			return 0;
-    // 		}
+    inline double getEpsilon(double rho) const {
+      return rho * rho / 8.0;
+    }
+    inline double getRho(double epsilon) const {
+      return std::sqrt(8.0 * epsilon);
+    }
 
     inline void setDeterministic(const bool deterministic) {
       deterministic_ = deterministic;
     }
 
-    inline void setMethod(const int &method) {
+    inline void setMethod(const int method) {
       if(method == 0) {
-        method_ = "Partial Bidding";
-      }
-      if(method == 1) {
-        method_ = "Munkres";
+        method_ = ComputeMethod::PARTIAL_BIDDING;
+      } else if(method == 1) {
+        method_ = ComputeMethod::MUNKRES;
       } else if(method == 2) {
-        method_ = "Auction";
+        method_ = ComputeMethod::AUCTION;
       }
     }
 
-    inline int setDiagrams(std::vector<std::vector<diagramTuple>> *data) {
+    inline void setDiagrams(std::vector<DiagramType> *const data) {
       inputDiagrams_ = data;
-      return 0;
     }
 
-    inline int setNumberOfInputs(int numberOfInputs) {
+    inline void setNumberOfInputs(const int numberOfInputs) {
       numberOfInputs_ = numberOfInputs;
-      // precision_objective_.resize(numberOfInputs_);
       precision_.resize(numberOfInputs_);
-      return 0;
     }
 
-    inline void setWasserstein(const int &wasserstein) {
+    inline void setWasserstein(const int wasserstein) {
       wasserstein_ = wasserstein;
     }
 
@@ -166,21 +138,20 @@ namespace ttk {
       lambda_ = lambda;
     }
 
-    inline void
-      setCurrentBidders(std::vector<BidderDiagram<dataType>> &diagrams) {
+    inline void setCurrentBidders(const std::vector<BidderDiagram> &diagrams) {
       current_bidder_diagrams_ = diagrams;
     }
 
     inline void
-      setCurrentBarycenter(std::vector<GoodDiagram<dataType>> &barycenters) {
+      setCurrentBarycenter(const std::vector<GoodDiagram> &barycenters) {
       barycenter_goods_ = barycenters;
     }
 
-    inline std::vector<BidderDiagram<dataType>> &getCurrentBidders() {
+    inline std::vector<BidderDiagram> &getCurrentBidders() {
       return current_bidder_diagrams_;
     }
 
-    inline std::vector<GoodDiagram<dataType>> &getCurrentBarycenter() {
+    inline std::vector<GoodDiagram> &getCurrentBarycenter() {
       return barycenter_goods_;
     }
 
@@ -196,21 +167,21 @@ namespace ttk {
       early_stoppage_ = early_stoppage;
     }
 
-    inline void setDiagramType(const int &diagramType) {
+    inline void setDiagramType(const int diagramType) {
       diagramType_ = diagramType;
       if(diagramType_ == 0) {
-        nt1_ = BLocalMin;
-        nt2_ = BSaddle1;
+        nt1_ = CriticalType::Local_minimum;
+        nt2_ = CriticalType::Saddle1;
       } else if(diagramType_ == 1) {
-        nt1_ = BSaddle1;
-        nt2_ = BSaddle2;
+        nt1_ = CriticalType::Saddle1;
+        nt2_ = CriticalType::Saddle2;
       } else {
-        nt1_ = BSaddle2;
-        nt2_ = BLocalMax;
+        nt1_ = CriticalType::Saddle2;
+        nt2_ = CriticalType::Local_maximum;
       }
     }
 
-    dataType getCost() {
+    double getCost() {
       return cost_;
     }
 
@@ -220,49 +191,41 @@ namespace ttk {
     }
 
   protected:
-    // std::vector<bool> precision_objective_;
-    std::vector<dataType> precision_;
+    std::vector<double> precision_{};
+    ComputeMethod method_{ComputeMethod::PARTIAL_BIDDING};
+    int wasserstein_{2};
 
-    // to kill any randomness
-    bool deterministic_;
-
-    std::string method_;
-    int wasserstein_;
-
-    double geometrical_factor_;
-
+    double geometrical_factor_{1.0};
     // lambda_ : 0<=lambda<=1
     // parametrizes the point used for the physical (critical) coordinates of
     // the persistence paired lambda_ = 1 : extremum (min if pair min-sad, max
     // if pair sad-max) lambda_ = 0 : saddle (awful stability) lambda_ = 1/2 :
     // middle of the 2 critical points of the pair (bad stability)
-    double lambda_;
+    double lambda_{};
 
-    int diagramType_;
-    BNodeType nt1_;
-    BNodeType nt2_;
-    dataType cost_;
-    int numberOfInputs_;
-    bool use_progressive_;
-    double time_limit_;
-    double epsilon_min_;
-    std::vector<std::vector<diagramTuple>> *inputDiagrams_;
+    int diagramType_{};
+    CriticalType nt1_{};
+    CriticalType nt2_{};
+    double cost_{};
+    int numberOfInputs_{};
+    double time_limit_{std::numeric_limits<double>::max()};
+    double epsilon_min_{1e-5};
+    std::vector<DiagramType> *inputDiagrams_{};
 
-    int points_added_;
-    int points_deleted_;
+    int points_added_{};
+    int points_deleted_{};
 
-    std::vector<std::vector<dataType>> all_matchings_;
-    std::vector<std::vector<dataType>> all_old_matchings_;
-    std::vector<BidderDiagram<dataType>> bidder_diagrams_;
-    std::vector<BidderDiagram<dataType>> current_bidder_diagrams_;
-    std::vector<std::vector<int>> current_bidder_ids_;
-    std::vector<GoodDiagram<dataType>> barycenter_goods_;
+    std::vector<std::vector<double>> all_matchings_{};
+    std::vector<std::vector<double>> all_old_matchings_{};
+    std::vector<BidderDiagram> bidder_diagrams_{};
+    std::vector<BidderDiagram> current_bidder_diagrams_{};
+    std::vector<std::vector<int>> current_bidder_ids_{};
+    std::vector<GoodDiagram> barycenter_goods_{};
 
-    bool reinit_prices_;
-    bool epsilon_decreases_;
-    bool early_stoppage_;
+    bool deterministic_{false}; // to kill any randomness
+    bool use_progressive_{true};
+    bool reinit_prices_{true};
+    bool epsilon_decreases_{true};
+    bool early_stoppage_{true};
   };
 } // namespace ttk
-
-#include <PDBarycenterImpl.h>
-#endif
