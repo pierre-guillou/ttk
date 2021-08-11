@@ -14,12 +14,9 @@
 
 #pragma once
 
-#include <KDTree.h>
-#include <PDBarycenter.h>
-#include <PersistenceDiagramAuction.h>
+#include <PersistenceDiagramBarycenter.h>
 
 #include <array>
-#include <limits>
 
 namespace ttk {
 
