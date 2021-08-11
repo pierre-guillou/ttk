@@ -14,22 +14,6 @@
 
 #pragma once
 
-#ifndef diagramTuple
-#define diagramTuple                                                       \
-  std::tuple<ttk::SimplexId, ttk::CriticalType, ttk::SimplexId,            \
-             ttk::CriticalType, dataType, ttk::SimplexId, dataType, float, \
-             float, float, dataType, float, float, float>
-#endif
-
-#ifndef BNodeType
-#define BNodeType ttk::CriticalType
-#define BLocalMax ttk::CriticalType::Local_maximum
-#define BLocalMin ttk::CriticalType::Local_minimum
-#define BSaddle1 ttk::CriticalType::Saddle1
-#define BSaddle2 ttk::CriticalType::Saddle2
-#define BIdVertex ttk::SimplexId
-#endif
-
 // base code includes
 #include <KDTree.h>
 #include <PDBarycenter.h>
@@ -37,8 +21,6 @@
 #include <Wrapper.h>
 
 #include <limits>
-
-using namespace std;
 
 namespace ttk {
 
@@ -51,7 +33,7 @@ namespace ttk {
     void execute(
       std::vector<DiagramType> &intermediateDiagrams,
       DiagramType &barycenter,
-      std::vector<std::vector<std::vector<MatchingType>>> &all_matchings);
+      std::vector<std::vector<MatchingType>> &all_matchings);
 
     inline void setNumberOfInputs(int numberOfInputs) {
       numberOfInputs_ = numberOfInputs;
@@ -81,11 +63,6 @@ namespace ttk {
 
     inline void setTimeLimit(const double time_limit) {
       time_limit_ = time_limit;
-    }
-
-    template <typename type>
-    static type abs(const type var) {
-      return (var >= 0) ? var : -var;
     }
 
     inline void setMethod(const int &method) {

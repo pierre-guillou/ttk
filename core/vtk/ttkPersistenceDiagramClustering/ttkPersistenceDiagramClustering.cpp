@@ -151,8 +151,10 @@ int ttkPersistenceDiagramClustering::RequestData(
       pdBarycenter.setThreadNumber(threadNumber_);
       pdBarycenter.setAlpha(Alpha);
       pdBarycenter.setLambda(Lambda);
+
+      all_matchings_.resize(1); // at least of size 1
       pdBarycenter.execute(
-        intermediateDiagrams_, final_centroids_[0], all_matchings_);
+        intermediateDiagrams_, final_centroids_[0], all_matchings_[0]);
 
       needUpdate_ = false;
     }

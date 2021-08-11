@@ -5,7 +5,7 @@
 void ttk::PersistenceDiagramBarycenter::execute(
   std::vector<DiagramType> &intermediateDiagrams,
   DiagramType &barycenter,
-  std::vector<std::vector<std::vector<MatchingType>>> &all_matchings) {
+  std::vector<std::vector<MatchingType>> &all_matchings) {
 
   Timer tm;
 
@@ -36,23 +36,27 @@ void ttk::PersistenceDiagramBarycenter::execute(
       const auto dt = std::get<4>(t);
 
       if(dt > 0) {
-        if(nt1 == BLocalMin && nt2 == BLocalMax) {
+        if(nt1 == CriticalType::Local_minimum
+           && nt2 == CriticalType::Local_maximum) {
           data_max[i].push_back(t);
           data_max_idx[i].push_back(j);
           do_max = true;
         } else {
-          if(nt1 == BLocalMax || nt2 == BLocalMax) {
+          if(nt1 == CriticalType::Local_maximum
+             || nt2 == CriticalType::Local_maximum) {
             data_max[i].push_back(t);
             data_max_idx[i].push_back(j);
             do_max = true;
           }
-          if(nt1 == BLocalMin || nt2 == BLocalMin) {
+          if(nt1 == CriticalType::Local_minimum
+             || nt2 == CriticalType::Local_minimum) {
             data_min[i].push_back(t);
             data_min_idx[i].push_back(j);
             do_min = true;
           }
-          if((nt1 == BSaddle1 && nt2 == BSaddle2)
-             || (nt1 == BSaddle2 && nt2 == BSaddle1)) {
+          if((nt1 == CriticalType::Saddle1 && nt2 == CriticalType::Saddle2)
+             || (nt1 == CriticalType::Saddle2
+                 && nt2 == CriticalType::Saddle1)) {
             data_sad[i].push_back(t);
             data_sad_idx[i].push_back(j);
             do_sad = true;
@@ -74,75 +78,47 @@ void ttk::PersistenceDiagramBarycenter::execute(
     time_limit_ = time_limit_ / 3;
   }
 
+  const auto getRunner = [this]() -> PDBarycenter {
+    PDBarycenter runner{};
+    runner.setDebugLevel(this->debugLevel_);
+    runner.setThreadNumber(this->threadNumber_);
+    runner.setWasserstein(this->wasserstein_);
+    runner.setNumberOfInputs(this->numberOfInputs_);
+    runner.setUseProgressive(this->use_progressive_);
+    runner.setTimeLimit(this->time_limit_);
+    runner.setGeometricalFactor(this->alpha_);
+    runner.setDeterministic(this->deterministic_);
+    runner.setLambda(this->lambda_);
+    runner.setMethod(this->method_);
+    runner.setEarlyStoppage(this->early_stoppage_);
+    runner.setEpsilonDecreases(this->epsilon_decreases_);
+    runner.setReinitPrices(this->reinit_prices_);
+    return runner;
+  };
+
   if(do_min) {
     printMsg("Computing Minima barycenter...");
-    PDBarycenter bary_min{};
-    bary_min.setThreadNumber(threadNumber_);
-    bary_min.setWasserstein(wasserstein_);
-    bary_min.setNumberOfInputs(numberOfInputs_);
-    bary_min.setDiagramType(0);
-    bary_min.setUseProgressive(use_progressive_);
-    bary_min.setTimeLimit(time_limit_);
-    bary_min.setGeometricalFactor(alpha_);
-    bary_min.setDebugLevel(debugLevel_);
-    bary_min.setDeterministic(deterministic_);
-    bary_min.setLambda(lambda_);
-    bary_min.setMethod(method_);
-    bary_min.setEarlyStoppage(early_stoppage_);
-    bary_min.setEpsilonDecreases(epsilon_decreases_);
-    bary_min.setReinitPrices(reinit_prices_);
-    bary_min.setDiagrams(&data_min);
-    matching_min = bary_min.execute(barycenter_min);
+    PDBarycenter bary_min = getRunner();
+    matching_min = bary_min.execute(data_min, barycenter_min);
     total_cost += bary_min.getCost();
   }
 
   if(do_sad) {
     printMsg("Computing Saddles barycenter...");
-    PDBarycenter bary_sad{};
-    bary_sad.setThreadNumber(threadNumber_);
-    bary_sad.setWasserstein(wasserstein_);
-    bary_sad.setNumberOfInputs(numberOfInputs_);
-    bary_sad.setDiagramType(1);
-    bary_sad.setUseProgressive(use_progressive_);
-    bary_sad.setTimeLimit(time_limit_);
-    bary_sad.setGeometricalFactor(alpha_);
-    bary_sad.setLambda(lambda_);
-    bary_sad.setDebugLevel(debugLevel_);
-    bary_sad.setMethod(method_);
-    bary_sad.setEarlyStoppage(early_stoppage_);
-    bary_sad.setEpsilonDecreases(epsilon_decreases_);
-    bary_sad.setDeterministic(deterministic_);
-    bary_sad.setReinitPrices(reinit_prices_);
-    bary_sad.setDiagrams(&data_sad);
-    matching_sad = bary_sad.execute(barycenter_sad);
+    PDBarycenter bary_sad = getRunner();
+    matching_sad = bary_sad.execute(data_sad, barycenter_sad);
     total_cost += bary_sad.getCost();
   }
 
   if(do_max) {
     printMsg("Computing Maxima barycenter...");
-    PDBarycenter bary_max{};
-    bary_max.setThreadNumber(threadNumber_);
-    bary_max.setWasserstein(wasserstein_);
-    bary_max.setNumberOfInputs(numberOfInputs_);
-    bary_max.setDiagramType(2);
-    bary_max.setUseProgressive(use_progressive_);
-    bary_max.setTimeLimit(time_limit_);
-    bary_max.setGeometricalFactor(alpha_);
-    bary_max.setLambda(lambda_);
-    bary_max.setMethod(method_);
-    bary_max.setDebugLevel(debugLevel_);
-    bary_max.setEarlyStoppage(early_stoppage_);
-    bary_max.setDeterministic(deterministic_);
-    bary_max.setEpsilonDecreases(epsilon_decreases_);
-    bary_max.setReinitPrices(reinit_prices_);
-    bary_max.setDiagrams(&data_max);
-    matching_max = bary_max.execute(barycenter_max);
+    PDBarycenter bary_max = getRunner();
+    matching_max = bary_max.execute(data_max, barycenter_max);
     total_cost += bary_max.getCost();
   }
 
   // Reconstruct matchings
-  all_matchings.resize(1);
-  all_matchings[0].resize(numberOfInputs_);
+  all_matchings.resize(numberOfInputs_);
   for(int i = 0; i < numberOfInputs_; i++) {
 
     if(do_min) {
@@ -153,7 +129,7 @@ void ttk::PersistenceDiagramBarycenter::execute(
         if(std::get<1>(t) < 0) {
           std::get<1>(t) = -1;
         }
-        all_matchings[0][i].push_back(t);
+        all_matchings[i].push_back(t);
       }
     }
 
@@ -167,7 +143,7 @@ void ttk::PersistenceDiagramBarycenter::execute(
         } else {
           std::get<1>(t) = -1;
         }
-        all_matchings[0][i].push_back(t);
+        all_matchings[i].push_back(t);
       }
     }
 
@@ -182,11 +158,11 @@ void ttk::PersistenceDiagramBarycenter::execute(
         } else {
           std::get<1>(t) = -1;
         }
-        all_matchings[0][i].push_back(t);
+        all_matchings[i].push_back(t);
       }
     }
   }
-  // Reconstruct barcenter
+  // Reconstruct barycenter
   for(const auto &pair : barycenter_min) {
     barycenter.emplace_back(pair);
   }
@@ -202,10 +178,10 @@ void ttk::PersistenceDiagramBarycenter::execute(
   std::vector<std::array<float, 3>> cords_1(barycenter.size());
   std::vector<std::array<float, 3>> cords_2(barycenter.size());
 
-  for(size_t i = 0; i < all_matchings[0].size(); i++) {
+  for(size_t i = 0; i < all_matchings.size(); i++) {
     DiagramType &CTDiagram = intermediateDiagrams[i];
-    for(size_t j = 0; j < all_matchings[0][i].size(); j++) {
-      const auto &t = all_matchings[0][i][j];
+    for(size_t j = 0; j < all_matchings[i].size(); j++) {
+      const auto &t = all_matchings[i][j];
       const int bidder_id = std::get<0>(t);
       const int bary_id = std::get<1>(t);
 
@@ -245,61 +221,188 @@ using ttk::MatchingType;
 using ttk::PDBarycenter;
 
 std::vector<std::vector<MatchingType>>
-  PDBarycenter::execute(ttk::DiagramType &barycenter) {
-  return executeAuctionBarycenter(barycenter);
+  PDBarycenter::execute(const std::vector<DiagramType> &inputDiagrams,
+                        ttk::DiagramType &barycenter) {
+  return executeAuctionBarycenter(inputDiagrams, barycenter);
+}
+
+std::vector<std::vector<MatchingType>> PDBarycenter::executeAuctionBarycenter(
+  const std::vector<DiagramType> &inputDiagrams, DiagramType &barycenter) {
+  double total_time = 0;
+
+  std::vector<std::vector<MatchingType>> previous_matchings;
+  double min_persistence = 0;
+  double min_cost = std::numeric_limits<double>::max();
+  int last_min_cost_obtained = 0;
+
+  const auto diagramType = std::get<5>(inputDiagrams[0][0]);
+  const auto nt1 = std::get<1>(inputDiagrams[0][0]);
+  const auto nt2 = std::get<3>(inputDiagrams[0][0]);
+
+  this->setBidderDiagrams(inputDiagrams);
+  this->setInitialBarycenter(inputDiagrams, min_persistence);
+
+  double max_persistence = getMaxPersistence();
+
+  std::vector<double> min_diag_price(numberOfInputs_);
+  std::vector<double> min_price(numberOfInputs_);
+  for(int i = 0; i < numberOfInputs_; i++) {
+    min_diag_price[i] = 0;
+    min_price[i] = 0;
+  }
+
+  int min_points_to_add = std::numeric_limits<int>::max();
+  min_persistence = this->enrichCurrentBidderDiagrams(
+    2 * max_persistence, min_persistence, min_diag_price, min_price,
+    min_points_to_add, false);
+
+  int n_iterations = 0;
+
+  bool converged = false;
+  bool finished = false;
+  double total_cost;
+
+  while(!finished) {
+    Timer tm;
+
+    n_iterations += 1;
+
+    std::pair<std::unique_ptr<KDTree<double>>, std::vector<KDTree<double> *>>
+      pair;
+    bool use_kdt = false;
+    // If the barycenter is empty, do not compute the kdt (or it will crash :/)
+    // TODO Fix KDTree to handle empty inputs...
+    if(barycenter_goods_[0].size() > 0) {
+      pair = this->getKDTree();
+      use_kdt = true;
+    }
+
+    std::vector<std::vector<MatchingType>> all_matchings(numberOfInputs_);
+    std::vector<int> sizes(numberOfInputs_);
+    for(int i = 0; i < numberOfInputs_; i++) {
+      sizes[i] = current_bidder_diagrams_[i].size();
+    }
+
+    total_cost = 0;
+
+    barycenter.clear();
+    for(size_t j = 0; j < barycenter_goods_[0].size(); j++) {
+      Good &g = barycenter_goods_[0][j];
+      const auto t = std::make_tuple(0, nt1, 0, nt2, g.getPersistence(),
+                                     diagramType, g.x_, 0, 0, 0, g.y_, 0, 0, 0);
+      barycenter.push_back(t);
+    }
+
+    runMatchingAuction(total_cost, sizes, *pair.first, pair.second,
+                       min_diag_price, all_matchings, use_kdt);
+
+    this->printMsg("Barycenter cost : " + std::to_string(total_cost),
+                   debug::Priority::DETAIL);
+
+    if(converged) {
+      finished = true;
+    }
+
+    if(!finished) {
+      updateBarycenter(all_matchings);
+
+      if(min_cost > total_cost) {
+        min_cost = total_cost;
+        last_min_cost_obtained = 0;
+      } else {
+        last_min_cost_obtained += 1;
+      }
+
+      converged = converged || last_min_cost_obtained > 1;
+    }
+
+    previous_matchings = std::move(all_matchings);
+    // END OF TIMER
+    total_time += tm.getElapsedTime();
+
+    for(unsigned int i = 0; i < barycenter_goods_.size(); ++i) {
+      for(size_t j = 0; j < barycenter_goods_[i].size(); ++j) {
+        barycenter_goods_[i][j].setPrice(0);
+      }
+    }
+    for(unsigned int i = 0; i < current_bidder_diagrams_.size(); ++i) {
+      for(size_t j = 0; j < current_bidder_diagrams_[i].size(); ++j) {
+        current_bidder_diagrams_[i][j].setDiagonalPrice(0);
+      }
+    }
+    for(int i = 0; i < numberOfInputs_; i++) {
+      min_diag_price[i] = 0;
+      min_price[i] = 0;
+    }
+  }
+  barycenter.clear();
+  for(size_t j = 0; j < barycenter_goods_[0].size(); j++) {
+    Good &g = barycenter_goods_[0][j];
+    const auto t = std::make_tuple(0, nt1, 0, nt2, g.getPersistence(),
+                                   diagramType, g.x_, 0, 0, 0, g.y_, 0, 0, 0);
+    barycenter.push_back(t);
+  }
+
+  cost_ = sqrt(total_cost);
+  std::vector<std::vector<MatchingType>> corrected_matchings
+    = correctMatchings(previous_matchings);
+  return corrected_matchings;
 }
 
 void PDBarycenter::runMatching(
-  double *total_cost,
-  double epsilon,
-  std::vector<int> sizes,
+  double &total_cost,
+  const double epsilon,
+  const std::vector<int> &sizes,
   KDTree<double> &kdt,
   std::vector<KDTree<double> *> &correspondance_kdt_map,
-  std::vector<double> *min_diag_price,
-  std::vector<double> *min_price,
-  std::vector<std::vector<MatchingType>> *all_matchings,
-  bool use_kdt,
-  int actual_distance) {
+  std::vector<double> &min_diag_price,
+  std::vector<double> &min_price,
+  std::vector<std::vector<MatchingType>> &all_matchings,
+  const bool use_kdt,
+  const int actual_distance) {
+
   Timer time_matchings;
+
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_) schedule(dynamic, 1)
 #endif
-
   for(int i = 0; i < numberOfInputs_; i++) {
     PersistenceDiagramAuction auction(
       current_bidder_diagrams_[i], barycenter_goods_[i], wasserstein_,
       geometrical_factor_, lambda_, 0.01, kdt, correspondance_kdt_map, epsilon,
-      min_diag_price->at(i), use_kdt);
+      min_diag_price[i], use_kdt);
     int n_biddings = 0;
     auction.buildUnassignedBidders();
     auction.reinitializeGoods();
     auction.runAuctionRound(n_biddings, i);
     auction.updateDiagonalPrices();
-    min_diag_price->at(i) = auction.getMinimalDiagonalPrice();
-    min_price->at(i) = getMinimalPrice(i);
+    min_diag_price[i] = auction.getMinimalDiagonalPrice();
+    min_price[i] = getMinimalPrice(i);
     std::vector<MatchingType> matchings;
     double cost = auction.getMatchingsAndDistance(matchings, true);
-    all_matchings->at(i) = matchings;
+    all_matchings[i] = matchings;
     if(actual_distance) {
-      (*total_cost) += cost;
+      total_cost += cost;
     } else {
-      (*total_cost) += cost * cost;
+      total_cost += cost * cost;
     }
 
-    double quotient = epsilon * auction.getAugmentedNumberOfBidders() / cost;
+    const double quotient
+      = epsilon * auction.getAugmentedNumberOfBidders() / cost;
     precision_[i] = quotient < 1 ? 1. / sqrt(1 - quotient) - 1 : 10;
     current_bidder_diagrams_[i].resize(sizes[i]);
   }
 }
 
 void PDBarycenter::runMatchingAuction(
-  double *total_cost,
-  std::vector<int> sizes,
+  double &total_cost,
+  const std::vector<int> &sizes,
   KDTree<double> &kdt,
   std::vector<KDTree<double> *> &correspondance_kdt_map,
-  std::vector<double> *min_diag_price,
-  std::vector<std::vector<MatchingType>> *all_matchings,
-  bool use_kdt) {
+  std::vector<double> &min_diag_price,
+  std::vector<std::vector<MatchingType>> &all_matchings,
+  const bool use_kdt) {
+
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_) schedule(dynamic, 1)
 #endif
@@ -307,12 +410,12 @@ void PDBarycenter::runMatchingAuction(
     PersistenceDiagramAuction auction(
       current_bidder_diagrams_[i], barycenter_goods_[i], wasserstein_,
       geometrical_factor_, lambda_, 0.01, kdt, correspondance_kdt_map,
-      (*min_diag_price)[i], use_kdt);
+      min_diag_price[i], use_kdt);
     std::vector<MatchingType> matchings;
     double cost = auction.run(matchings);
-    all_matchings->at(i) = matchings;
+    all_matchings[i] = matchings;
 
-    (*total_cost) += cost * cost;
+    total_cost += cost * cost;
     current_bidder_diagrams_[i].resize(sizes[i]);
   }
 }
@@ -370,7 +473,6 @@ std::vector<std::vector<MatchingType>> PDBarycenter::correctMatchings(
 
 double PDBarycenter::updateBarycenter(
   std::vector<std::vector<MatchingType>> &matchings) {
-  // cout<<"updating barycenter"<<endl;
   // 1. Initialize variables used in the sequel
   Timer t_update;
   unsigned int n_goods = barycenter_goods_[0].size();
@@ -458,8 +560,8 @@ double PDBarycenter::updateBarycenter(
       // TODO adjust shift with geometrical_factor_
       double dx = barycenter_goods_[0][i].x_ - new_x;
       double dy = barycenter_goods_[0][i].y_ - new_y;
-      double shift = Geometry::pow(abs(dx), wasserstein_)
-                     + Geometry::pow(abs(dy), wasserstein_);
+      double shift = Geometry::pow(std::abs(dx), wasserstein_)
+                     + Geometry::pow(std::abs(dy), wasserstein_);
       if(shift > max_shift) {
         max_shift = shift;
       }
@@ -545,15 +647,16 @@ double PDBarycenter::updateBarycenter(
   return max_shift;
 }
 
-void PDBarycenter::setBidderDiagrams() {
+void PDBarycenter::setBidderDiagrams(
+  const std::vector<DiagramType> &inputDiagrams) {
 
   for(int i = 0; i < numberOfInputs_; i++) {
-    DiagramType *CTDiagram = &((*inputDiagrams_)[i]);
+    const auto &CTDiagram = inputDiagrams[i];
 
     BidderDiagram bidders;
-    for(unsigned int j = 0; j < CTDiagram->size(); j++) {
+    for(unsigned int j = 0; j < CTDiagram.size(); j++) {
       // Add bidder to bidders
-      Bidder b((*CTDiagram)[j], j, lambda_);
+      Bidder b(CTDiagram[j], j, lambda_);
 
       b.setPositionInAuction(bidders.size());
       bidders.emplace_back(b);
@@ -715,22 +818,22 @@ double PDBarycenter::getLowestPersistence() {
   return lowest_persistence;
 }
 
-void PDBarycenter::setInitialBarycenter(double min_persistence) {
+void PDBarycenter::setInitialBarycenter(
+  const std::vector<DiagramType> &inputDiagrams, double min_persistence) {
   int size = 0;
   int random_idx;
-  DiagramType *CTDiagram;
   int iter = 0;
   while(size == 0) {
     random_idx
       = deterministic_ ? iter % numberOfInputs_ : rand() % numberOfInputs_;
-    CTDiagram = &((*inputDiagrams_)[random_idx]);
-    size = CTDiagram->size();
+    const auto &CTDiagram = inputDiagrams[random_idx];
+    size = CTDiagram.size();
     for(int i = 0; i < numberOfInputs_; i++) {
       GoodDiagram goods;
       int count = 0;
-      for(unsigned int j = 0; j < CTDiagram->size(); j++) {
+      for(unsigned int j = 0; j < CTDiagram.size(); j++) {
         // Add bidder to bidders
-        Good g((*CTDiagram)[j], count, lambda_);
+        Good g(CTDiagram[j], count, lambda_);
         if(g.getPersistence() >= min_persistence) {
           goods.emplace_back(g);
           count++;
@@ -784,127 +887,6 @@ typename PDBarycenter::KDTreePair PDBarycenter::getKDTree() const {
   this->printMsg(" Building KDTree", 1, tm.getElapsedTime(),
                  debug::LineMode::NEW, debug::Priority::VERBOSE);
   return std::make_pair(std::move(kdt), correspondance_kdt_map);
-}
-
-std::vector<std::vector<MatchingType>>
-  PDBarycenter::executeAuctionBarycenter(DiagramType &barycenter) {
-  double total_time = 0;
-
-  std::vector<std::vector<MatchingType>> previous_matchings;
-  double min_persistence = 0;
-  double min_cost = std::numeric_limits<double>::max();
-  int last_min_cost_obtained = 0;
-
-  this->setBidderDiagrams();
-  this->setInitialBarycenter(
-    min_persistence); // false for a determinist initialization
-
-  double max_persistence = getMaxPersistence();
-
-  std::vector<double> min_diag_price(numberOfInputs_);
-  std::vector<double> min_price(numberOfInputs_);
-  for(int i = 0; i < numberOfInputs_; i++) {
-    min_diag_price[i] = 0;
-    min_price[i] = 0;
-  }
-
-  int min_points_to_add = std::numeric_limits<int>::max();
-  min_persistence = this->enrichCurrentBidderDiagrams(
-    2 * max_persistence, min_persistence, min_diag_price, min_price,
-    min_points_to_add, false);
-
-  int n_iterations = 0;
-
-  bool converged = false;
-  bool finished = false;
-  double total_cost;
-
-  while(!finished) {
-    Timer tm;
-
-    n_iterations += 1;
-
-    std::pair<std::unique_ptr<KDTree<double>>, std::vector<KDTree<double> *>>
-      pair;
-    bool use_kdt = false;
-    // If the barycenter is empty, do not compute the kdt (or it will crash :/)
-    // TODO Fix KDTree to handle empty inputs...
-    if(barycenter_goods_[0].size() > 0) {
-      pair = this->getKDTree();
-      use_kdt = true;
-    }
-
-    std::vector<std::vector<MatchingType>> all_matchings(numberOfInputs_);
-    std::vector<int> sizes(numberOfInputs_);
-    for(int i = 0; i < numberOfInputs_; i++) {
-      sizes[i] = current_bidder_diagrams_[i].size();
-    }
-
-    total_cost = 0;
-
-    barycenter.resize(0);
-    for(size_t j = 0; j < barycenter_goods_[0].size(); j++) {
-      Good &g = barycenter_goods_[0][j];
-      const auto t
-        = std::make_tuple(0, nt1_, 0, nt2_, g.getPersistence(), diagramType_,
-                          g.x_, 0, 0, 0, g.y_, 0, 0, 0);
-      barycenter.push_back(t);
-    }
-
-    runMatchingAuction(&total_cost, sizes, *pair.first, pair.second,
-                       &min_diag_price, &all_matchings, use_kdt);
-
-    this->printMsg("Barycenter cost : " + std::to_string(total_cost),
-                   debug::Priority::DETAIL);
-
-    if(converged) {
-      finished = true;
-    }
-
-    if(!finished) {
-      updateBarycenter(all_matchings);
-
-      if(min_cost > total_cost) {
-        min_cost = total_cost;
-        last_min_cost_obtained = 0;
-      } else {
-        last_min_cost_obtained += 1;
-      }
-
-      converged = converged || last_min_cost_obtained > 1;
-    }
-
-    previous_matchings = std::move(all_matchings);
-    // END OF TIMER
-    total_time += tm.getElapsedTime();
-
-    for(unsigned int i = 0; i < barycenter_goods_.size(); ++i) {
-      for(size_t j = 0; j < barycenter_goods_[i].size(); ++j) {
-        barycenter_goods_[i][j].setPrice(0);
-      }
-    }
-    for(unsigned int i = 0; i < current_bidder_diagrams_.size(); ++i) {
-      for(size_t j = 0; j < current_bidder_diagrams_[i].size(); ++j) {
-        current_bidder_diagrams_[i][j].setDiagonalPrice(0);
-      }
-    }
-    for(int i = 0; i < numberOfInputs_; i++) {
-      min_diag_price[i] = 0;
-      min_price[i] = 0;
-    }
-  }
-  barycenter.resize(0);
-  for(size_t j = 0; j < barycenter_goods_[0].size(); j++) {
-    Good &g = barycenter_goods_[0][j];
-    const auto t = std::make_tuple(0, nt1_, 0, nt2_, g.getPersistence(),
-                                   diagramType_, g.x_, 0, 0, 0, g.y_, 0, 0, 0);
-    barycenter.push_back(t);
-  }
-
-  cost_ = sqrt(total_cost);
-  std::vector<std::vector<MatchingType>> corrected_matchings
-    = correctMatchings(previous_matchings);
-  return corrected_matchings;
 }
 
 double PDBarycenter::computeRealCost() {

@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include "DataTypes.h"
 #include <KDTree.h>
 #include <PersistenceDiagramAuction.h>
 #include <PersistenceDiagramBarycenter.h>
@@ -31,15 +30,23 @@ namespace ttk {
       this->setDebugMsgPrefix("PersistenceDiagramBarycenter");
     }
 
-    std::vector<std::vector<MatchingType>> execute(DiagramType &barycenter);
     std::vector<std::vector<MatchingType>>
-      executeMunkresBarycenter(DiagramType &barycenter);
+      execute(const std::vector<DiagramType> &inputDiagrams,
+              DiagramType &barycenter);
     std::vector<std::vector<MatchingType>>
-      executeAuctionBarycenter(DiagramType &barycenter);
-    std::vector<std::vector<MatchingType>>
-      executePartialBiddingBarycenter(DiagramType &barycenter);
+      executeAuctionBarycenter(const std::vector<DiagramType> &inputDiagrams,
+                               DiagramType &barycenter);
 
-    void setBidderDiagrams();
+    // Not implemented yet
+    std::vector<std::vector<MatchingType>> executePartialBiddingBarycenter(
+      const std::vector<DiagramType> &inputDiagrams, DiagramType &barycenter)
+      = delete;
+    std::vector<std::vector<MatchingType>>
+      executeMunkresBarycenter(const std::vector<DiagramType> &inputDiagrams,
+                               DiagramType &barycenter)
+      = delete;
+
+    void setBidderDiagrams(const std::vector<DiagramType> &inputDiagrams);
     double
       enrichCurrentBidderDiagrams(double previous_min_persistence,
                                   double min_persistence,
@@ -47,33 +54,35 @@ namespace ttk {
                                   std::vector<double> initial_prices,
                                   int min_points_to_add,
                                   bool add_points_to_barycenter = true);
-    void setInitialBarycenter(double min_persistence);
+    void setInitialBarycenter(const std::vector<DiagramType> &inputDiagrams,
+                              double min_persistence);
     double getMaxPersistence();
     double getLowestPersistence();
     double getMinimalPrice(int i);
+
     using KDTreePair = std::pair<typename KDTree<double>::KDTreeRoot,
                                  typename KDTree<double>::KDTreeMap>;
     KDTreePair getKDTree() const;
 
-    void runMatching(double *total_cost,
-                     double epsilon,
-                     std::vector<int> sizes,
+    void runMatching(double &total_cost,
+                     const double epsilon,
+                     const std::vector<int> &sizes,
                      KDTree<double> &kdt,
                      std::vector<KDTree<double> *> &correspondance_kdt_map,
-                     std::vector<double> *min_diag_price,
-                     std::vector<double> *min_price,
-                     std::vector<std::vector<MatchingType>> *all_matchings,
-                     bool use_kdt,
-                     int compute_only_distance);
+                     std::vector<double> &min_diag_price,
+                     std::vector<double> &min_price,
+                     std::vector<std::vector<MatchingType>> &all_matchings,
+                     const bool use_kdt,
+                     const int compute_only_distance);
 
     void
-      runMatchingAuction(double *total_cost,
-                         std::vector<int> sizes,
+      runMatchingAuction(double &total_cost,
+                         const std::vector<int> &sizes,
                          KDTree<double> &kdt,
                          std::vector<KDTree<double> *> &correspondance_kdt_map,
-                         std::vector<double> *min_diag_price,
-                         std::vector<std::vector<MatchingType>> *all_matchings,
-                         bool use_kdt);
+                         std::vector<double> &min_diag_price,
+                         std::vector<std::vector<MatchingType>> &all_matchings,
+                         const bool use_kdt);
 
     double updateBarycenter(std::vector<std::vector<MatchingType>> &matchings);
 
@@ -85,15 +94,6 @@ namespace ttk {
 
     std::vector<std::vector<MatchingType>> correctMatchings(
       std::vector<std::vector<MatchingType>> previous_matchings);
-
-    bool is_matching_stable();
-
-    inline double getEpsilon(double rho) const {
-      return rho * rho / 8.0;
-    }
-    inline double getRho(double epsilon) const {
-      return std::sqrt(8.0 * epsilon);
-    }
 
     inline void setDeterministic(const bool deterministic) {
       deterministic_ = deterministic;
@@ -107,10 +107,6 @@ namespace ttk {
       } else if(method == 2) {
         method_ = ComputeMethod::AUCTION;
       }
-    }
-
-    inline void setDiagrams(std::vector<DiagramType> *const data) {
-      inputDiagrams_ = data;
     }
 
     inline void setNumberOfInputs(const int numberOfInputs) {
@@ -147,14 +143,6 @@ namespace ttk {
       barycenter_goods_ = barycenters;
     }
 
-    inline std::vector<BidderDiagram> &getCurrentBidders() {
-      return current_bidder_diagrams_;
-    }
-
-    inline std::vector<GoodDiagram> &getCurrentBarycenter() {
-      return barycenter_goods_;
-    }
-
     inline void setReinitPrices(const bool reinit_prices) {
       reinit_prices_ = reinit_prices;
     }
@@ -167,27 +155,24 @@ namespace ttk {
       early_stoppage_ = early_stoppage;
     }
 
-    inline void setDiagramType(const int diagramType) {
-      diagramType_ = diagramType;
-      if(diagramType_ == 0) {
-        nt1_ = CriticalType::Local_minimum;
-        nt2_ = CriticalType::Saddle1;
-      } else if(diagramType_ == 1) {
-        nt1_ = CriticalType::Saddle1;
-        nt2_ = CriticalType::Saddle2;
-      } else {
-        nt1_ = CriticalType::Saddle2;
-        nt2_ = CriticalType::Local_maximum;
-      }
+    inline double getEpsilon(double rho) const {
+      return rho * rho / 8.0;
     }
 
-    double getCost() {
+    inline double getRho(double epsilon) const {
+      return std::sqrt(8.0 * epsilon);
+    }
+
+    inline const std::vector<BidderDiagram> &getCurrentBidders() const {
+      return current_bidder_diagrams_;
+    }
+
+    inline const std::vector<GoodDiagram> &getCurrentBarycenter() const {
+      return barycenter_goods_;
+    }
+
+    inline double getCost() const {
       return cost_;
-    }
-
-    template <typename type>
-    static type abs(const type var) {
-      return (var >= 0) ? var : -var;
     }
 
   protected:
@@ -203,14 +188,10 @@ namespace ttk {
     // middle of the 2 critical points of the pair (bad stability)
     double lambda_{};
 
-    int diagramType_{};
-    CriticalType nt1_{};
-    CriticalType nt2_{};
     double cost_{};
     int numberOfInputs_{};
     double time_limit_{std::numeric_limits<double>::max()};
     double epsilon_min_{1e-5};
-    std::vector<DiagramType> *inputDiagrams_{};
 
     int points_added_{};
     int points_deleted_{};

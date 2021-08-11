@@ -32,11 +32,12 @@ namespace ttk {
 
     std::vector<int>
       execute(std::vector<DiagramType> &final_centroids,
-              vector<vector<vector<vector<MatchingType>>>> &all_matchings);
+              std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
+                &all_matchings);
 
     double getMostPersistent(int type = -1);
 
-    vector<vector<int>> get_centroids_sizes() {
+    std::vector<std::vector<int>> get_centroids_sizes() {
       return this->centroids_sizes_;
     }
     double getLessPersistent(int type = -1);
@@ -44,20 +45,27 @@ namespace ttk {
     std::vector<std::vector<double>> getMinPrices();
 
     void correctMatchings(
-      vector<vector<vector<vector<MatchingType>>>> &previous_matchings);
+      std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
+        &previous_matchings);
 
-    double computeDistance(const BidderDiagram &D1,
-                           const BidderDiagram &D2,
-                           const double delta_lim);
+    inline double computeDistance(const BidderDiagram &D1,
+                                  const BidderDiagram &D2,
+                                  const double delta_lim) {
+      const auto D2_bis = diagramToCentroid(D2);
+      return computeDistance(D1, D2_bis, delta_lim);
+    }
     double computeDistance(const BidderDiagram &D1,
                            const GoodDiagram &D2,
                            const double delta_lim);
     double computeDistance(BidderDiagram *const D1,
                            const GoodDiagram *const D2,
                            const double delta_lim);
-    double computeDistance(const GoodDiagram &D1,
-                           const GoodDiagram &D2,
-                           const double delta_lim);
+    inline double computeDistance(const GoodDiagram &D1,
+                                  const GoodDiagram &D2,
+                                  const double delta_lim) {
+      const auto D1_bis = centroidToDiagram(D1);
+      return computeDistance(D1_bis, D2, delta_lim);
+    }
 
     GoodDiagram centroidWithZeroPrices(const GoodDiagram &centroid);
     BidderDiagram centroidToDiagram(const GoodDiagram &centroid);
@@ -65,7 +73,10 @@ namespace ttk {
     BidderDiagram diagramWithZeroPrices(const BidderDiagram &diagram);
 
     void setBidderDiagrams();
-    void initializeEmptyClusters();
+    inline void initializeEmptyClusters() {
+      this->clustering_.clear();
+      this->clustering_.resize(this->k_);
+    }
     void initializeCentroids();
     void initializeCentroidsKMeanspp();
     void initializeAcceleratedKMeans();
@@ -92,14 +103,14 @@ namespace ttk {
     void updateClusters();
     void invertClusters();
     void invertInverseClusters();
-    void
-      computeBarycenterForTwo(vector<vector<vector<vector<MatchingType>>>> &);
+    void computeBarycenterForTwo(
+      std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>> &);
 
     void acceleratedUpdateClusters();
     std::vector<double> updateCentroidsPosition(
       std::vector<std::vector<double>> *min_price,
       std::vector<std::vector<double>> *min_diag_price,
-      std::vector<std::vector<std::vector<std::vector<MatchingType>>>>
+      std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
         &all_matchings,
       int only_matchings);
 
@@ -108,34 +119,29 @@ namespace ttk {
       do_sad_ = original_dos[1];
       do_max_ = original_dos[2];
     }
-    inline int setDiagrams(std::vector<DiagramType> *data_min,
-                           std::vector<DiagramType> *data_saddle,
-                           std::vector<DiagramType> *data_max) {
+
+    inline void setDiagrams(std::vector<DiagramType> *data_min,
+                            std::vector<DiagramType> *data_saddle,
+                            std::vector<DiagramType> *data_max) {
       inputDiagramsMin_ = data_min;
       inputDiagramsSaddle_ = data_saddle;
       inputDiagramsMax_ = data_max;
-      return 0;
     }
 
-    inline int setDos(bool doMin, bool doSad, bool doMax) {
+    inline void setDos(bool doMin, bool doSad, bool doMax) {
       do_min_ = doMin;
       do_sad_ = doSad;
       do_max_ = doMax;
 
-      original_dos[0] = do_min_;
-      original_dos[1] = do_sad_;
-      original_dos[2] = do_max_;
-      return 0;
+      this->original_dos = {do_min_, do_sad_, do_max_};
     }
 
-    inline int setNumberOfInputs(int numberOfInputs) {
+    inline void setNumberOfInputs(int numberOfInputs) {
       numberOfInputs_ = numberOfInputs;
-      return 0;
     }
 
-    inline int setK(const int k) {
+    inline void setK(const int k) {
       k_ = k;
-      return 0;
     }
 
     inline void setWasserstein(const int &wasserstein) {
@@ -177,11 +183,7 @@ namespace ttk {
 
     inline void setUseDeltaLim(const bool UseDeltaLim) {
       UseDeltaLim_ = UseDeltaLim;
-      if(UseDeltaLim_) {
-        epsilon_min_ = 1e-8;
-      } else {
-        epsilon_min_ = 5e-5;
-      }
+      epsilon_min_ = UseDeltaLim_ ? 1e-8 : 5e-5;
     }
 
     inline void setDistanceWritingOptions(const int distanceWritingOptions) {
@@ -200,34 +202,11 @@ namespace ttk {
             msg.append(std::to_string(clustering_[c][idx]) + "}");
             this->printMsg(msg);
             msg = "";
-            // msg << clustering_[c][idx] << "}" << std::endl;
           } else {
             msg.append(std::to_string(clustering_[c][idx]) + ", ");
-            // msg << clustering_[c][idx] << ", ";
           }
         }
       }
-      // cout<<msg.str()<<endl;
-    }
-
-    inline void printOldClustering() {
-      std::stringstream msg;
-      for(int c = 0; c < k_; ++c) {
-        msg << "Cluster " << c << " = {";
-        for(unsigned int idx = 0; idx < old_clustering_[c].size(); ++idx) {
-          if(idx == old_clustering_[c].size() - 1) {
-            msg << old_clustering_[c][idx] << "}" << std::endl;
-          } else {
-            msg << old_clustering_[c][idx] << ", ";
-          }
-        }
-      }
-      this->printMsg(msg.str());
-    }
-
-    template <typename type>
-    static type abs(const type var) {
-      return (var >= 0) ? var : -var;
     }
 
   protected:
