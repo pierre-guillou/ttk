@@ -29,35 +29,32 @@ void ttk::PersistenceDiagramBarycenter::execute(
     DiagramType &CTDiagram = intermediateDiagrams[i];
 
     for(size_t j = 0; j < CTDiagram.size(); ++j) {
-      const auto &t = CTDiagram[j];
+      const auto &p = CTDiagram[j];
 
-      const auto nt1 = std::get<1>(t);
-      const auto nt2 = std::get<3>(t);
-      const auto dt = std::get<4>(t);
-
-      if(dt > 0) {
-        if(nt1 == CriticalType::Local_minimum
-           && nt2 == CriticalType::Local_maximum) {
-          data_max[i].push_back(t);
+      if(p.persistence > 0) {
+        if(p.birth.type == CriticalType::Local_minimum
+           && p.death.type == CriticalType::Local_maximum) {
+          data_max[i].push_back(p);
           data_max_idx[i].push_back(j);
           do_max = true;
         } else {
-          if(nt1 == CriticalType::Local_maximum
-             || nt2 == CriticalType::Local_maximum) {
-            data_max[i].push_back(t);
+          if(p.birth.type == CriticalType::Local_maximum
+             || p.death.type == CriticalType::Local_maximum) {
+            data_max[i].push_back(p);
             data_max_idx[i].push_back(j);
             do_max = true;
           }
-          if(nt1 == CriticalType::Local_minimum
-             || nt2 == CriticalType::Local_minimum) {
-            data_min[i].push_back(t);
+          if(p.birth.type == CriticalType::Local_minimum
+             || p.death.type == CriticalType::Local_minimum) {
+            data_min[i].push_back(p);
             data_min_idx[i].push_back(j);
             do_min = true;
           }
-          if((nt1 == CriticalType::Saddle1 && nt2 == CriticalType::Saddle2)
-             || (nt1 == CriticalType::Saddle2
-                 && nt2 == CriticalType::Saddle1)) {
-            data_sad[i].push_back(t);
+          if((p.birth.type == CriticalType::Saddle1
+              && p.death.type == CriticalType::Saddle2)
+             || (p.birth.type == CriticalType::Saddle2
+                 && p.death.type == CriticalType::Saddle1)) {
+            data_sad[i].push_back(p);
             data_sad_idx[i].push_back(j);
             do_sad = true;
           }
@@ -187,29 +184,27 @@ void ttk::PersistenceDiagramBarycenter::execute(
 
       const auto &bidder = CTDiagram[bidder_id];
       number_of_matchings_for_point[bary_id]++;
-      cords_1[bary_id][0] += std::get<7>(bidder);
-      cords_1[bary_id][1] += std::get<8>(bidder);
-      cords_1[bary_id][2] += std::get<9>(bidder);
-      cords_2[bary_id][0] += std::get<11>(bidder);
-      cords_2[bary_id][1] += std::get<12>(bidder);
-      cords_2[bary_id][2] += std::get<13>(bidder);
+      cords_1[bary_id][0] += bidder.birth.coords[0];
+      cords_1[bary_id][1] += bidder.birth.coords[1];
+      cords_1[bary_id][2] += bidder.birth.coords[2];
+      cords_2[bary_id][0] += bidder.death.coords[0];
+      cords_2[bary_id][1] += bidder.death.coords[1];
+      cords_2[bary_id][2] += bidder.death.coords[2];
     }
   }
 
   for(size_t i = 0; i < barycenter.size(); i++) {
     if(number_of_matchings_for_point[i] > 0) {
-      std::get<7>(barycenter[i])
-        = cords_1[i][0] / number_of_matchings_for_point[i];
-      std::get<8>(barycenter[i])
-        = cords_1[i][1] / number_of_matchings_for_point[i];
-      std::get<9>(barycenter[i])
-        = cords_1[i][2] / number_of_matchings_for_point[i];
-      std::get<11>(barycenter[i])
-        = cords_2[i][0] / number_of_matchings_for_point[i];
-      std::get<12>(barycenter[i])
-        = cords_2[i][1] / number_of_matchings_for_point[i];
-      std::get<13>(barycenter[i])
-        = cords_2[i][2] / number_of_matchings_for_point[i];
+      barycenter[i].birth.coords = {
+        cords_1[i][0] / number_of_matchings_for_point[i],
+        cords_1[i][1] / number_of_matchings_for_point[i],
+        cords_1[i][2] / number_of_matchings_for_point[i],
+      };
+      barycenter[i].death.coords = {
+        cords_2[i][0] / number_of_matchings_for_point[i],
+        cords_2[i][1] / number_of_matchings_for_point[i],
+        cords_2[i][2] / number_of_matchings_for_point[i],
+      };
     }
   }
 
@@ -235,9 +230,9 @@ std::vector<std::vector<MatchingType>> PDBarycenter::executeAuctionBarycenter(
   double min_cost = std::numeric_limits<double>::max();
   int last_min_cost_obtained = 0;
 
-  const auto diagramType = std::get<5>(inputDiagrams[0][0]);
-  const auto nt1 = std::get<1>(inputDiagrams[0][0]);
-  const auto nt2 = std::get<3>(inputDiagrams[0][0]);
+  const auto diagramType = inputDiagrams[0][0].dim;
+  const auto nt1 = inputDiagrams[0][0].birth.type;
+  const auto nt2 = inputDiagrams[0][0].death.type;
 
   this->setBidderDiagrams(inputDiagrams);
   this->setInitialBarycenter(inputDiagrams, min_persistence);
@@ -288,9 +283,9 @@ std::vector<std::vector<MatchingType>> PDBarycenter::executeAuctionBarycenter(
     barycenter.clear();
     for(size_t j = 0; j < barycenter_goods_[0].size(); j++) {
       Good &g = barycenter_goods_[0][j];
-      const auto t = std::make_tuple(0, nt1, 0, nt2, g.getPersistence(),
-                                     diagramType, g.x_, 0, 0, 0, g.y_, 0, 0, 0);
-      barycenter.push_back(t);
+      barycenter.emplace_back(PersistencePair{
+        CriticalVertex{0, nt1, g.x_, {}}, CriticalVertex{0, nt2, g.y_, {}},
+        g.getPersistence(), diagramType, true});
     }
 
     runMatchingAuction(total_cost, sizes, *pair.first, pair.second,
@@ -338,9 +333,9 @@ std::vector<std::vector<MatchingType>> PDBarycenter::executeAuctionBarycenter(
   barycenter.clear();
   for(size_t j = 0; j < barycenter_goods_[0].size(); j++) {
     Good &g = barycenter_goods_[0][j];
-    const auto t = std::make_tuple(0, nt1, 0, nt2, g.getPersistence(),
-                                   diagramType, g.x_, 0, 0, 0, g.y_, 0, 0, 0);
-    barycenter.push_back(t);
+    barycenter.emplace_back(PersistencePair{
+      CriticalVertex{0, nt1, g.x_, {}}, CriticalVertex{0, nt2, g.y_, {}},
+      g.getPersistence(), diagramType, true});
   }
 
   cost_ = sqrt(total_cost);

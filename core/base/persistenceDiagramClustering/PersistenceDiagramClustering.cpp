@@ -36,36 +36,32 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
     const auto &CTDiagram = intermediateDiagrams[i];
 
     for(size_t j = 0; j < CTDiagram.size(); ++j) {
-      const auto &t = CTDiagram[j];
+      const auto &p = CTDiagram[j];
 
-      const auto nt1 = std::get<1>(t);
-      const auto nt2 = std::get<3>(t);
-
-      const auto dt = std::get<4>(t);
-
-      if(dt > 0) {
-        if(nt1 == CriticalType::Local_minimum
-           && nt2 == CriticalType::Local_maximum) {
-          data_max[i].push_back(t);
+      if(p.persistence > 0) {
+        if(p.birth.type == CriticalType::Local_minimum
+           && p.death.type == CriticalType::Local_maximum) {
+          data_max[i].push_back(p);
           data_max_idx[i].push_back(j);
           do_max = true;
         } else {
-          if(nt1 == CriticalType::Local_maximum
-             || nt2 == CriticalType::Local_maximum) {
-            data_max[i].push_back(t);
+          if(p.birth.type == CriticalType::Local_maximum
+             || p.death.type == CriticalType::Local_maximum) {
+            data_max[i].push_back(p);
             data_max_idx[i].push_back(j);
             do_max = true;
           }
-          if(nt1 == CriticalType::Local_minimum
-             || nt2 == CriticalType::Local_minimum) {
-            data_min[i].push_back(t);
+          if(p.birth.type == CriticalType::Local_minimum
+             || p.death.type == CriticalType::Local_minimum) {
+            data_min[i].push_back(p);
             data_min_idx[i].push_back(j);
             do_min = true;
           }
-          if((nt1 == CriticalType::Saddle1 && nt2 == CriticalType::Saddle2)
-             || (nt1 == CriticalType::Saddle2
-                 && nt2 == CriticalType::Saddle1)) {
-            data_sad[i].push_back(t);
+          if((p.birth.type == CriticalType::Saddle1
+              && p.death.type == CriticalType::Saddle2)
+             || (p.birth.type == CriticalType::Saddle2
+                 && p.death.type == CriticalType::Saddle1)) {
+            data_sad[i].push_back(p);
             data_sad_idx[i].push_back(j);
             do_sad = true;
           }
@@ -624,13 +620,10 @@ std::vector<int> PDClustering::execute(
       for(size_t i = 0; i < centroids_min_[c].size(); ++i) {
         Good &g = centroids_min_[c][i];
         const auto critCoords = g.GetCriticalCoordinates();
-        float x = std::get<0>(critCoords);
-        float y = std::get<1>(critCoords);
-        float z = std::get<2>(critCoords);
-        const auto t = std::make_tuple(
-          0, ttk::CriticalType::Local_minimum, 0, ttk::CriticalType::Saddle1,
-          g.getPersistence(), 0, g.x_, x, y, z, g.y_, x, y, z);
-        final_centroids[c].push_back(t);
+        final_centroids[c].emplace_back(PersistencePair{
+          CriticalVertex{0, CriticalType::Local_minimum, g.x_, critCoords},
+          CriticalVertex{0, CriticalType::Saddle1, g.y_, critCoords},
+          g.getPersistence(), 0, true});
         if(g.getPersistence() > 1000) {
           this->printMsg("Found a anormally high persistence in min diagram",
                          debug::Priority::WARNING);
@@ -642,13 +635,10 @@ std::vector<int> PDClustering::execute(
       for(size_t i = 0; i < centroids_saddle_[c].size(); ++i) {
         Good &g = centroids_saddle_[c][i];
         const auto critCoords = g.GetCriticalCoordinates();
-        float x = std::get<0>(critCoords);
-        float y = std::get<1>(critCoords);
-        float z = std::get<2>(critCoords);
-        const auto t = std::make_tuple(
-          0, ttk::CriticalType::Saddle1, 0, ttk::CriticalType::Saddle2,
-          g.getPersistence(), 1, g.x_, x, y, z, g.y_, x, y, z);
-        final_centroids[c].push_back(t);
+        final_centroids[c].emplace_back(PersistencePair{
+          CriticalVertex{0, CriticalType::Saddle1, g.x_, critCoords},
+          CriticalVertex{0, CriticalType::Saddle2, g.y_, critCoords},
+          g.getPersistence(), 1, true});
         if(g.getPersistence() > 1000) {
           this->printMsg("Found a anormally high persistence in sad diagram",
                          debug::Priority::WARNING);
@@ -660,20 +650,13 @@ std::vector<int> PDClustering::execute(
       for(size_t i = 0; i < centroids_max_[c].size(); ++i) {
         Good &g = centroids_max_[c][i];
         const auto critCoords = g.GetCriticalCoordinates();
-        float y = std::get<1>(critCoords);
-        float x = std::get<0>(critCoords);
-        float z = std::get<2>(critCoords);
-        ttk::CriticalType saddle_type;
+        ttk::CriticalType saddle_type
+          = do_sad_ ? ttk::CriticalType::Saddle2 : ttk::CriticalType::Saddle1;
 
-        if(do_sad_)
-          saddle_type = ttk::CriticalType::Saddle2;
-        else
-          saddle_type = ttk::CriticalType::Saddle1;
-
-        const auto t = std::make_tuple(
-          0, saddle_type, 0, ttk::CriticalType::Local_maximum,
-          g.getPersistence(), 2, g.x_, x, y, z, g.y_, x, y, z);
-        final_centroids[c].push_back(t);
+        final_centroids[c].emplace_back(PersistencePair{
+          CriticalVertex{0, saddle_type, g.x_, critCoords},
+          CriticalVertex{0, CriticalType::Local_maximum, g.y_, critCoords},
+          g.getPersistence(), 2, true});
         if(g.getPersistence() > 1000) {
           this->printMsg("Found a anormally high persistence in min diagram",
                          debug::Priority::WARNING);
