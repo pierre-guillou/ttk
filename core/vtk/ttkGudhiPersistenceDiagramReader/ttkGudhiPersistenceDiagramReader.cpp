@@ -128,6 +128,14 @@ int ttkGudhiPersistenceDiagramReader::RequestData(
   pairPers->SetNumberOfComponents(1);
   pairPers->SetName("Persistence");
   pairPers->SetNumberOfTuples(nPairs);
+  vtkNew<vtkDoubleArray> births{};
+  births->SetNumberOfComponents(1);
+  births->SetName("Birth");
+  births->SetNumberOfTuples(nPairs);
+  vtkNew<vtkDoubleArray> deaths{};
+  deaths->SetNumberOfComponents(1);
+  deaths->SetName("Death");
+  deaths->SetNumberOfTuples(nPairs);
   vtkNew<vtkUnsignedCharArray> isFinite{};
   isFinite->SetNumberOfComponents(1);
   isFinite->SetName("IsFinite");
@@ -136,14 +144,6 @@ int ttkGudhiPersistenceDiagramReader::RequestData(
   critType->SetNumberOfComponents(1);
   critType->SetName("CriticalType");
   critType->SetNumberOfTuples(2 * nPairs);
-  vtkNew<vtkDoubleArray> births{};
-  births->SetNumberOfComponents(1);
-  births->SetName("Birth");
-  births->SetNumberOfTuples(2 * nPairs);
-  vtkNew<vtkDoubleArray> deaths{};
-  deaths->SetNumberOfComponents(1);
-  deaths->SetName("Death");
-  deaths->SetNumberOfTuples(2 * nPairs);
   // misc dummy point data
   vtkNew<ttkSimplexIdTypeArray> vertId{};
   vertId->SetNumberOfComponents(1);
@@ -206,10 +206,8 @@ int ttkGudhiPersistenceDiagramReader::RequestData(
     offsets->SetTuple1(i, 2 * i);
     pairId->SetTuple1(i, i);
     pairPers->SetTuple1(i, pair.death - pair.birth);
-    births->SetTuple1(2 * i + 0, pair.birth);
-    deaths->SetTuple1(2 * i + 0, pair.birth);
-    births->SetTuple1(2 * i + 1, pair.birth);
-    deaths->SetTuple1(2 * i + 1, pair.death);
+    births->SetTuple1(i, pair.birth);
+    deaths->SetTuple1(i, pair.death);
   }
 
   offsets->SetTuple1(nPairs, connectivity->GetNumberOfTuples());
@@ -231,6 +229,8 @@ int ttkGudhiPersistenceDiagramReader::RequestData(
   pairType->InsertNextTuple1(-1);
   isFinite->InsertNextTuple1(0);
   pairPers->InsertNextTuple1(2 * (maxDeath - minBirth));
+  births->InsertNextTuple1(0);
+  deaths->InsertNextTuple1(0);
 
   // copy mesh to output (segfault workaround)
   auto output = vtkUnstructuredGrid::GetData(outputVector);
@@ -238,12 +238,12 @@ int ttkGudhiPersistenceDiagramReader::RequestData(
   // add data arrays
   output->GetPointData()->AddArray(vertId);
   output->GetPointData()->AddArray(critType);
-  output->GetPointData()->AddArray(births);
-  output->GetPointData()->AddArray(deaths);
   output->GetPointData()->AddArray(coords);
   output->GetCellData()->AddArray(pairId);
   output->GetCellData()->AddArray(pairType);
   output->GetCellData()->AddArray(pairPers);
+  output->GetCellData()->AddArray(births);
+  output->GetCellData()->AddArray(deaths);
   output->GetCellData()->AddArray(isFinite);
 
   return 1;
