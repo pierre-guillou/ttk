@@ -581,7 +581,11 @@ std::vector<int> PDClustering::execute(
       {" Saddle-saddle cost", std::to_string(cost_sad_)},
       {" Saddle-max cost", std::to_string(cost_max_)},
       {matchings_only ? "Wasserstein Distance" : "Final Cost",
-       std::to_string(cost_min_ + cost_sad_ + cost_max_)},
+       std::to_string(
+         Geometry::pow(Geometry::pow(cost_min_, this->wasserstein_)
+                         + Geometry::pow(cost_sad_, this->wasserstein_)
+                         + Geometry::pow(cost_max_, this->wasserstein_),
+                       1.0 / this->wasserstein_))},
     };
     this->printMsg(rows);
 
