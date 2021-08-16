@@ -31,7 +31,7 @@ namespace ttk {
       this->setDebugMsgPrefix("Gabow-Tarjan");
     }
 
-    double Distance(double maxLevel);
+    double Distance();
 
     void printCurrentMatching();
 
