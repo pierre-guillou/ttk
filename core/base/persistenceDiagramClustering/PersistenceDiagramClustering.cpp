@@ -70,30 +70,14 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
     }
   }
 
-  {
-    std::stringstream msg;
-    switch(PairTypeClustering) {
-      case(0):
-        msg << "Only MIN-SAD Pairs";
-        do_max = false;
-        do_sad = false;
-        break;
-      case(1):
-        msg << "Only SAD-SAD Pairs";
-        do_max = false;
-        do_min = false;
-        break;
-      case(2):
-        msg << "Only SAD-MAX Pairs";
-        do_min = false;
-        do_sad = false;
-        break;
-      default:
-        msg << "All critical pairs: "
-               "global clustering";
-        break;
-    }
-    printMsg(msg.str());
+  if(PairTypeClustering == 0) {
+    this->printMsg("Only min-saddle pairs");
+  } else if(PairTypeClustering == 1) {
+    this->printMsg("Only saddle-saddle pairs");
+  } else if(PairTypeClustering == 2) {
+    this->printMsg("Only saddle-max pairs");
+  } else {
+    this->printMsg("All critical pairs (global clustering)");
   }
 
   std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
@@ -628,10 +612,6 @@ std::vector<int> PDClustering::execute(
           CriticalVertex{0, CriticalType::Local_minimum, g.x_, critCoords},
           CriticalVertex{0, CriticalType::Saddle1, g.y_, critCoords},
           g.getPersistence(), 0, true});
-        if(g.getPersistence() > 1000) {
-          this->printMsg("Found a anormally high persistence in min diagram",
-                         debug::Priority::WARNING);
-        }
       }
     }
 
@@ -643,10 +623,6 @@ std::vector<int> PDClustering::execute(
           CriticalVertex{0, CriticalType::Saddle1, g.x_, critCoords},
           CriticalVertex{0, CriticalType::Saddle2, g.y_, critCoords},
           g.getPersistence(), 1, true});
-        if(g.getPersistence() > 1000) {
-          this->printMsg("Found a anormally high persistence in sad diagram",
-                         debug::Priority::WARNING);
-        }
       }
     }
 
@@ -661,10 +637,6 @@ std::vector<int> PDClustering::execute(
           CriticalVertex{0, saddle_type, g.x_, critCoords},
           CriticalVertex{0, CriticalType::Local_maximum, g.y_, critCoords},
           g.getPersistence(), 2, true});
-        if(g.getPersistence() > 1000) {
-          this->printMsg("Found a anormally high persistence in min diagram",
-                         debug::Priority::WARNING);
-        }
       }
     }
   }
