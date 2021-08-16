@@ -473,7 +473,7 @@ double ttk::BottleneckDistance::distanceFunction(const ttk::PersistencePair &a,
                  w));
 
   double persDistance = x + y;
-  return Geometry::pow(persDistance + geoDistance, 1.0 / w);
+  return persDistance + geoDistance;
 }
 
 double ttk::BottleneckDistance::diagonalDistanceFunction(
@@ -482,8 +482,9 @@ double ttk::BottleneckDistance::diagonalDistanceFunction(
   const int w = std::max(wasserstein, 1);
   const bool isMin1 = a.birth.type == CriticalType::Local_minimum;
   const bool isMax1 = a.death.type == CriticalType::Local_maximum;
+  // projection on diagonal: cost = persistence ** w / 2.0
   const double infDistance = (isMin1 || isMax1 ? this->PE : this->PS)
-                             * Geometry::pow(std::abs(a.persistence), w);
+                             * Geometry::pow(std::abs(a.persistence), w) / 2.0;
   const double geoDistance
     = (this->PX
          * Geometry::pow(std::abs(a.death.coords[0] - a.birth.coords[0]), w)
@@ -492,7 +493,7 @@ double ttk::BottleneckDistance::diagonalDistanceFunction(
        + this->PZ
            * Geometry::pow(std::abs(a.death.coords[2] - a.birth.coords[2]), w));
 
-  return Geometry::pow(infDistance + geoDistance, 1.0 / w);
+  return infDistance + geoDistance;
 }
 
 int ttk::BottleneckDistance::computeBottleneck(
