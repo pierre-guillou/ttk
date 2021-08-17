@@ -29,7 +29,7 @@ namespace ttk {
 
     ~AssignmentMunkres() = default;
 
-    int run(std::vector<asgnMatchingTuple> &matchings);
+    int run(std::vector<MatchingType> &matchings);
 
     inline void clear() {
       AssignmentSolver<dataType>::clear();
@@ -135,7 +135,7 @@ namespace ttk {
 
     int stepSeven(int &step);
 
-    int affect(std::vector<asgnMatchingTuple> &matchings,
+    int affect(std::vector<MatchingType> &matchings,
                const std::vector<std::vector<dataType>> &C);
 
     int computeAffectationCost(const std::vector<std::vector<dataType>> &C);

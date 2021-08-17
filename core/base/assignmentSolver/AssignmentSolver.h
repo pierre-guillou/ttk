@@ -14,9 +14,8 @@
 #ifndef _ASSIGNMENTSOLVER_H
 #define _ASSIGNMENTSOLVER_H
 
-#define asgnMatchingTuple std::tuple<int, int, double>
-
 #include <Debug.h>
+#include <PersistenceDiagramUtils.h>
 
 namespace ttk {
 
@@ -28,7 +27,7 @@ namespace ttk {
 
     virtual ~AssignmentSolver() = default;
 
-    virtual int run(std::vector<asgnMatchingTuple> &matchings) = 0;
+    virtual int run(std::vector<MatchingType> &matchings) = 0;
 
     virtual inline void clear() {
       rowSize = 0;

@@ -1235,12 +1235,12 @@ namespace ttk {
     // --------------------------------------------------------------------------------
     template <class dataType>
     dataType postprocessAssignment(
-      std::vector<asgnMatchingTuple> &matchings,
+      std::vector<MatchingType> &matchings,
       std::vector<ftm::idNode> &children1,
       std::vector<ftm::idNode> &children2,
       std::vector<std::tuple<int, int>> &forestAssignment) {
       dataType cost = 0;
-      for(asgnMatchingTuple mTuple : matchings) {
+      for(MatchingType mTuple : matchings) {
         cost += std::get<2>(mTuple);
         if(std::get<0>(mTuple) >= (int)children1.size()
            || std::get<1>(mTuple) >= (int)children2.size())
@@ -1313,9 +1313,9 @@ namespace ttk {
       printTableVector<dataType>(vec);
     }
 
-    void printMatching(std::vector<asgnMatchingTuple> &matchings) {
+    void printMatching(std::vector<MatchingType> &matchings) {
       printMsg(debug::Separator::L2);
-      for(asgnMatchingTuple mTuple : matchings) {
+      for(MatchingType mTuple : matchings) {
         std::stringstream ss;
         ss << std::get<0>(mTuple) << " - " << std::get<1>(mTuple) << " - "
            << std::get<2>(mTuple);

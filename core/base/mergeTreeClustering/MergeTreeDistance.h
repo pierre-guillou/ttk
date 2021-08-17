@@ -115,7 +115,7 @@ namespace ttk {
     template <class dataType>
     void
       runAssignmentProblemSolver(std::vector<std::vector<dataType>> &costMatrix,
-                                 std::vector<asgnMatchingTuple> &matchings) {
+                                 std::vector<MatchingType> &matchings) {
       AssignmentSolver<dataType> *assignmentSolver;
       AssignmentExhaustive<dataType> solverExhaustive;
       AssignmentMunkres<dataType> solverMunkres;
@@ -186,7 +186,7 @@ namespace ttk {
       // assignmentProblemSize[costMatrix.size()*costMatrix[0].size()]++;
 
       // --- Solve assignment problem
-      std::vector<asgnMatchingTuple> matchings;
+      std::vector<MatchingType> matchings;
       runAssignmentProblemSolver(costMatrix, matchings);
 
       // --- Postprocess matching to create output assignment
@@ -1202,7 +1202,7 @@ namespace ttk {
       for(unsigned int j = 0; j < costMatrix[0].size() - 1; ++j)
         costMatrix[costMatrix.size() - 1][j]
           = 2 * std::pow(std::get<2>(pairs2[j]), 2) / (std::pow(2, 2));
-      std::vector<asgnMatchingTuple> matchings;
+      std::vector<MatchingType> matchings;
       forestAssignmentProblemMunkres(costMatrix, matchings);
       dataType cost = 0;
       for(auto tuple : matchings)
