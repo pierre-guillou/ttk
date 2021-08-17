@@ -8,9 +8,6 @@
 
 #pragma once
 
-#ifndef _KDTREE_H
-#define _KDTREE_H
-
 // base code includes
 #include <Debug.h>
 #include <Geometry.h> // for pow
@@ -111,11 +108,6 @@ namespace ttk {
 
     bool isLeaf();
     bool isRoot();
-
-    template <typename type>
-    inline static type abs(const type var) {
-      return (var > 0) ? var : -var;
-    }
   };
 
   template <typename dataType>
@@ -340,14 +332,9 @@ namespace ttk {
       costs.push_back(cost);
     } else {
       // 1.1- Find the most costly amongst neighbours
-      std::vector<int> idx(k);
-      for(unsigned int i = 0; i < k; i++) {
-        idx[i] = i;
-      }
-      int idx_max_cost = *std::max_element(
-        idx.begin(), idx.end(),
-        [&costs](int &a, int &b) { return costs[a] < costs[b]; });
-      dataType max_cost = costs[idx_max_cost];
+      const auto it = std::max_element(costs.begin(), costs.end());
+      const dataType max_cost = *it;
+      const int idx_max_cost = std::distance(costs.begin(), it);
 
       // 1.2- If the current KDTree is less costly, put it in the neighbours and
       // update costs.
@@ -381,14 +368,13 @@ namespace ttk {
           k, coordinates, neighbours, costs, weight_index);
       }
     }
-    return;
   }
 
   template <typename dataType>
   dataType KDTree<dataType>::cost(const std::vector<dataType> &coordinates) {
     dataType cost = 0;
     for(size_t i = 0; i < coordinates.size(); i++) {
-      cost += Geometry::pow(abs(coordinates[i] - coordinates_[i]), p_);
+      cost += Geometry::pow(std::abs(coordinates[i] - coordinates_[i]), p_);
     }
     return cost;
   }
@@ -420,6 +406,5 @@ namespace ttk {
     return parent_ == nullptr;
   }
 } // namespace ttk
-#include <buildWeights.h>
 
-#endif
+#include <buildWeights.h>
