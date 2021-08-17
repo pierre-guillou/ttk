@@ -34,43 +34,10 @@ namespace ttk {
       std::vector<std::vector<std::vector<MatchingType>>> &all_matchings);
 
   protected:
-    // Critical pairs used for clustering
-    // 0:min-saddles ; 1:saddles-saddles ; 2:sad-max ; else : all
-
-    int DistanceWritingOptions{0};
-    int PairTypeClustering{-1};
-    bool Deterministic{true};
-    int WassersteinMetric{2};
-
-    bool UseProgressive{true};
-
-    bool ForceUseOfAlgorithm{false};
-    bool UseInterruptible{true};
-    double Alpha{1.0};
-    bool UseAdditionalPrecision{false};
-    double DeltaLim{0.01};
-    double Lambda{1.0};
-    double TimeLimit{999999};
-
-    int NumberOfClusters{1};
-    bool UseAccelerated{false};
-    bool UseKmeansppInit{false};
-
-    int points_added_;
-    int points_deleted_;
-  };
-
-  class PDClustering : virtual public Debug {
-
-  public:
-    PDClustering() {
-      this->setDebugMsgPrefix("PersistenceDiagramClustering");
-    }
-
     std::vector<int>
-      execute(std::vector<DiagramType> &final_centroids,
-              std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
-                &all_matchings);
+      run(std::vector<DiagramType> &final_centroids,
+          std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
+            &all_matchings);
 
     double getMostPersistent(const int type = -1) const;
     double getLessPersistent(const int type = -1) const;
@@ -113,7 +80,7 @@ namespace ttk {
     void setBidderDiagrams();
     inline void initializeEmptyClusters() {
       this->clustering_.clear();
-      this->clustering_.resize(this->k_);
+      this->clustering_.resize(this->NumberOfClusters);
     }
     void initializeCentroids();
     void initializeCentroidsKMeanspp();
@@ -159,14 +126,6 @@ namespace ttk {
       do_max_ = original_dos[2];
     }
 
-    inline void setDiagrams(std::vector<DiagramType> *data_min,
-                            std::vector<DiagramType> *data_saddle,
-                            std::vector<DiagramType> *data_max) {
-      inputDiagramsMin_ = data_min;
-      inputDiagramsSaddle_ = data_saddle;
-      inputDiagramsMax_ = data_max;
-    }
-
     inline void setDos(bool doMin, bool doSad, bool doMax) {
       do_min_ = doMin;
       do_sad_ = doSad;
@@ -178,63 +137,53 @@ namespace ttk {
     inline void setNumberOfInputs(int numberOfInputs) {
       numberOfInputs_ = numberOfInputs;
     }
-
-    inline void setK(const int k) {
-      k_ = k;
+    inline void setNumberOfClusters(const int k) {
+      NumberOfClusters = k;
     }
-
     inline void setWasserstein(const int &wasserstein) {
-      wasserstein_ = wasserstein;
+      WassersteinMetric = wasserstein;
     }
-
     inline void setUseProgressive(const bool use_progressive) {
-      use_progressive_ = use_progressive;
+      UseProgressive = use_progressive;
     }
-
     inline void setKMeanspp(const bool use_kmeanspp) {
-      use_kmeanspp_ = use_kmeanspp;
+      UseKmeansppInit = use_kmeanspp;
     }
-
     inline void setUseKDTree(const bool use_kdtree) {
       use_kdtree_ = use_kdtree;
     }
-
     inline void setAccelerated(const bool use_accelerated) {
-      use_accelerated_ = use_accelerated;
+      UseAccelerated = use_accelerated;
     }
-
     inline void setTimeLimit(const double time_limit) {
-      time_limit_ = time_limit;
+      TimeLimit = time_limit;
     }
-
     inline void setGeometricalFactor(const double geometrical_factor) {
-      geometrical_factor_ = geometrical_factor;
+      Alpha = geometrical_factor;
     }
     inline void setLambda(const double lambda) {
-      lambda_ = lambda;
+      Lambda = lambda;
     }
     inline void setForceUseOfAlgorithm(const bool forceUseOfAlgorithm) {
-      forceUseOfAlgorithm_ = forceUseOfAlgorithm;
+      ForceUseOfAlgorithm = forceUseOfAlgorithm;
     }
     inline void setDeterministic(const bool deterministic) {
-      deterministic_ = deterministic;
+      Deterministic = deterministic;
     }
-
     inline void setUseDeltaLim(const bool UseDeltaLim) {
-      UseDeltaLim_ = UseDeltaLim;
-      epsilon_min_ = UseDeltaLim_ ? 1e-8 : 5e-5;
+      UseAdditionalPrecision = UseDeltaLim;
+      epsilon_min_ = UseAdditionalPrecision ? 1e-8 : 5e-5;
     }
-
     inline void setDistanceWritingOptions(const int distanceWritingOptions) {
-      distanceWritingOptions_ = distanceWritingOptions;
+      DistanceWritingOptions = distanceWritingOptions;
     }
     inline void setDeltaLim(const double deltaLim) {
-      deltaLim_ = deltaLim;
+      DeltaLim = deltaLim;
     }
 
     inline void printClustering() const {
       std::string msg = "";
-      for(int c = 0; c < k_; ++c) {
+      for(int c = 0; c < NumberOfClusters; ++c) {
         msg.append(" Cluster " + std::to_string(c) + " = {");
         for(unsigned int idx = 0; idx < clustering_[c].size(); ++idx) {
           if(idx == clustering_[c].size() - 1) {
@@ -248,7 +197,7 @@ namespace ttk {
       }
     }
 
-  protected:
+    // data members
     std::vector<PDBarycenter> barycenter_computer_min_{};
     std::vector<PDBarycenter> barycenter_computer_sad_{};
     std::vector<PDBarycenter> barycenter_computer_max_{};
@@ -258,27 +207,28 @@ namespace ttk {
     bool precision_max_{false};
     bool precision_min_{false};
     bool precision_sad_{false};
-    bool forceUseOfAlgorithm_{false};
-    bool deterministic_{true};
-    int wasserstein_{2};
-    double geometrical_factor_{1.0};
-    double deltaLim_{};
-    bool UseDeltaLim_{false};
-    int distanceWritingOptions_{0};
+    bool ForceUseOfAlgorithm{false};
+    bool Deterministic{true};
+    int WassersteinMetric{2};
+    double Alpha{1.0};
+    double DeltaLim{0.01};
+    bool UseAdditionalPrecision{false};
+    int DistanceWritingOptions{0};
     // lambda : 0<=lambda<=1
     // parametrizes the point used for the physical (critical) coordinates of
     // the persistence paired lambda = 1 : extremum (min if pair min-sad, max if
     // pair sad-max) lambda = 0 : saddle (bad stability) lambda = 1/2 : middle
     // of the 2 critical points of the pair
-    double lambda_{};
+    double Lambda{1.0};
 
-    int k_{};
     int numberOfInputs_{};
-    bool use_progressive_{true};
-    bool use_accelerated_{};
-    bool use_kmeanspp_{};
-    bool use_kdtree_{};
-    double time_limit_{std::numeric_limits<double>::max()};
+    int NumberOfClusters{1};
+    int PairTypeClustering{-1};
+    bool UseProgressive{true};
+    bool UseAccelerated{false};
+    bool UseKmeansppInit{false};
+    bool use_kdtree_{true};
+    double TimeLimit{std::numeric_limits<double>::max()};
 
     double epsilon_min_{1e-8};
     std::array<double, 3> epsilon_{};
@@ -290,25 +240,25 @@ namespace ttk {
     std::vector<std::vector<int>> current_bidder_ids_min_;
     std::vector<std::vector<int>> current_bidder_ids_sad_;
     std::vector<std::vector<int>> current_bidder_ids_max_;
-    std::vector<DiagramType> *inputDiagramsMin_;
-    std::vector<DiagramType> *inputDiagramsSaddle_;
-    std::vector<DiagramType> *inputDiagramsMax_;
+    std::vector<DiagramType> inputDiagramsMin_;
+    std::vector<DiagramType> inputDiagramsSaddle_;
+    std::vector<DiagramType> inputDiagramsMax_;
 
-    std::array<bool, 3> original_dos;
+    std::array<bool, 3> original_dos{false, false, false};
 
-    bool do_min_{};
+    bool do_min_{false};
     std::vector<BidderDiagram> bidder_diagrams_min_;
     std::vector<BidderDiagram> current_bidder_diagrams_min_;
     std::vector<GoodDiagram> centroids_min_;
     std::vector<GoodDiagram> centroids_with_price_min_;
 
-    bool do_sad_{};
+    bool do_sad_{false};
     std::vector<BidderDiagram> bidder_diagrams_saddle_;
     std::vector<BidderDiagram> current_bidder_diagrams_saddle_;
     std::vector<GoodDiagram> centroids_saddle_;
     std::vector<GoodDiagram> centroids_with_price_saddle_;
 
-    bool do_max_{};
+    bool do_max_{false};
     std::vector<BidderDiagram> bidder_diagrams_max_;
     std::vector<BidderDiagram> current_bidder_diagrams_max_;
     std::vector<GoodDiagram> centroids_max_;

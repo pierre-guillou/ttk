@@ -2,34 +2,28 @@
 
 #include <random>
 
-using ttk::BidderDiagram;
-using ttk::GoodDiagram;
-using ttk::PDClustering;
+using ttk::PersistenceDiagramClustering;
 
 std::vector<int> ttk::PersistenceDiagramClustering::execute(
   std::vector<DiagramType> &intermediateDiagrams,
   std::vector<DiagramType> &final_centroids,
   std::vector<std::vector<std::vector<MatchingType>>> &all_matchings) {
 
-  const int numberOfInputs_ = intermediateDiagrams.size();
+  this->numberOfInputs_ = intermediateDiagrams.size();
   Timer tm;
 
   printMsg("Clustering " + std::to_string(numberOfInputs_) + " diagrams in "
            + std::to_string(NumberOfClusters) + " cluster(s).");
 
-  std::vector<DiagramType> data_min(numberOfInputs_);
-  std::vector<DiagramType> data_sad(numberOfInputs_);
-  std::vector<DiagramType> data_max(numberOfInputs_);
+  this->inputDiagramsMin_.resize(numberOfInputs_);
+  this->inputDiagramsSaddle_.resize(numberOfInputs_);
+  this->inputDiagramsMax_.resize(numberOfInputs_);
 
   std::vector<std::vector<int>> data_min_idx(numberOfInputs_);
   std::vector<std::vector<int>> data_sad_idx(numberOfInputs_);
   std::vector<std::vector<int>> data_max_idx(numberOfInputs_);
 
   std::vector<int> inv_clustering(numberOfInputs_);
-
-  bool do_min = false;
-  bool do_sad = false;
-  bool do_max = false;
 
   // Create diagrams for min, saddle and max persistence pairs
   for(int i = 0; i < numberOfInputs_; i++) {
@@ -41,40 +35,40 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
       if(p.persistence > 0) {
         if(p.birth.type == CriticalType::Local_minimum
            && p.death.type == CriticalType::Local_maximum) {
-          data_max[i].push_back(p);
+          inputDiagramsMax_[i].push_back(p);
           data_max_idx[i].push_back(j);
-          do_max = true;
+          this->do_max_ = true;
         } else {
           if(p.birth.type == CriticalType::Local_maximum
              || p.death.type == CriticalType::Local_maximum) {
-            data_max[i].push_back(p);
+            inputDiagramsMax_[i].push_back(p);
             data_max_idx[i].push_back(j);
-            do_max = true;
+            this->do_max_ = true;
           }
           if(p.birth.type == CriticalType::Local_minimum
              || p.death.type == CriticalType::Local_minimum) {
-            data_min[i].push_back(p);
+            inputDiagramsMin_[i].push_back(p);
             data_min_idx[i].push_back(j);
-            do_min = true;
+            this->do_min_ = true;
           }
           if((p.birth.type == CriticalType::Saddle1
               && p.death.type == CriticalType::Saddle2)
              || (p.birth.type == CriticalType::Saddle2
                  && p.death.type == CriticalType::Saddle1)) {
-            data_sad[i].push_back(p);
+            inputDiagramsSaddle_[i].push_back(p);
             data_sad_idx[i].push_back(j);
-            do_sad = true;
+            this->do_sad_ = true;
           }
         }
       }
     }
   }
 
-  if(PairTypeClustering == 0) {
+  if(this->PairTypeClustering == 0) {
     this->printMsg("Only min-saddle pairs");
-  } else if(PairTypeClustering == 1) {
+  } else if(this->PairTypeClustering == 1) {
     this->printMsg("Only saddle-saddle pairs");
-  } else if(PairTypeClustering == 2) {
+  } else if(this->PairTypeClustering == 2) {
     this->printMsg("Only saddle-max pairs");
   } else {
     this->printMsg("All critical pairs (global clustering)");
@@ -82,28 +76,9 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
 
   std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
     all_matchings_per_type_and_cluster;
-  PDClustering KMeans{};
-  KMeans.setNumberOfInputs(numberOfInputs_);
-  KMeans.setWasserstein(WassersteinMetric);
-  KMeans.setUseProgressive(UseProgressive);
-  KMeans.setAccelerated(UseAccelerated);
-  KMeans.setUseKDTree(true);
-  KMeans.setTimeLimit(TimeLimit);
-  KMeans.setGeometricalFactor(Alpha);
-  KMeans.setLambda(Lambda);
-  KMeans.setDeterministic(Deterministic);
-  KMeans.setForceUseOfAlgorithm(ForceUseOfAlgorithm);
-  KMeans.setDebugLevel(debugLevel_);
-  KMeans.setDeltaLim(DeltaLim);
-  KMeans.setUseDeltaLim(UseAdditionalPrecision);
-  KMeans.setDistanceWritingOptions(DistanceWritingOptions);
-  KMeans.setKMeanspp(UseKmeansppInit);
-  KMeans.setK(NumberOfClusters);
-  KMeans.setDiagrams(&data_min, &data_sad, &data_max);
-  KMeans.setDos(do_min, do_sad, do_max);
+
   inv_clustering
-    = KMeans.execute(final_centroids, all_matchings_per_type_and_cluster);
-  std::vector<std::vector<int>> centroids_sizes = KMeans.get_centroids_sizes();
+    = this->run(final_centroids, all_matchings_per_type_and_cluster);
 
   // Reconstruct matchings
   std::vector<int> cluster_size;
@@ -126,31 +101,26 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
     all_matchings[c].resize(numberOfInputs_);
   }
   for(int i = 0; i < numberOfInputs_; i++) {
-    unsigned int c = inv_clustering[i];
+    const auto c = inv_clustering[i];
     // LARGEST PAIR MUST BE FIRST
-    if(do_max) {
-      MatchingType t
-        = all_matchings_per_type_and_cluster[c][2][idxInCluster[i]][0];
-      int bidder_id = std::get<0>(t);
-      if(bidder_id >= 0 && bidder_id < (int)data_max[i].size()) {
+    if(this->do_max_) {
+      auto t = all_matchings_per_type_and_cluster[c][2][idxInCluster[i]][0];
+      const size_t bidder_id = std::get<0>(t);
+      if(bidder_id < inputDiagramsMax_[i].size()) {
         std::get<0>(t) = data_max_idx[i][bidder_id];
         if(std::get<1>(t) >= 0) {
           std::get<1>(t)
-            = std::get<1>(t) + centroids_sizes[c][0] + centroids_sizes[c][1];
+            += this->centroids_sizes_[c][0] + this->centroids_sizes_[c][1];
         } else {
           std::get<1>(t) = -1;
         }
         all_matchings[inv_clustering[i]][i].push_back(t);
       }
     }
-    if(do_min) {
-      for(unsigned int j = 0;
-          j < all_matchings_per_type_and_cluster[c][0][idxInCluster[i]].size();
-          j++) {
-        MatchingType t
-          = all_matchings_per_type_and_cluster[c][0][idxInCluster[i]][j];
-        int bidder_id = std::get<0>(t);
-        if(bidder_id >= 0 && bidder_id < (int)data_min[i].size()) {
+    if(this->do_min_) {
+      for(auto t : all_matchings_per_type_and_cluster[c][0][idxInCluster[i]]) {
+        const size_t bidder_id = std::get<0>(t);
+        if(bidder_id < inputDiagramsMin_[i].size()) {
           std::get<0>(t) = data_min_idx[i][bidder_id];
           if(std::get<1>(t) < 0) {
             std::get<1>(t) = -1;
@@ -160,17 +130,13 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
       }
     }
 
-    if(do_sad) {
-      for(unsigned int j = 1;
-          j < all_matchings_per_type_and_cluster[c][1][idxInCluster[i]].size();
-          j++) {
-        MatchingType t
-          = all_matchings_per_type_and_cluster[c][1][idxInCluster[i]][j];
-        int bidder_id = std::get<0>(t);
-        if(bidder_id >= 0 && bidder_id < (int)data_sad[i].size()) {
+    if(this->do_sad_) {
+      for(auto t : all_matchings_per_type_and_cluster[c][1][idxInCluster[i]]) {
+        const size_t bidder_id = std::get<0>(t);
+        if(bidder_id < inputDiagramsSaddle_[i].size()) {
           std::get<0>(t) = data_sad_idx[i][bidder_id];
           if(std::get<1>(t) >= 0) {
-            std::get<1>(t) = std::get<1>(t) + centroids_sizes[c][0];
+            std::get<1>(t) += this->centroids_sizes_[c][0];
           } else {
             std::get<1>(t) = -1;
           }
@@ -179,18 +145,14 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
       }
     }
 
-    if(do_max) {
-      for(unsigned int j = 0;
-          j < all_matchings_per_type_and_cluster[c][2][idxInCluster[i]].size();
-          j++) {
-        MatchingType t
-          = all_matchings_per_type_and_cluster[c][2][idxInCluster[i]][j];
-        int bidder_id = std::get<0>(t);
-        if(bidder_id >= 0 && bidder_id < (int)data_max[i].size()) {
+    if(this->do_max_) {
+      for(auto t : all_matchings_per_type_and_cluster[c][2][idxInCluster[i]]) {
+        const size_t bidder_id = std::get<0>(t);
+        if(bidder_id < inputDiagramsMax_[i].size()) {
           std::get<0>(t) = data_max_idx[i][bidder_id];
           if(std::get<1>(t) >= 0) {
             std::get<1>(t)
-              = std::get<1>(t) + centroids_sizes[c][0] + centroids_sizes[c][1];
+              += this->centroids_sizes_[c][0] + this->centroids_sizes_[c][1];
           } else {
             std::get<1>(t) = -1;
           }
@@ -204,13 +166,17 @@ std::vector<int> ttk::PersistenceDiagramClustering::execute(
   return inv_clustering;
 }
 
-std::vector<int> PDClustering::execute(
+std::vector<int> PersistenceDiagramClustering::run(
   std::vector<DiagramType> &final_centroids,
   std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
     &all_matchings_per_type_and_cluster) {
 
-  all_matchings_per_type_and_cluster.resize(k_);
-  for(int c = 0; c < k_; c++) {
+  // parameters consistency...
+  this->epsilon_min_ = this->UseAdditionalPrecision ? 1e-8 : 5e-5;
+  this->original_dos = {this->do_min_, this->do_sad_, this->do_max_};
+
+  all_matchings_per_type_and_cluster.resize(this->NumberOfClusters);
+  for(int c = 0; c < this->NumberOfClusters; c++) {
     for(int i = 0; i < 3; i++) {
       all_matchings_per_type_and_cluster[c][i].resize(numberOfInputs_);
     }
@@ -219,14 +185,14 @@ std::vector<int> PDClustering::execute(
   Timer tm;
   {
     // PARTICULARITIES FOR THE CASE OF ONE UNIQUE CLUSTER
-    if(k_ <= 1) {
-      use_accelerated_ = false;
-      use_kmeanspp_ = false;
-      if(numberOfInputs_ == 2 and forceUseOfAlgorithm_ == false) {
-        use_progressive_ = false;
-        deterministic_ = true;
+    if(this->NumberOfClusters <= 1) {
+      UseAccelerated = false;
+      UseKmeansppInit = false;
+      if(numberOfInputs_ == 2 and ForceUseOfAlgorithm == false) {
+        UseProgressive = false;
+        Deterministic = true;
         matchings_only = true;
-        time_limit_ = 99999999999;
+        TimeLimit = 99999999999;
       }
     }
 
@@ -242,7 +208,7 @@ std::vector<int> PDClustering::execute(
     bool converged = false;
     std::vector<bool> diagrams_complete(3);
     for(int c = 0; c < 3; c++) {
-      diagrams_complete[c] = (!use_progressive_) || (!original_dos[c]);
+      diagrams_complete[c] = (!UseProgressive) || (!original_dos[c]);
     }
     bool all_diagrams_complete
       = diagrams_complete[0] && diagrams_complete[1] && diagrams_complete[2];
@@ -282,7 +248,7 @@ std::vector<int> PDClustering::execute(
     min_points_to_add[1] = 10;
     min_points_to_add[2] = 10;
 
-    if(use_progressive_) {
+    if(UseProgressive) {
       // min_persistence = max_persistence/2.;
       // min_persistence = 0;
     } else {
@@ -313,17 +279,17 @@ std::vector<int> PDClustering::execute(
     all_diagrams_complete
       = diagrams_complete[0] && diagrams_complete[1] && diagrams_complete[2];
     if(all_diagrams_complete) {
-      use_progressive_ = false;
+      UseProgressive = false;
     }
 
     // Initializing centroids and clusters
-    if(use_kmeanspp_) {
+    if(UseKmeansppInit) {
       initializeCentroidsKMeanspp();
     } else {
       initializeCentroids();
     }
     initializeEmptyClusters();
-    if(use_accelerated_) {
+    if(UseAccelerated) {
       initializeAcceleratedKMeans();
       getCentroidDistanceMatrix();
       acceleratedUpdateClusters();
@@ -331,12 +297,12 @@ std::vector<int> PDClustering::execute(
       updateClusters();
       old_clustering_ = clustering_;
     }
-    if(debugLevel_ > 3 && k_ > 1) {
+    if(debugLevel_ > 3 && this->NumberOfClusters > 1) {
       printMsg("Initial Clustering: ");
       printClustering();
     }
     initializeBarycenterComputers();
-    while(!converged || (!all_diagrams_complete && use_progressive_)) {
+    while(!converged || (!all_diagrams_complete && UseProgressive)) {
       Timer t_inside;
       {
         n_iterations_++;
@@ -349,7 +315,7 @@ std::vector<int> PDClustering::execute(
           }
         }
 
-        if(use_progressive_ && n_iterations_ > 1) {
+        if(UseProgressive && n_iterations_ > 1) {
 
           do_min_ = do_min_ && (min_persistence[0] > rho[0]);
           do_sad_ = do_sad_ && (min_persistence[1] > rho[1]);
@@ -403,7 +369,7 @@ std::vector<int> PDClustering::execute(
 
           if(diagrams_complete[0] && diagrams_complete[1]
              && diagrams_complete[2]) {
-            use_progressive_ = false;
+            UseProgressive = false;
             all_diagrams_complete = true;
           }
 
@@ -412,13 +378,13 @@ std::vector<int> PDClustering::execute(
         std::vector<double> max_shift_vec = updateCentroidsPosition(
           min_off_diag_price, min_diag_price,
           all_matchings_per_type_and_cluster, matchings_only);
-        if(do_min_ && !UseDeltaLim_) {
+        if(do_min_ && !UseAdditionalPrecision) {
           precision_min_ = (epsilon_[0] < epsilon0[0] / 500.);
         }
-        if(do_sad_ && !UseDeltaLim_) {
+        if(do_sad_ && !UseAdditionalPrecision) {
           precision_sad_ = (epsilon_[1] < epsilon0[1] / 500.);
         }
-        if(do_max_ && !UseDeltaLim_) {
+        if(do_max_ && !UseAdditionalPrecision) {
           precision_max_ = (epsilon_[2] < epsilon0[2] / 500.);
         }
 
@@ -461,10 +427,10 @@ std::vector<int> PDClustering::execute(
 
         if(diagrams_complete[0] && diagrams_complete[1]
            && diagrams_complete[2]) {
-          use_progressive_ = false;
+          UseProgressive = false;
           all_diagrams_complete = true;
         }
-        if(use_accelerated_) {
+        if(UseAccelerated) {
           acceleratedUpdateClusters();
         } else {
           // updateClusters();
@@ -536,24 +502,24 @@ std::vector<int> PDClustering::execute(
 
       total_time
         += t_inside.getElapsedTime(); // - t_real_cost.getElapsedTime();
-      if(total_time + t_inside.getElapsedTime() > 0.9 * time_limit_) {
+      if(total_time + t_inside.getElapsedTime() > 0.9 * TimeLimit) {
         min_cost_min = cost_min_;
         min_cost_sad = cost_sad_;
         min_cost_max = cost_max_;
         converged = true;
       }
-      if(total_time > 0.1 * time_limit_) {
+      if(total_time > 0.1 * TimeLimit) {
         all_diagrams_complete = true;
         diagrams_complete[0] = true;
         diagrams_complete[1] = true;
         diagrams_complete[2] = true;
-        use_progressive_ = false;
+        UseProgressive = false;
       }
       if(debugLevel_ > 4) {
         this->printMsg("== Iteration " + std::to_string(n_iterations_)
                        + +" == complete : "
                        + std::to_string(all_diagrams_complete)
-                       + " , progressive : " + std::to_string(use_progressive_)
+                       + " , progressive : " + std::to_string(UseProgressive)
                        + " , converged : " + std::to_string(converged));
       }
     }
@@ -566,19 +532,19 @@ std::vector<int> PDClustering::execute(
       {" Saddle-max cost", std::to_string(cost_max_)},
       {matchings_only ? "Wasserstein Distance" : "Final Cost",
        std::to_string(
-         Geometry::pow(Geometry::pow(cost_min_, this->wasserstein_)
-                         + Geometry::pow(cost_sad_, this->wasserstein_)
-                         + Geometry::pow(cost_max_, this->wasserstein_),
-                       1.0 / this->wasserstein_))},
+         Geometry::pow(Geometry::pow(cost_min_, this->WassersteinMetric)
+                         + Geometry::pow(cost_sad_, this->WassersteinMetric)
+                         + Geometry::pow(cost_max_, this->WassersteinMetric),
+                       1.0 / this->WassersteinMetric))},
     };
     this->printMsg(rows);
 
-    if(!use_progressive_ && k_ > 1) {
+    if(!UseProgressive && this->NumberOfClusters > 1) {
       clustering_ = old_clustering_; // reverting to last clustering
     }
     invertClusters(); // this is to pass the old inverse clustering to the VTK
                       // wrapper
-    if(k_ > 1) {
+    if(this->NumberOfClusters > 1) {
       this->printMsg("Clustering result:");
       printClustering();
     }
@@ -591,9 +557,9 @@ std::vector<int> PDClustering::execute(
   correctMatchings(all_matchings_per_type_and_cluster);
   // Filling the final centroids for output
 
-  final_centroids.resize(k_);
-  centroids_sizes_.resize(k_);
-  for(int c = 0; c < k_; c++) {
+  final_centroids.resize(this->NumberOfClusters);
+  centroids_sizes_.resize(this->NumberOfClusters);
+  for(int c = 0; c < this->NumberOfClusters; c++) {
     centroids_sizes_[c].resize(3);
     if(do_min_)
       centroids_sizes_[c][0] = centroids_min_[c].size();
@@ -603,7 +569,7 @@ std::vector<int> PDClustering::execute(
       centroids_sizes_[c][2] = centroids_max_[c].size();
   }
 
-  for(int c = 0; c < k_; ++c) {
+  for(int c = 0; c < this->NumberOfClusters; ++c) {
     if(do_min_) {
       for(size_t i = 0; i < centroids_min_[c].size(); ++i) {
         Good &g = centroids_min_[c][i];
@@ -641,19 +607,19 @@ std::vector<int> PDClustering::execute(
     }
   }
 
-  if(distanceWritingOptions_ == 1) {
+  if(DistanceWritingOptions == 1) {
     printDistancesToFile();
-  } else if(distanceWritingOptions_ == 2) {
+  } else if(DistanceWritingOptions == 2) {
     printRealDistancesToFile();
   }
 
   return inv_clustering_;
 }
 
-void PDClustering::correctMatchings(
+void PersistenceDiagramClustering::correctMatchings(
   std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
     &previous_matchings) {
-  for(int c = 0; c < k_; c++) {
+  for(int c = 0; c < this->NumberOfClusters; c++) {
     for(unsigned int i = 0; i < clustering_[c].size(); i++) {
       int diagram_id = clustering_[c][i];
       if(original_dos[0]) {
@@ -752,7 +718,7 @@ void PDClustering::correctMatchings(
   }
 }
 
-void PDClustering::printMatchings(
+void PersistenceDiagramClustering::printMatchings(
   const std::vector<std::vector<std::vector<MatchingType>>> &matchings) const {
 
   std::cout << "\n MATCHINGS :\n";
@@ -772,7 +738,7 @@ void PDClustering::printMatchings(
   }
 }
 
-double PDClustering::getMostPersistent(const int type) const {
+double PersistenceDiagramClustering::getMostPersistent(const int type) const {
   double max_persistence = 0;
   if(do_min_ && (type == -1 || type == 0)) {
     for(unsigned int i = 0; i < bidder_diagrams_min_.size(); ++i) {
@@ -812,7 +778,7 @@ double PDClustering::getMostPersistent(const int type) const {
   return max_persistence;
 }
 
-double PDClustering::getLessPersistent(const int type) const {
+double PersistenceDiagramClustering::getLessPersistent(const int type) const {
   // type == -1 : query the min of all the types of diagrams.
   // type = 0 : min,  1 : sad,   2 : max
   double min_persistence = std::numeric_limits<double>::max();
@@ -854,7 +820,8 @@ double PDClustering::getLessPersistent(const int type) const {
   return min_persistence;
 }
 
-std::vector<std::vector<double>> PDClustering::getMinPrices() const {
+std::vector<std::vector<double>>
+  PersistenceDiagramClustering::getMinPrices() const {
 
   std::vector<std::vector<double>> min_prices(3);
   if(original_dos[0]) {
@@ -899,7 +866,8 @@ std::vector<std::vector<double>> PDClustering::getMinPrices() const {
   return min_prices;
 }
 
-std::vector<std::vector<double>> PDClustering::getMinDiagonalPrices() const {
+std::vector<std::vector<double>>
+  PersistenceDiagramClustering::getMinDiagonalPrices() const {
 
   std::vector<std::vector<double>> min_prices(3);
   if(original_dos[0]) {
@@ -952,22 +920,24 @@ std::vector<std::vector<double>> PDClustering::getMinDiagonalPrices() const {
   return min_prices;
 }
 
-double PDClustering::computeDistance(const BidderDiagram &D1,
-                                     const GoodDiagram &D2,
-                                     const double delta_lim) const {
+double
+  PersistenceDiagramClustering::computeDistance(const BidderDiagram &D1,
+                                                const GoodDiagram &D2,
+                                                const double delta_lim) const {
   const auto D2_bis = centroidWithZeroPrices(D2);
   PersistenceDiagramAuction auction(
-    wasserstein_, geometrical_factor_, lambda_, delta_lim, use_kdtree_);
+    WassersteinMetric, Alpha, Lambda, delta_lim, use_kdtree_);
   auction.BuildAuctionDiagrams(D1, D2_bis);
   double cost = auction.run();
   return cost;
 }
 
-double PDClustering::computeDistance(BidderDiagram *const D1,
-                                     const GoodDiagram *const D2,
-                                     const double delta_lim) const {
+double
+  PersistenceDiagramClustering::computeDistance(BidderDiagram *const D1,
+                                                const GoodDiagram *const D2,
+                                                const double delta_lim) const {
   PersistenceDiagramAuction auction(
-    wasserstein_, geometrical_factor_, lambda_, delta_lim, use_kdtree_);
+    WassersteinMetric, Alpha, Lambda, delta_lim, use_kdtree_);
   int size1 = D1->size();
   auction.BuildAuctionDiagrams(*D1, *D2);
   double cost = auction.run();
@@ -977,8 +947,8 @@ double PDClustering::computeDistance(BidderDiagram *const D1,
   return cost;
 }
 
-GoodDiagram
-  PDClustering::centroidWithZeroPrices(const GoodDiagram &centroid) const {
+ttk::GoodDiagram PersistenceDiagramClustering::centroidWithZeroPrices(
+  const GoodDiagram &centroid) const {
 
   GoodDiagram GD{};
   for(auto g : centroid) {
@@ -988,8 +958,8 @@ GoodDiagram
   return GD;
 }
 
-BidderDiagram
-  PDClustering::diagramWithZeroPrices(const BidderDiagram &diagram) const {
+ttk::BidderDiagram PersistenceDiagramClustering::diagramWithZeroPrices(
+  const BidderDiagram &diagram) const {
 
   BidderDiagram BD{};
   for(auto b : diagram) {
@@ -999,8 +969,8 @@ BidderDiagram
   return BD;
 }
 
-BidderDiagram
-  PDClustering::centroidToDiagram(const GoodDiagram &centroid) const {
+ttk::BidderDiagram PersistenceDiagramClustering::centroidToDiagram(
+  const GoodDiagram &centroid) const {
 
   BidderDiagram BD{};
   for(const auto &g : centroid) {
@@ -1012,8 +982,8 @@ BidderDiagram
   return BD;
 }
 
-GoodDiagram
-  PDClustering::diagramToCentroid(const BidderDiagram &diagram) const {
+ttk::GoodDiagram PersistenceDiagramClustering::diagramToCentroid(
+  const BidderDiagram &diagram) const {
 
   GoodDiagram GD{};
   for(const auto &b : diagram) {
@@ -1024,7 +994,7 @@ GoodDiagram
   return GD;
 }
 
-void PDClustering::initializeCentroids() {
+void PersistenceDiagramClustering::initializeCentroids() {
   std::vector<int> idx(numberOfInputs_);
   // To perform a random draw with replacement, the vector {1, 2, ...,
   // numberOfInputs_} is shuffled, and we consider its k_ first elements to be
@@ -1032,10 +1002,10 @@ void PDClustering::initializeCentroids() {
   for(int i = 0; i < numberOfInputs_; i++) {
     idx[i] = i;
   }
-  if(!deterministic_) {
+  if(!Deterministic) {
     std::shuffle(idx.begin(), idx.end(), std::random_device());
   }
-  for(int c = 0; c < k_; c++) {
+  for(int c = 0; c < this->NumberOfClusters; c++) {
     if(do_min_) {
       GoodDiagram centroid_min
         = diagramToCentroid(this->current_bidder_diagrams_min_[idx[c]]);
@@ -1054,9 +1024,9 @@ void PDClustering::initializeCentroids() {
   }
 }
 
-void PDClustering::initializeCentroidsKMeanspp() {
+void PersistenceDiagramClustering::initializeCentroidsKMeanspp() {
   std::vector<int> indexes_clusters;
-  int random_idx = deterministic_ ? 0 : rand() % numberOfInputs_;
+  int random_idx = Deterministic ? 0 : rand() % numberOfInputs_;
   indexes_clusters.push_back(random_idx);
 
   if(do_min_) {
@@ -1074,7 +1044,7 @@ void PDClustering::initializeCentroidsKMeanspp() {
       = diagramToCentroid(this->current_bidder_diagrams_max_[random_idx]);
     this->centroids_max_.push_back(centroid_max);
   }
-  while((int)indexes_clusters.size() < k_) {
+  while((int)indexes_clusters.size() < this->NumberOfClusters) {
     std::vector<double> min_distance_to_centroid(numberOfInputs_);
     std::vector<double> probabilities(numberOfInputs_);
 
@@ -1117,7 +1087,7 @@ void PDClustering::initializeCentroidsKMeanspp() {
 
       // The following block is useful in case of need for a deterministic
       // algoritm
-      if(deterministic_ && min_distance_to_centroid[i] > maximal_distance) {
+      if(Deterministic && min_distance_to_centroid[i] > maximal_distance) {
         maximal_distance = min_distance_to_centroid[i];
         candidate_centroid = i;
       }
@@ -1128,7 +1098,7 @@ void PDClustering::initializeCentroidsKMeanspp() {
     std::discrete_distribution<int> distribution(
       probabilities.begin(), probabilities.end());
 
-    if(!deterministic_) {
+    if(!Deterministic) {
       candidate_centroid = distribution(gen);
     }
 
@@ -1151,7 +1121,7 @@ void PDClustering::initializeCentroidsKMeanspp() {
   }
 }
 
-void PDClustering::initializeAcceleratedKMeans() {
+void PersistenceDiagramClustering::initializeAcceleratedKMeans() {
   // r_ is a vector stating for each diagram if its distance to its centroid is
   // up to date (false) or needs to be recomputed (true)
   r_ = std::vector<bool>(numberOfInputs_);
@@ -1168,22 +1138,23 @@ void PDClustering::initializeAcceleratedKMeans() {
   // to each centroid
   l_ = std::vector<std::vector<double>>(numberOfInputs_);
   for(int i = 0; i < numberOfInputs_; ++i) {
-    l_[i] = std::vector<double>(k_);
-    for(int c = 0; c < k_; ++c) {
+    l_[i] = std::vector<double>(this->NumberOfClusters);
+    for(int c = 0; c < this->NumberOfClusters; ++c) {
       l_[i][c] = 0;
     }
   }
 
   // And d_ is a (K x K) matrix storing the distances between each pair of
   // centroids
-  centroidsDistanceMatrix_.resize(k_);
-  for(int i = 0; i < k_; ++i) {
-    centroidsDistanceMatrix_[i].resize(k_, 0.0);
+  centroidsDistanceMatrix_.resize(this->NumberOfClusters);
+  for(int i = 0; i < this->NumberOfClusters; ++i) {
+    centroidsDistanceMatrix_[i].resize(this->NumberOfClusters, 0.0);
   }
   return;
 }
 
-std::vector<std::vector<double>> PDClustering::getDistanceMatrix() const {
+std::vector<std::vector<double>>
+  PersistenceDiagramClustering::getDistanceMatrix() const {
 
   std::vector<std::vector<double>> D(numberOfInputs_);
 
@@ -1198,7 +1169,7 @@ std::vector<std::vector<double>> PDClustering::getDistanceMatrix() const {
     if(do_max_) {
       D1_max = diagramWithZeroPrices(current_bidder_diagrams_max_[i]);
     }
-    for(int c = 0; c < k_; ++c) {
+    for(int c = 0; c < this->NumberOfClusters; ++c) {
       GoodDiagram D2_min, D2_sad, D2_max;
       double distance = 0;
       if(do_min_) {
@@ -1219,8 +1190,8 @@ std::vector<std::vector<double>> PDClustering::getDistanceMatrix() const {
   return D;
 }
 
-void PDClustering::getCentroidDistanceMatrix() {
-  for(int i = 0; i < k_; ++i) {
+void PersistenceDiagramClustering::getCentroidDistanceMatrix() {
+  for(int i = 0; i < this->NumberOfClusters; ++i) {
     GoodDiagram D1_min, D1_sad, D1_max;
     if(do_min_) {
       D1_min = centroidWithZeroPrices(centroids_min_[i]);
@@ -1231,7 +1202,7 @@ void PDClustering::getCentroidDistanceMatrix() {
     if(do_max_) {
       D1_max = centroidWithZeroPrices(centroids_max_[i]);
     }
-    for(int j = i + 1; j < k_; ++j) {
+    for(int j = i + 1; j < this->NumberOfClusters; ++j) {
       double distance{};
       GoodDiagram D2_min, D2_sad, D2_max;
       if(do_min_) {
@@ -1254,7 +1225,7 @@ void PDClustering::getCentroidDistanceMatrix() {
   return;
 }
 
-void PDClustering::computeDistanceToCentroid() {
+void PersistenceDiagramClustering::computeDistanceToCentroid() {
   this->distanceToCentroid_.resize(numberOfInputs_);
 
   for(int i = 0; i < numberOfInputs_; ++i) {
@@ -1284,8 +1255,8 @@ void PDClustering::computeDistanceToCentroid() {
   }
 }
 
-void PDClustering::updateClusters() {
-  if(k_ > 1) {
+void PersistenceDiagramClustering::updateClusters() {
+  if(this->NumberOfClusters > 1) {
     std::vector<std::vector<double>> distance_matrix = getDistanceMatrix();
     old_clustering_ = clustering_;
     invertClusters();
@@ -1294,7 +1265,7 @@ void PDClustering::updateClusters() {
     for(int i = 0; i < numberOfInputs_; ++i) {
       double min_distance_to_centroid = std::numeric_limits<double>::max();
       int cluster = -1;
-      for(int c = 0; c < k_; ++c) {
+      for(int c = 0; c < this->NumberOfClusters; ++c) {
         if(distance_matrix[i][c] < min_distance_to_centroid) {
           min_distance_to_centroid = distance_matrix[i][c];
           cluster = c;
@@ -1349,7 +1320,7 @@ void PDClustering::updateClusters() {
   return;
 }
 
-void PDClustering::invertClusters() {
+void PersistenceDiagramClustering::invertClusters() {
   /// Converts the clustering (vector of vector of diagram's id) into
   /// a vector of size numberOfInputs_ containg the cluster of each input
   /// diagram.
@@ -1361,7 +1332,7 @@ void PDClustering::invertClusters() {
   }
 
   // Fill in the clusters
-  for(int c = 0; c < k_; ++c) {
+  for(int c = 0; c < this->NumberOfClusters; ++c) {
     for(unsigned int j = 0; j < clustering_[c].size(); ++j) {
       int idx = clustering_[c][j];
       inv_clustering_[idx] = c;
@@ -1369,14 +1340,14 @@ void PDClustering::invertClusters() {
   }
 }
 
-void PDClustering::invertInverseClusters() {
-  clustering_ = std::vector<std::vector<int>>(k_);
+void PersistenceDiagramClustering::invertInverseClusters() {
+  clustering_ = std::vector<std::vector<int>>(this->NumberOfClusters);
   for(int i = 0; i < numberOfInputs_; ++i) {
     clustering_[inv_clustering_[i]].push_back(i);
   }
 
   // Check if a cluster was left without diagram
-  for(int c = 0; c < k_; ++c) {
+  for(int c = 0; c < this->NumberOfClusters; ++c) {
     if(clustering_[c].size() == 0) {
       this->printWrn("Problem in invertInverseClusters()... \nCluster "
                      + std::to_string(c)
@@ -1385,7 +1356,7 @@ void PDClustering::invertInverseClusters() {
   }
 }
 
-void PDClustering::acceleratedUpdateClusters() {
+void PersistenceDiagramClustering::acceleratedUpdateClusters() {
   // Step 1
   getCentroidDistanceMatrix();
   old_clustering_ = clustering_;
@@ -1409,15 +1380,15 @@ void PDClustering::acceleratedUpdateClusters() {
       D1_max = diagramWithZeroPrices(current_bidder_diagrams_max_[i]);
     }
 
-    for(int c = 0; c < k_; ++c) {
+    for(int c = 0; c < this->NumberOfClusters; ++c) {
       if(inv_clustering_[i] == -1) {
         // If not yet assigned, assign it first to a random cluster
 
-        if(deterministic_) {
-          inv_clustering_[i] = i % k_;
+        if(Deterministic) {
+          inv_clustering_[i] = i % this->NumberOfClusters;
         } else {
           this->printWrn(" - ASSIGNED TO A RANDOM CLUSTER ");
-          inv_clustering_[i] = rand() % (k_);
+          inv_clustering_[i] = rand() % (this->NumberOfClusters);
         }
 
         r_[i] = true;
@@ -1515,7 +1486,7 @@ void PDClustering::acceleratedUpdateClusters() {
     }
   }
   invertInverseClusters();
-  for(int c = 0; c < k_; ++c) {
+  for(int c = 0; c < this->NumberOfClusters; ++c) {
     if(clustering_[c].size() == 0) {
       this->printWrn("Adding artificial centroid because a cluster was empty");
 
@@ -1528,7 +1499,8 @@ void PDClustering::acceleratedUpdateClusters() {
       while(!idx_acceptable) {
         auto argMax = std::max_element(copy_of_u.begin(), copy_of_u.end());
         idx = std::distance(copy_of_u.begin(), argMax);
-        if(inv_clustering_[idx] < k_ && inv_clustering_[idx] >= 0
+        if(inv_clustering_[idx] < this->NumberOfClusters
+           && inv_clustering_[idx] >= 0
            && clustering_[inv_clustering_[idx]].size() > 1) {
           idx_acceptable = true;
           int cluster_removal = inv_clustering_[idx];
@@ -1546,7 +1518,7 @@ void PDClustering::acceleratedUpdateClusters() {
             if(clustering_[cluster_max].size() > 0) {
               idx = clustering_[cluster_max][0];
             }
-            for(int i_test = 1; i_test < k_; i_test++) {
+            for(int i_test = 1; i_test < this->NumberOfClusters; i_test++) {
               if(clustering_[i_test].size() > clustering_[cluster_max].size()) {
                 cluster_max = i_test;
                 idx = clustering_[cluster_max][0];
@@ -1590,7 +1562,7 @@ void PDClustering::acceleratedUpdateClusters() {
   return;
 }
 
-std::vector<double> PDClustering::updateCentroidsPosition(
+std::vector<double> PersistenceDiagramClustering::updateCentroidsPosition(
   std::vector<std::vector<double>> &min_price,
   std::vector<std::vector<double>> &min_diag_price,
   std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
@@ -1623,7 +1595,7 @@ std::vector<double> PDClustering::updateCentroidsPosition(
     cost_max_ = 0;
   }
 
-  for(int c = 0; c < k_; ++c) {
+  for(int c = 0; c < this->NumberOfClusters; ++c) {
     if(clustering_[c].size() > 0) {
       std::vector<GoodDiagram> centroids_with_price_min,
         centroids_with_price_sad, centroids_with_price_max;
@@ -1803,7 +1775,7 @@ std::vector<double> PDClustering::updateCentroidsPosition(
           all_matchings_per_type_and_cluster[c][0][ii].resize(0);
         }
         precision_min
-          = barycenter_computer_min_[c].isPrecisionObjectiveMet(deltaLim_, 0);
+          = barycenter_computer_min_[c].isPrecisionObjectiveMet(DeltaLim, 0);
         cost_min_ += sqrt(total_cost);
         Timer time_update;
         if(!only_matchings) {
@@ -1829,7 +1801,7 @@ std::vector<double> PDClustering::updateCentroidsPosition(
         GoodDiagram old_centroid = centroids_min_[c];
         centroids_min_[c] = centroidWithZeroPrices(
           centroids_with_price_min_[clustering_[c][0]]);
-        if(use_accelerated_) {
+        if(UseAccelerated) {
           wasserstein_shift
             += computeDistance(old_centroid, centroids_min_[c], 0.01);
         }
@@ -1893,7 +1865,7 @@ std::vector<double> PDClustering::updateCentroidsPosition(
         }
 
         precision_sad
-          = barycenter_computer_sad_[c].isPrecisionObjectiveMet(deltaLim_, 0);
+          = barycenter_computer_sad_[c].isPrecisionObjectiveMet(DeltaLim, 0);
         if(!only_matchings) {
           max_shift_c_sad
             = barycenter_computer_sad_[c].updateBarycenter(all_matchings);
@@ -1917,7 +1889,7 @@ std::vector<double> PDClustering::updateCentroidsPosition(
         GoodDiagram old_centroid = centroids_saddle_[c];
         centroids_saddle_[c] = centroidWithZeroPrices(
           centroids_with_price_saddle_[clustering_[c][0]]);
-        if(use_accelerated_)
+        if(UseAccelerated)
           wasserstein_shift
             += computeDistance(old_centroid, centroids_saddle_[c], 0.01);
       }
@@ -1980,7 +1952,7 @@ std::vector<double> PDClustering::updateCentroidsPosition(
           all_matchings_per_type_and_cluster[c][2][ii].resize(0);
         }
         precision_max
-          = barycenter_computer_max_[c].isPrecisionObjectiveMet(deltaLim_, 0);
+          = barycenter_computer_max_[c].isPrecisionObjectiveMet(DeltaLim, 0);
 
         cost_max_ += sqrt(total_cost);
         Timer time_update;
@@ -2006,7 +1978,7 @@ std::vector<double> PDClustering::updateCentroidsPosition(
         GoodDiagram old_centroid = centroids_max_[c];
         centroids_max_[c] = centroidWithZeroPrices(
           centroids_with_price_max_[clustering_[c][0]]);
-        if(use_accelerated_) {
+        if(UseAccelerated) {
           wasserstein_shift
             += computeDistance(old_centroid, centroids_max_[c], 0.01);
         }
@@ -2016,14 +1988,14 @@ std::vector<double> PDClustering::updateCentroidsPosition(
       if(wasserstein_shift > max_wasserstein_shift) {
         max_wasserstein_shift = wasserstein_shift;
       }
-      if(use_accelerated_) {
+      if(UseAccelerated) {
         for(int i = 0; i < numberOfInputs_; ++i) {
           // Step 5 of Accelerated KMeans: Update the lower bound on distance
           // thanks to the triangular inequality
           l_[i][c] = Geometry::pow(
-            Geometry::pow(l_[i][c], 1. / wasserstein_)
-              - Geometry::pow(wasserstein_shift, 1. / wasserstein_),
-            wasserstein_);
+            Geometry::pow(l_[i][c], 1. / WassersteinMetric)
+              - Geometry::pow(wasserstein_shift, 1. / WassersteinMetric),
+            WassersteinMetric);
           if(l_[i][c] < 0) {
             l_[i][c] = 0;
           }
@@ -2032,9 +2004,9 @@ std::vector<double> PDClustering::updateCentroidsPosition(
           // Step 6, update the upper bound on the distance to the centroid
           // thanks to the triangle inequality
           u_[idx] = Geometry::pow(
-            Geometry::pow(u_[idx], 1. / wasserstein_)
-              + Geometry::pow(wasserstein_shift, 1. / wasserstein_),
-            wasserstein_);
+            Geometry::pow(u_[idx], 1. / WassersteinMetric)
+              + Geometry::pow(wasserstein_shift, 1. / WassersteinMetric),
+            WassersteinMetric);
           r_[idx] = true;
         }
       }
@@ -2052,14 +2024,14 @@ std::vector<double> PDClustering::updateCentroidsPosition(
   return max_shift_vector; // std::min(max_shift, max_wasserstein_shift);
 }
 
-void PDClustering::setBidderDiagrams() {
+void PersistenceDiagramClustering::setBidderDiagrams() {
   for(int i = 0; i < numberOfInputs_; i++) {
     if(do_min_) {
-      DiagramType *CTDiagram = &((*inputDiagramsMin_)[i]);
+      DiagramType *CTDiagram = &inputDiagramsMin_[i];
       BidderDiagram bidders;
       for(unsigned int j = 0; j < CTDiagram->size(); j++) {
         // Add bidder to bidders
-        Bidder b((*CTDiagram)[j], j, lambda_);
+        Bidder b((*CTDiagram)[j], j, Lambda);
 
         b.setPositionInAuction(bidders.size());
         bidders.emplace_back(b);
@@ -2078,12 +2050,12 @@ void PDClustering::setBidderDiagrams() {
     }
 
     if(do_sad_) {
-      DiagramType *CTDiagram = &((*inputDiagramsSaddle_)[i]);
+      DiagramType *CTDiagram = &inputDiagramsSaddle_[i];
 
       BidderDiagram bidders;
       for(unsigned int j = 0; j < CTDiagram->size(); j++) {
         // Add bidder to bidders
-        Bidder b((*CTDiagram)[j], j, lambda_);
+        Bidder b((*CTDiagram)[j], j, Lambda);
 
         b.setPositionInAuction(bidders.size());
         bidders.emplace_back(b);
@@ -2102,12 +2074,12 @@ void PDClustering::setBidderDiagrams() {
     }
 
     if(do_max_) {
-      DiagramType *CTDiagram = &((*inputDiagramsMax_)[i]);
+      DiagramType *CTDiagram = &inputDiagramsMax_[i];
 
       BidderDiagram bidders;
       for(unsigned int j = 0; j < CTDiagram->size(); j++) {
         // Add bidder to bidders
-        Bidder b((*CTDiagram)[j], j, lambda_);
+        Bidder b((*CTDiagram)[j], j, Lambda);
 
         b.setPositionInAuction(bidders.size());
         bidders.emplace_back(b);
@@ -2128,7 +2100,7 @@ void PDClustering::setBidderDiagrams() {
   return;
 }
 
-std::vector<double> PDClustering::enrichCurrentBidderDiagrams(
+std::vector<double> PersistenceDiagramClustering::enrichCurrentBidderDiagrams(
   const std::vector<double> &previous_min_persistence,
   const std::vector<double> &min_persistence,
   const std::vector<std::vector<double>> &initial_diagonal_prices,
@@ -2328,28 +2300,28 @@ std::vector<double> PDClustering::enrichCurrentBidderDiagrams(
                                  [candidates_to_be_added_min[i][idx_min[i][j]]]
             = current_bidder_diagrams_min_[i].size() - 1;
 
-          if(use_accelerated_ && n_iterations_ > 0) {
-            for(int c = 0; c < k_; ++c) {
+          if(UseAccelerated && n_iterations_ > 0) {
+            for(int c = 0; c < this->NumberOfClusters; ++c) {
               // Step 5 of Accelerated KMeans: Update the lower bound on
               // distance thanks to the triangular inequality
               l_[i][c]
-                = Geometry::pow(Geometry::pow(l_[i][c], 1. / wasserstein_)
+                = Geometry::pow(Geometry::pow(l_[i][c], 1. / WassersteinMetric)
                                   - persistence / sqrt(2),
-                                wasserstein_);
+                                WassersteinMetric);
               if(l_[i][c] < 0) {
                 l_[i][c] = 0;
               }
             }
             // Step 6, update the upper bound on the distance to the centroid
             // thanks to the triangle inequality
-            u_[i] = Geometry::pow(
-              Geometry::pow(u_[i], 1. / wasserstein_) + persistence / sqrt(2),
-              wasserstein_);
+            u_[i] = Geometry::pow(Geometry::pow(u_[i], 1. / WassersteinMetric)
+                                    + persistence / sqrt(2),
+                                  WassersteinMetric);
             r_[i] = true;
           }
           int to_be_added_to_barycenter
-            = deterministic_ ? compteur_for_adding_points % numberOfInputs_
-                             : rand() % numberOfInputs_;
+            = Deterministic ? compteur_for_adding_points % numberOfInputs_
+                            : rand() % numberOfInputs_;
           if(to_be_added_to_barycenter == 0 && add_points_to_barycenter) {
             for(int k = 0; k < numberOfInputs_; k++) {
               if(inv_clustering_[i] == inv_clustering_[k]) {
@@ -2386,28 +2358,28 @@ std::vector<double> PDClustering::enrichCurrentBidderDiagrams(
                                  [candidates_to_be_added_sad[i][idx_sad[i][j]]]
             = current_bidder_diagrams_saddle_[i].size() - 1;
 
-          if(use_accelerated_ && n_iterations_ > 0) {
-            for(int c = 0; c < k_; ++c) {
+          if(UseAccelerated && n_iterations_ > 0) {
+            for(int c = 0; c < this->NumberOfClusters; ++c) {
               // Step 5 of Accelerated KMeans: Update the lower bound on
               // distance thanks to the triangular inequality
               l_[i][c]
-                = Geometry::pow(Geometry::pow(l_[i][c], 1. / wasserstein_)
+                = Geometry::pow(Geometry::pow(l_[i][c], 1. / WassersteinMetric)
                                   - persistence / sqrt(2),
-                                wasserstein_);
+                                WassersteinMetric);
               if(l_[i][c] < 0) {
                 l_[i][c] = 0;
               }
             }
             // Step 6, update the upper bound on the distance to the centroid
             // thanks to the triangle inequality
-            u_[i] = Geometry::pow(
-              Geometry::pow(u_[i], 1. / wasserstein_) + persistence / sqrt(2),
-              wasserstein_);
+            u_[i] = Geometry::pow(Geometry::pow(u_[i], 1. / WassersteinMetric)
+                                    + persistence / sqrt(2),
+                                  WassersteinMetric);
             r_[i] = true;
           }
           int to_be_added_to_barycenter
-            = deterministic_ ? compteur_for_adding_points % numberOfInputs_
-                             : rand() % numberOfInputs_;
+            = Deterministic ? compteur_for_adding_points % numberOfInputs_
+                            : rand() % numberOfInputs_;
           if(to_be_added_to_barycenter == 0 && add_points_to_barycenter) {
             for(int k = 0; k < numberOfInputs_; k++) {
               if(inv_clustering_[i] == inv_clustering_[k]) {
@@ -2442,28 +2414,28 @@ std::vector<double> PDClustering::enrichCurrentBidderDiagrams(
                                  [candidates_to_be_added_max[i][idx_max[i][j]]]
             = current_bidder_diagrams_max_[i].size() - 1;
 
-          if(use_accelerated_ && n_iterations_ > 0) {
-            for(int c = 0; c < k_; ++c) {
+          if(UseAccelerated && n_iterations_ > 0) {
+            for(int c = 0; c < this->NumberOfClusters; ++c) {
               // Step 5 of Accelerated KMeans: Update the lower bound on
               // distance thanks to the triangular inequality
               l_[i][c]
-                = Geometry::pow(Geometry::pow(l_[i][c], 1. / wasserstein_)
+                = Geometry::pow(Geometry::pow(l_[i][c], 1. / WassersteinMetric)
                                   - persistence / sqrt(2),
-                                wasserstein_);
+                                WassersteinMetric);
               if(l_[i][c] < 0) {
                 l_[i][c] = 0;
               }
             }
             // Step 6, update the upper bound on the distance to the centroid
             // thanks to the triangle inequality
-            u_[i] = Geometry::pow(
-              Geometry::pow(u_[i], 1. / wasserstein_) + persistence / sqrt(2),
-              wasserstein_);
+            u_[i] = Geometry::pow(Geometry::pow(u_[i], 1. / WassersteinMetric)
+                                    + persistence / sqrt(2),
+                                  WassersteinMetric);
             r_[i] = true;
           }
           int to_be_added_to_barycenter
-            = deterministic_ ? compteur_for_adding_points % numberOfInputs_
-                             : rand() % numberOfInputs_;
+            = Deterministic ? compteur_for_adding_points % numberOfInputs_
+                            : rand() % numberOfInputs_;
           if(to_be_added_to_barycenter == 0 && add_points_to_barycenter) {
             for(int k = 0; k < numberOfInputs_; k++) {
               if(inv_clustering_[i] == inv_clustering_[k]) {
@@ -2487,22 +2459,22 @@ std::vector<double> PDClustering::enrichCurrentBidderDiagrams(
   return new_min_persistence;
 }
 
-void PDClustering::initializeBarycenterComputers() {
+void PersistenceDiagramClustering::initializeBarycenterComputers() {
 
   const auto getBaryRunner = [this]() -> PDBarycenter {
     PDBarycenter runner{};
     runner.setThreadNumber(this->threadNumber_);
     runner.setDebugLevel(this->debugLevel_);
-    runner.setWasserstein(this->wasserstein_);
+    runner.setWasserstein(this->WassersteinMetric);
     runner.setUseProgressive(false);
     runner.setDeterministic(true);
-    runner.setGeometricalFactor(this->geometrical_factor_);
+    runner.setGeometricalFactor(this->Alpha);
     return runner;
   };
 
   if(do_min_) {
-    barycenter_computer_min_.resize(k_, getBaryRunner());
-    for(int c = 0; c < k_; c++) {
+    barycenter_computer_min_.resize(this->NumberOfClusters, getBaryRunner());
+    for(int c = 0; c < this->NumberOfClusters; c++) {
       std::vector<BidderDiagram> diagrams_c;
       for(int idx : clustering_[c]) {
         diagrams_c.push_back(current_bidder_diagrams_min_[idx]);
@@ -2512,8 +2484,8 @@ void PDClustering::initializeBarycenterComputers() {
     }
   }
   if(do_sad_) {
-    barycenter_computer_sad_.resize(k_, getBaryRunner());
-    for(int c = 0; c < k_; c++) {
+    barycenter_computer_sad_.resize(this->NumberOfClusters, getBaryRunner());
+    for(int c = 0; c < this->NumberOfClusters; c++) {
       std::vector<BidderDiagram> diagrams_c;
       for(int idx : clustering_[c]) {
         diagrams_c.push_back(current_bidder_diagrams_saddle_[idx]);
@@ -2531,8 +2503,8 @@ void PDClustering::initializeBarycenterComputers() {
     }
   }
   if(do_max_) {
-    barycenter_computer_max_.resize(k_, getBaryRunner());
-    for(int c = 0; c < k_; c++) {
+    barycenter_computer_max_.resize(this->NumberOfClusters, getBaryRunner());
+    for(int c = 0; c < this->NumberOfClusters; c++) {
       std::vector<BidderDiagram> diagrams_c;
       for(int idx : clustering_[c]) {
         diagrams_c.push_back(current_bidder_diagrams_max_[idx]);
@@ -2551,21 +2523,21 @@ void PDClustering::initializeBarycenterComputers() {
   }
 }
 
-void PDClustering::printDistancesToFile() const {
+void PersistenceDiagramClustering::printDistancesToFile() const {
   std::ofstream ufile("u_vec.txt");
   std::ofstream lfile("l_mat.txt");
   std::ofstream approx_file("a_mat.txt");
   if(ufile.is_open() && lfile.is_open()) {
     for(int i = 0; i < numberOfInputs_; i++) {
       ufile << u_[i] << " ";
-      for(int j = 0; j < k_; j++) {
+      for(int j = 0; j < this->NumberOfClusters; j++) {
         lfile << l_[i][j] << " ";
       }
       lfile << "\n";
     }
   }
 
-  for(int c = 0; c < k_; c++) {
+  for(int c = 0; c < this->NumberOfClusters; c++) {
     for(int i : clustering_[c]) {
       approx_file << (u_[i] + l_[i][c]) / 2 << " ";
     }
@@ -2576,10 +2548,10 @@ void PDClustering::printDistancesToFile() const {
   approx_file.close();
 }
 
-void PDClustering::printRealDistancesToFile() const {
+void PersistenceDiagramClustering::printRealDistancesToFile() const {
   std::ofstream file("a_real_mat.txt");
   if(file.is_open()) {
-    for(int c = 0; c < k_; c++) {
+    for(int c = 0; c < this->NumberOfClusters; c++) {
       for(int i : clustering_[c]) {
         file << distanceToCentroid_[i] << " ";
       }
@@ -2591,12 +2563,13 @@ void PDClustering::printRealDistancesToFile() const {
   }
 }
 
-void PDClustering::printPricesToFile(const int iteration) const {
+void PersistenceDiagramClustering::printPricesToFile(
+  const int iteration) const {
   std::ofstream file(
     "prices_evolution.txt", std::ofstream::out | std::ofstream::app);
   if(file.is_open()) {
     file << "\nITERATION " << iteration << "\n\n";
-    for(int i = 0; i < k_; i++) {
+    for(int i = 0; i < this->NumberOfClusters; i++) {
       file << "\ncentroid " << i << '\n';
 
       for(const auto &g : centroids_with_price_max_[i]) {
@@ -2607,14 +2580,14 @@ void PDClustering::printPricesToFile(const int iteration) const {
   file.close();
 }
 
-double PDClustering::computeRealCost() const {
+double PersistenceDiagramClustering::computeRealCost() const {
   double total_real_cost_min = 0;
   double total_real_cost_max = 0;
   double total_real_cost_sad = 0;
   double sq_distance;
 
   if(original_dos[0]) {
-    for(int c = 0; c < k_; c++) {
+    for(int c = 0; c < this->NumberOfClusters; c++) {
       double real_cost_cluster = 0;
       for(int i = 0; i < numberOfInputs_; i++) {
         GoodDiagram current_barycenter
@@ -2627,7 +2600,7 @@ double PDClustering::computeRealCost() const {
     }
   }
   if(original_dos[1]) {
-    for(int c = 0; c < k_; c++) {
+    for(int c = 0; c < this->NumberOfClusters; c++) {
       double real_cost_cluster = 0;
       for(int i = 0; i < numberOfInputs_; i++) {
         GoodDiagram current_barycenter
@@ -2640,7 +2613,7 @@ double PDClustering::computeRealCost() const {
     }
   }
   if(original_dos[2]) {
-    for(int c = 0; c < k_; c++) {
+    for(int c = 0; c < this->NumberOfClusters; c++) {
       double real_cost_cluster = 0;
       for(int i = 0; i < numberOfInputs_; i++) {
         GoodDiagram current_barycenter
@@ -2655,7 +2628,7 @@ double PDClustering::computeRealCost() const {
   return total_real_cost_min + total_real_cost_sad + total_real_cost_max;
 }
 
-void PDClustering::computeBarycenterForTwo(
+void PersistenceDiagramClustering::computeBarycenterForTwo(
   std::vector<std::array<std::vector<std::vector<MatchingType>>, 3>>
     &all_matchings_per_type_and_cluster) {
 
@@ -2689,8 +2662,8 @@ void PDClustering::computeBarycenterForTwo(
           double gy = (bx + by) / 2;
           gx = (gx + bx) / 2;
           gy = (gy + by) / 2;
-          double cost = Geometry::pow((gx - bx), wasserstein_)
-                        + Geometry::pow((gy - by), wasserstein_);
+          double cost = Geometry::pow((gx - bx), WassersteinMetric)
+                        + Geometry::pow((gy - by), WassersteinMetric);
           Good g(gx, gy, false, centroids_min_[0].size());
           // g.SetCriticalCoordinates(b.coords_x_, b.coords_y_, b.coords_z_);
           MatchingType t2
@@ -2743,8 +2716,8 @@ void PDClustering::computeBarycenterForTwo(
           double gy = (bx + by) / 2;
           gx = (gx + bx) / 2;
           gy = (gy + by) / 2;
-          double cost = Geometry::pow((gx - bx), wasserstein_)
-                        + Geometry::pow((gy - by), wasserstein_);
+          double cost = Geometry::pow((gx - bx), WassersteinMetric)
+                        + Geometry::pow((gy - by), WassersteinMetric);
           MatchingType t2
             = std::make_tuple(bidderId, centroids_saddle_[0].size(), cost);
           Good g(gx, gy, false, centroids_saddle_[0].size());
@@ -2797,8 +2770,8 @@ void PDClustering::computeBarycenterForTwo(
           double gy = (bx + by) / 2;
           gx = (gx + bx) / 2;
           gy = (gy + by) / 2;
-          double cost = Geometry::pow((gx - bx), wasserstein_)
-                        + Geometry::pow((gy - by), wasserstein_);
+          double cost = Geometry::pow((gx - bx), WassersteinMetric)
+                        + Geometry::pow((gy - by), WassersteinMetric);
           MatchingType t2
             = std::make_tuple(bidderId, centroids_max_[0].size(), cost);
           Good g(gx, gy, false, centroids_max_[0].size());

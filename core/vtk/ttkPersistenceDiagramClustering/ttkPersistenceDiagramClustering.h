@@ -179,4 +179,5 @@ private:
   DISPLAY DisplayMethod{DISPLAY::COMPACT};
   METHOD Method{METHOD::PROGRESSIVE};
   bool needUpdate_{true};
+  bool UseInterruptible{true};
 };
