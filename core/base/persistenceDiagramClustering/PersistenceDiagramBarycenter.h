@@ -22,59 +22,6 @@
 
 namespace ttk {
 
-  class PersistenceDiagramBarycenter : public Debug {
-  public:
-    PersistenceDiagramBarycenter() {
-      this->setDebugMsgPrefix("PersistenceDiagramBarycenter");
-    }
-
-    void
-      executeBarycenter(std::vector<DiagramType> &intermediateDiagrams,
-                        DiagramType &barycenter,
-                        std::vector<std::vector<MatchingType>> &all_matchings,
-                        const int method,
-                        const bool reinit_prices,
-                        const bool epsilon_decreases,
-                        const bool stop_early) const;
-
-    inline void setNumberOfInputs(int numberOfInputs) {
-      NumberOfInputs = numberOfInputs;
-    }
-
-    inline void setDeterministic(const bool deterministic) {
-      Deterministic = deterministic;
-    }
-
-    inline void setWasserstein(const int wasserstein) {
-      WassersteinMetric = wasserstein;
-    }
-
-    inline void setUseProgressive(const bool use_progressive) {
-      UseProgressive = use_progressive;
-    }
-
-    inline void setAlpha(const double alpha) {
-      Alpha = alpha;
-    }
-
-    inline void setLambda(const double lambda) {
-      Lambda = lambda;
-    }
-
-    inline void setTimeLimit(const double time_limit) {
-      TimeLimit = time_limit;
-    }
-
-  protected:
-    int WassersteinMetric{2};
-    int NumberOfInputs{0};
-    double Alpha{1.0};
-    double Lambda{1.0};
-    double TimeLimit{1.0};
-    bool Deterministic{true};
-    bool UseProgressive{true};
-  };
-
   class PDBarycenter : public Debug {
     enum class ComputeMethod { PARTIAL_BIDDING, MUNKRES, AUCTION };
 

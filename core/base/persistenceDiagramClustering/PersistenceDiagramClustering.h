@@ -33,6 +33,15 @@ namespace ttk {
       std::vector<DiagramType> &centroids,
       std::vector<std::vector<std::vector<MatchingType>>> &all_matchings);
 
+    void
+      executeBarycenter(std::vector<DiagramType> &intermediateDiagrams,
+                        DiagramType &barycenter,
+                        std::vector<std::vector<MatchingType>> &all_matchings,
+                        const int method,
+                        const bool reinit_prices,
+                        const bool epsilon_decreases,
+                        const bool stop_early) const;
+
   protected:
     std::vector<int>
       run(std::vector<DiagramType> &final_centroids,

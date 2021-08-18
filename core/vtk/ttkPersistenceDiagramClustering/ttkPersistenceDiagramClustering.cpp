@@ -137,19 +137,8 @@ int ttkPersistenceDiagramClustering::RequestData(
       all_matchings_.resize(1); // at least of size 1
       inv_clustering_.resize(numInputs, 0);
 
-      PersistenceDiagramBarycenter pdBarycenter{};
-      pdBarycenter.setWasserstein(WassersteinMetric);
-      pdBarycenter.setNumberOfInputs(numInputs);
-      pdBarycenter.setTimeLimit(TimeLimit);
-      pdBarycenter.setDeterministic(Deterministic);
-      pdBarycenter.setUseProgressive(UseProgressive);
-      pdBarycenter.setDebugLevel(debugLevel_);
-      pdBarycenter.setThreadNumber(threadNumber_);
-      pdBarycenter.setAlpha(Alpha);
-      pdBarycenter.setLambda(Lambda);
-
-      pdBarycenter.executeBarycenter(intermediateDiagrams_, final_centroids_[0],
-                                     all_matchings_[0], 2, true, true, false);
+      this->executeBarycenter(intermediateDiagrams_, final_centroids_[0],
+                              all_matchings_[0], 2, true, true, false);
 
       needUpdate_ = false;
     }
