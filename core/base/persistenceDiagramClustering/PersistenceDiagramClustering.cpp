@@ -4,7 +4,7 @@
 
 using ttk::PersistenceDiagramClustering;
 
-std::vector<int> ttk::PersistenceDiagramClustering::execute(
+std::vector<int> ttk::PersistenceDiagramClustering::executeClustering(
   std::vector<DiagramType> &intermediateDiagrams,
   std::vector<DiagramType> &final_centroids,
   std::vector<std::vector<std::vector<MatchingType>>> &all_matchings) {

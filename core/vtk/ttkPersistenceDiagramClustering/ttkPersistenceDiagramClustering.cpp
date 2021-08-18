@@ -127,22 +127,18 @@ int ttkPersistenceDiagramClustering::RequestData(
         TimeLimit = 999999999;
       }
 
-      inv_clustering_ = this->execute(
+      inv_clustering_ = this->executeClustering(
         intermediateDiagrams_, final_centroids_, all_matchings_);
       needUpdate_ = false;
 
     } else if(this->Method == METHOD::AUCTION) {
 
       final_centroids_.resize(1);
-      inv_clustering_.resize(numInputs);
-      for(int i_input = 0; i_input < numInputs; i_input++) {
-        inv_clustering_[i_input] = 0;
-      }
-      PersistenceDiagramBarycenter pdBarycenter{};
+      all_matchings_.resize(1); // at least of size 1
+      inv_clustering_.resize(numInputs, 0);
 
-      const auto wassersteinMetric = std::to_string(WassersteinMetric);
-      pdBarycenter.setWasserstein(wassersteinMetric);
-      pdBarycenter.setMethod(2);
+      PersistenceDiagramBarycenter pdBarycenter{};
+      pdBarycenter.setWasserstein(WassersteinMetric);
       pdBarycenter.setNumberOfInputs(numInputs);
       pdBarycenter.setTimeLimit(TimeLimit);
       pdBarycenter.setDeterministic(Deterministic);
@@ -152,9 +148,8 @@ int ttkPersistenceDiagramClustering::RequestData(
       pdBarycenter.setAlpha(Alpha);
       pdBarycenter.setLambda(Lambda);
 
-      all_matchings_.resize(1); // at least of size 1
-      pdBarycenter.execute(
-        intermediateDiagrams_, final_centroids_[0], all_matchings_[0]);
+      pdBarycenter.executeBarycenter(intermediateDiagrams_, final_centroids_[0],
+                                     all_matchings_[0], 2, true, true, false);
 
       needUpdate_ = false;
     }

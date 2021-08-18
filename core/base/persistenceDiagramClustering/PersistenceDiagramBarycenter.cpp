@@ -2,30 +2,39 @@
 
 #include <numeric>
 
-void ttk::PersistenceDiagramBarycenter::execute(
+void ttk::PersistenceDiagramBarycenter::executeBarycenter(
   std::vector<DiagramType> &intermediateDiagrams,
   DiagramType &barycenter,
-  std::vector<std::vector<MatchingType>> &all_matchings) {
+  std::vector<std::vector<MatchingType>> &all_matchings,
+  const int method,
+  const bool reinit_prices,
+  const bool epsilon_decreases,
+  const bool stop_early) const {
 
   Timer tm;
 
-  printMsg("Computing Barycenter of " + std::to_string(numberOfInputs_)
+  printMsg("Computing Barycenter of " + std::to_string(NumberOfInputs)
            + " diagrams.");
 
-  std::vector<DiagramType> data_min(numberOfInputs_);
-  std::vector<DiagramType> data_sad(numberOfInputs_);
-  std::vector<DiagramType> data_max(numberOfInputs_);
+  std::vector<DiagramType> data_min(NumberOfInputs);
+  std::vector<DiagramType> data_sad(NumberOfInputs);
+  std::vector<DiagramType> data_max(NumberOfInputs);
 
-  std::vector<std::vector<int>> data_min_idx(numberOfInputs_);
-  std::vector<std::vector<int>> data_sad_idx(numberOfInputs_);
-  std::vector<std::vector<int>> data_max_idx(numberOfInputs_);
+  std::vector<std::vector<int>> data_min_idx(NumberOfInputs);
+  std::vector<std::vector<int>> data_sad_idx(NumberOfInputs);
+  std::vector<std::vector<int>> data_max_idx(NumberOfInputs);
+
+  bool ed = epsilon_decreases;
+  if(this->UseProgressive) {
+    ed = true;
+  }
 
   bool do_min = false;
   bool do_sad = false;
   bool do_max = false;
 
   // Create diagrams for min, saddle and max persistence pairs
-  for(int i = 0; i < numberOfInputs_; i++) {
+  for(int i = 0; i < NumberOfInputs; i++) {
     DiagramType &CTDiagram = intermediateDiagrams[i];
 
     for(size_t j = 0; j < CTDiagram.size(); ++j) {
@@ -68,28 +77,29 @@ void ttk::PersistenceDiagramBarycenter::execute(
     matching_max{};
 
   double total_cost = 0;
+  auto tl = TimeLimit;
   if(do_min && do_max) {
-    time_limit_ = time_limit_ / 2;
+    tl /= 2;
   }
   if(do_sad) {
-    time_limit_ = time_limit_ / 3;
+    tl /= 3;
   }
 
-  const auto getRunner = [this]() -> PDBarycenter {
+  const auto getRunner = [=]() -> PDBarycenter {
     PDBarycenter runner{};
     runner.setDebugLevel(this->debugLevel_);
     runner.setThreadNumber(this->threadNumber_);
-    runner.setWasserstein(this->wasserstein_);
-    runner.setNumberOfInputs(this->numberOfInputs_);
-    runner.setUseProgressive(this->use_progressive_);
-    runner.setTimeLimit(this->time_limit_);
-    runner.setGeometricalFactor(this->alpha_);
-    runner.setDeterministic(this->deterministic_);
-    runner.setLambda(this->lambda_);
-    runner.setMethod(this->method_);
-    runner.setEarlyStoppage(this->early_stoppage_);
-    runner.setEpsilonDecreases(this->epsilon_decreases_);
-    runner.setReinitPrices(this->reinit_prices_);
+    runner.setWasserstein(this->WassersteinMetric);
+    runner.setNumberOfInputs(this->NumberOfInputs);
+    runner.setUseProgressive(this->UseProgressive);
+    runner.setTimeLimit(tl);
+    runner.setGeometricalFactor(this->Alpha);
+    runner.setDeterministic(this->Deterministic);
+    runner.setLambda(this->Lambda);
+    runner.setMethod(method);
+    runner.setEarlyStoppage(stop_early);
+    runner.setEpsilonDecreases(ed);
+    runner.setReinitPrices(reinit_prices);
     return runner;
   };
 
@@ -115,8 +125,8 @@ void ttk::PersistenceDiagramBarycenter::execute(
   }
 
   // Reconstruct matchings
-  all_matchings.resize(numberOfInputs_);
-  for(int i = 0; i < numberOfInputs_; i++) {
+  all_matchings.resize(NumberOfInputs);
+  for(int i = 0; i < NumberOfInputs; i++) {
 
     if(do_min) {
       for(unsigned int j = 0; j < matching_min[i].size(); j++) {

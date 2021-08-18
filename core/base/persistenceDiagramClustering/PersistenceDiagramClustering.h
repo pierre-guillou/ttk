@@ -28,7 +28,7 @@ namespace ttk {
       this->setDebugMsgPrefix("PersistenceDiagramClustering");
     }
 
-    std::vector<int> execute(
+    std::vector<int> executeClustering(
       std::vector<DiagramType> &intermediateDiagrams,
       std::vector<DiagramType> &centroids,
       std::vector<std::vector<std::vector<MatchingType>>> &all_matchings);

@@ -28,80 +28,51 @@ namespace ttk {
       this->setDebugMsgPrefix("PersistenceDiagramBarycenter");
     }
 
-    void execute(std::vector<DiagramType> &intermediateDiagrams,
-                 DiagramType &barycenter,
-                 std::vector<std::vector<MatchingType>> &all_matchings);
+    void
+      executeBarycenter(std::vector<DiagramType> &intermediateDiagrams,
+                        DiagramType &barycenter,
+                        std::vector<std::vector<MatchingType>> &all_matchings,
+                        const int method,
+                        const bool reinit_prices,
+                        const bool epsilon_decreases,
+                        const bool stop_early) const;
 
     inline void setNumberOfInputs(int numberOfInputs) {
-      numberOfInputs_ = numberOfInputs;
+      NumberOfInputs = numberOfInputs;
     }
 
     inline void setDeterministic(const bool deterministic) {
-      deterministic_ = deterministic;
+      Deterministic = deterministic;
     }
 
-    inline void setWasserstein(const std::string &wasserstein) {
-      wasserstein_ = (wasserstein == "inf") ? -1 : stoi(wasserstein);
+    inline void setWasserstein(const int wasserstein) {
+      WassersteinMetric = wasserstein;
     }
 
     inline void setUseProgressive(const bool use_progressive) {
-      if(use_progressive)
-        epsilon_decreases_ = true;
-      use_progressive_ = use_progressive;
+      UseProgressive = use_progressive;
     }
 
     inline void setAlpha(const double alpha) {
-      alpha_ = alpha;
+      Alpha = alpha;
     }
 
     inline void setLambda(const double lambda) {
-      lambda_ = lambda;
+      Lambda = lambda;
     }
 
     inline void setTimeLimit(const double time_limit) {
-      time_limit_ = time_limit;
-    }
-
-    inline void setMethod(const int &method) {
-      method_ = method;
-    }
-
-    inline void setReinitPrices(const bool reinit_prices) {
-      reinit_prices_ = reinit_prices;
-    }
-
-    inline void setEpsilonDecreases(const bool epsilon_decreases) {
-      if(use_progressive_)
-        epsilon_decreases_ = true;
-      else
-        epsilon_decreases_ = epsilon_decreases;
-    }
-
-    inline void setEarlyStoppage(const bool early_stoppage) {
-      early_stoppage_ = early_stoppage;
+      TimeLimit = time_limit;
     }
 
   protected:
-    int method_{};
-    int wasserstein_{2};
-    int numberOfInputs_{0};
-    double alpha_{1.0};
-    double lambda_{1.0};
-    double time_limit_{1.0};
-
-    int points_added_{};
-    int points_deleted_{};
-
-    std::vector<std::vector<double>> all_matchings_{};
-    std::vector<std::vector<double>> all_old_matchings_{};
-    std::vector<BidderDiagram> bidder_diagrams_{};
-    std::vector<GoodDiagram> barycenter_goods_{};
-
-    bool deterministic_{true};
-    bool use_progressive_{true};
-    bool reinit_prices_{true};
-    bool epsilon_decreases_{true};
-    bool early_stoppage_{};
+    int WassersteinMetric{2};
+    int NumberOfInputs{0};
+    double Alpha{1.0};
+    double Lambda{1.0};
+    double TimeLimit{1.0};
+    bool Deterministic{true};
+    bool UseProgressive{true};
   };
 
   class PDBarycenter : public Debug {
