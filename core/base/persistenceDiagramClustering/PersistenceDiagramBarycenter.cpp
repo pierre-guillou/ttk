@@ -2,17 +2,16 @@
 
 #include <numeric>
 
-using ttk::MatchingType;
-using ttk::PDBarycenter;
-
-std::vector<std::vector<MatchingType>>
-  PDBarycenter::execute(const std::vector<DiagramType> &inputDiagrams,
-                        ttk::DiagramType &barycenter) {
+std::vector<std::vector<ttk::MatchingType>>
+  ttk::PersistenceDiagramBarycenter::execute(
+    const std::vector<DiagramType> &inputDiagrams,
+    ttk::DiagramType &barycenter) {
   return executeAuctionBarycenter(inputDiagrams, barycenter);
 }
 
-std::vector<std::vector<MatchingType>> PDBarycenter::executeAuctionBarycenter(
-  const std::vector<DiagramType> &inputDiagrams, DiagramType &barycenter) {
+std::vector<std::vector<ttk::MatchingType>>
+  ttk::PersistenceDiagramBarycenter::executeAuctionBarycenter(
+    const std::vector<DiagramType> &inputDiagrams, DiagramType &barycenter) {
   double total_time = 0;
 
   std::vector<std::vector<MatchingType>> previous_matchings;
@@ -134,7 +133,7 @@ std::vector<std::vector<MatchingType>> PDBarycenter::executeAuctionBarycenter(
   return corrected_matchings;
 }
 
-void PDBarycenter::runMatching(
+void ttk::PersistenceDiagramBarycenter::runMatching(
   double &total_cost,
   const double epsilon,
   const std::vector<int> &sizes,
@@ -179,7 +178,7 @@ void PDBarycenter::runMatching(
   }
 }
 
-void PDBarycenter::runMatchingAuction(
+void ttk::PersistenceDiagramBarycenter::runMatchingAuction(
   double &total_cost,
   const std::vector<int> &sizes,
   KDTree<double> &kdt,
@@ -205,7 +204,7 @@ void PDBarycenter::runMatchingAuction(
   }
 }
 
-bool PDBarycenter::hasBarycenterConverged(
+bool ttk::PersistenceDiagramBarycenter::hasBarycenterConverged(
   std::vector<std::vector<MatchingType>> &matchings,
   std::vector<std::vector<MatchingType>> &previous_matchings) {
 
@@ -228,8 +227,9 @@ bool PDBarycenter::hasBarycenterConverged(
   return true;
 }
 
-std::vector<std::vector<MatchingType>> PDBarycenter::correctMatchings(
-  std::vector<std::vector<MatchingType>> previous_matchings) {
+std::vector<std::vector<ttk::MatchingType>>
+  ttk::PersistenceDiagramBarycenter::correctMatchings(
+    std::vector<std::vector<MatchingType>> previous_matchings) {
 
   std::vector<std::vector<MatchingType>> corrected_matchings(numberOfInputs_);
   for(int i = 0; i < numberOfInputs_; i++) {
@@ -256,7 +256,7 @@ std::vector<std::vector<MatchingType>> PDBarycenter::correctMatchings(
   return corrected_matchings;
 }
 
-double PDBarycenter::updateBarycenter(
+double ttk::PersistenceDiagramBarycenter::updateBarycenter(
   std::vector<std::vector<MatchingType>> &matchings) {
   // 1. Initialize variables used in the sequel
   Timer t_update;
@@ -432,7 +432,7 @@ double PDBarycenter::updateBarycenter(
   return max_shift;
 }
 
-void PDBarycenter::setBidderDiagrams(
+void ttk::PersistenceDiagramBarycenter::setBidderDiagrams(
   const std::vector<DiagramType> &inputDiagrams) {
 
   for(int i = 0; i < numberOfInputs_; i++) {
@@ -460,7 +460,7 @@ void PDBarycenter::setBidderDiagrams(
   return;
 }
 
-double PDBarycenter::enrichCurrentBidderDiagrams(
+double ttk::PersistenceDiagramBarycenter::enrichCurrentBidderDiagrams(
   double previous_min_persistence,
   double min_persistence,
   std::vector<double> initial_diagonal_prices,
@@ -548,7 +548,7 @@ double PDBarycenter::enrichCurrentBidderDiagrams(
   return new_min_persistence;
 }
 
-double PDBarycenter::getMaxPersistence() {
+double ttk::PersistenceDiagramBarycenter::getMaxPersistence() {
   double max_persistence = 0;
   for(int i = 0; i < numberOfInputs_; i++) {
     BidderDiagram &D = bidder_diagrams_[i];
@@ -564,7 +564,7 @@ double PDBarycenter::getMaxPersistence() {
   return max_persistence;
 }
 
-double PDBarycenter::getMinimalPrice(int i) {
+double ttk::PersistenceDiagramBarycenter::getMinimalPrice(int i) {
   double min_price = std::numeric_limits<double>::max();
 
   GoodDiagram &D = barycenter_goods_[i];
@@ -584,7 +584,7 @@ double PDBarycenter::getMinimalPrice(int i) {
   return min_price;
 }
 
-double PDBarycenter::getLowestPersistence() {
+double ttk::PersistenceDiagramBarycenter::getLowestPersistence() {
   double lowest_persistence = std::numeric_limits<double>::max();
   for(int i = 0; i < numberOfInputs_; i++) {
     BidderDiagram &D = bidder_diagrams_[i];
@@ -603,7 +603,7 @@ double PDBarycenter::getLowestPersistence() {
   return lowest_persistence;
 }
 
-void PDBarycenter::setInitialBarycenter(
+void ttk::PersistenceDiagramBarycenter::setInitialBarycenter(
   const std::vector<DiagramType> &inputDiagrams, double min_persistence) {
   int size = 0;
   int random_idx;
@@ -635,7 +635,8 @@ void PDBarycenter::setInitialBarycenter(
   }
 }
 
-typename PDBarycenter::KDTreePair PDBarycenter::getKDTree() const {
+typename ttk::PersistenceDiagramBarycenter::KDTreePair
+  ttk::PersistenceDiagramBarycenter::getKDTree() const {
   Timer tm;
   auto kdt
     = std::unique_ptr<KDTree<double>>(new KDTree<double>{true, wasserstein_});
@@ -674,7 +675,7 @@ typename PDBarycenter::KDTreePair PDBarycenter::getKDTree() const {
   return std::make_pair(std::move(kdt), correspondance_kdt_map);
 }
 
-double PDBarycenter::computeRealCost() {
+double ttk::PersistenceDiagramBarycenter::computeRealCost() {
   double total_real_cost = 0;
   for(int i = 0; i < numberOfInputs_; i++) {
     PersistenceDiagramAuction auction(
@@ -688,8 +689,8 @@ double PDBarycenter::computeRealCost() {
   return sqrt(total_real_cost);
 }
 
-bool PDBarycenter::isPrecisionObjectiveMet(double precision_objective,
-                                           int mode) {
+bool ttk::PersistenceDiagramBarycenter::isPrecisionObjectiveMet(
+  double precision_objective, int mode) {
   if(mode == 0) { // ABSOLUTE PRECISION
     for(int i_input = 0; i_input < numberOfInputs_; i_input++) {
       if(precision_[i_input] > precision_objective) {

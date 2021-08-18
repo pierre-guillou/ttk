@@ -22,11 +22,11 @@
 
 namespace ttk {
 
-  class PDBarycenter : public Debug {
+  class PersistenceDiagramBarycenter : public Debug {
     enum class ComputeMethod { PARTIAL_BIDDING, MUNKRES, AUCTION };
 
   public:
-    PDBarycenter() {
+    PersistenceDiagramBarycenter() {
       this->setDebugMsgPrefix("PersistenceDiagramBarycenter");
     }
 

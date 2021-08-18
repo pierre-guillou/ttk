@@ -251,8 +251,8 @@ void ttk::PersistenceDiagramClustering::executeBarycenter(
     tl /= 3;
   }
 
-  const auto getRunner = [=]() -> PDBarycenter {
-    PDBarycenter runner{};
+  const auto getRunner = [=]() -> PersistenceDiagramBarycenter {
+    PersistenceDiagramBarycenter runner{};
     runner.setDebugLevel(this->debugLevel_);
     runner.setThreadNumber(this->threadNumber_);
     runner.setWasserstein(this->WassersteinMetric);
@@ -271,21 +271,21 @@ void ttk::PersistenceDiagramClustering::executeBarycenter(
 
   if(do_min) {
     printMsg("Computing Minima barycenter...");
-    PDBarycenter bary_min = getRunner();
+    PersistenceDiagramBarycenter bary_min = getRunner();
     matching_min = bary_min.execute(data_min, barycenter_min);
     total_cost += bary_min.getCost();
   }
 
   if(do_sad) {
     printMsg("Computing Saddles barycenter...");
-    PDBarycenter bary_sad = getRunner();
+    PersistenceDiagramBarycenter bary_sad = getRunner();
     matching_sad = bary_sad.execute(data_sad, barycenter_sad);
     total_cost += bary_sad.getCost();
   }
 
   if(do_max) {
     printMsg("Computing Maxima barycenter...");
-    PDBarycenter bary_max = getRunner();
+    PersistenceDiagramBarycenter bary_max = getRunner();
     matching_max = bary_max.execute(data_max, barycenter_max);
     total_cost += bary_max.getCost();
   }
@@ -2683,8 +2683,8 @@ std::vector<double> PersistenceDiagramClustering::enrichCurrentBidderDiagrams(
 
 void PersistenceDiagramClustering::initializeBarycenterComputers() {
 
-  const auto getBaryRunner = [this]() -> PDBarycenter {
-    PDBarycenter runner{};
+  const auto getBaryRunner = [this]() -> PersistenceDiagramBarycenter {
+    PersistenceDiagramBarycenter runner{};
     runner.setThreadNumber(this->threadNumber_);
     runner.setDebugLevel(this->debugLevel_);
     runner.setWasserstein(this->WassersteinMetric);

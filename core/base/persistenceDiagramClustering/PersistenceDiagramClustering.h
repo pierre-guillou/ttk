@@ -207,9 +207,9 @@ namespace ttk {
     }
 
     // data members
-    std::vector<PDBarycenter> barycenter_computer_min_{};
-    std::vector<PDBarycenter> barycenter_computer_sad_{};
-    std::vector<PDBarycenter> barycenter_computer_max_{};
+    std::vector<PersistenceDiagramBarycenter> barycenter_computer_min_{};
+    std::vector<PersistenceDiagramBarycenter> barycenter_computer_sad_{};
+    std::vector<PersistenceDiagramBarycenter> barycenter_computer_max_{};
 
     bool barycenter_inputs_reset_flag{};
     bool precision_criterion_{false};
