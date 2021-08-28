@@ -58,6 +58,12 @@ int ttkPersistenceDiagramClustering::RequestData(
 
   Memory m;
 
+  // Ensure state is clear
+  this->intermediateDiagrams_.clear();
+  this->all_matchings_.clear();
+  this->final_centroids_.clear();
+  this->inv_clustering_.clear();
+
   auto blocks = vtkMultiBlockDataSet::GetData(inputVector[0], 0);
 
   // Flat storage for diagrams extracted from blocks

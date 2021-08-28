@@ -25,6 +25,9 @@ std::vector<int> ttk::PersistenceDiagramClustering::executeClustering(
 
   std::vector<int> inv_clustering(numberOfInputs_);
 
+  // Ensure that member variables are empty
+  this->clear();
+
   // Create diagrams for min, saddle and max persistence pairs
   for(int i = 0; i < numberOfInputs_; i++) {
     const auto &CTDiagram = intermediateDiagrams[i];
@@ -411,7 +414,7 @@ std::vector<int> PersistenceDiagramClustering::run(
       UseAccelerated = false;
       UseKmeansppInit = false;
       if(numberOfInputs_ == 2 and ForceUseOfAlgorithm == false) {
-        UseProgressive = false;
+        use_progressive_ = false;
         Deterministic = true;
         matchings_only = true;
         TimeLimit = 99999999999;
@@ -430,7 +433,7 @@ std::vector<int> PersistenceDiagramClustering::run(
     bool converged = false;
     std::vector<bool> diagrams_complete(3);
     for(int c = 0; c < 3; c++) {
-      diagrams_complete[c] = (!UseProgressive) || (!original_dos[c]);
+      diagrams_complete[c] = (!use_progressive_) || (!original_dos[c]);
     }
     bool all_diagrams_complete
       = diagrams_complete[0] && diagrams_complete[1] && diagrams_complete[2];
@@ -470,7 +473,7 @@ std::vector<int> PersistenceDiagramClustering::run(
     min_points_to_add[1] = 10;
     min_points_to_add[2] = 10;
 
-    if(UseProgressive) {
+    if(use_progressive_) {
       // min_persistence = max_persistence/2.;
       // min_persistence = 0;
     } else {
@@ -501,7 +504,7 @@ std::vector<int> PersistenceDiagramClustering::run(
     all_diagrams_complete
       = diagrams_complete[0] && diagrams_complete[1] && diagrams_complete[2];
     if(all_diagrams_complete) {
-      UseProgressive = false;
+      use_progressive_ = false;
     }
 
     // Initializing centroids and clusters
@@ -524,7 +527,7 @@ std::vector<int> PersistenceDiagramClustering::run(
       printClustering();
     }
     initializeBarycenterComputers();
-    while(!converged || (!all_diagrams_complete && UseProgressive)) {
+    while(!converged || (!all_diagrams_complete && use_progressive_)) {
       Timer t_inside;
       {
         n_iterations_++;
@@ -537,7 +540,7 @@ std::vector<int> PersistenceDiagramClustering::run(
           }
         }
 
-        if(UseProgressive && n_iterations_ > 1) {
+        if(use_progressive_ && n_iterations_ > 1) {
 
           do_min_ = do_min_ && (min_persistence[0] > rho[0]);
           do_sad_ = do_sad_ && (min_persistence[1] > rho[1]);
@@ -591,7 +594,7 @@ std::vector<int> PersistenceDiagramClustering::run(
 
           if(diagrams_complete[0] && diagrams_complete[1]
              && diagrams_complete[2]) {
-            UseProgressive = false;
+            use_progressive_ = false;
             all_diagrams_complete = true;
           }
 
@@ -649,7 +652,7 @@ std::vector<int> PersistenceDiagramClustering::run(
 
         if(diagrams_complete[0] && diagrams_complete[1]
            && diagrams_complete[2]) {
-          UseProgressive = false;
+          use_progressive_ = false;
           all_diagrams_complete = true;
         }
         if(UseAccelerated) {
@@ -735,13 +738,13 @@ std::vector<int> PersistenceDiagramClustering::run(
         diagrams_complete[0] = true;
         diagrams_complete[1] = true;
         diagrams_complete[2] = true;
-        UseProgressive = false;
+        use_progressive_ = false;
       }
       if(debugLevel_ > 4) {
         this->printMsg("== Iteration " + std::to_string(n_iterations_)
                        + +" == complete : "
                        + std::to_string(all_diagrams_complete)
-                       + " , progressive : " + std::to_string(UseProgressive)
+                       + " , progressive : " + std::to_string(use_progressive_)
                        + " , converged : " + std::to_string(converged));
       }
     }
@@ -761,7 +764,7 @@ std::vector<int> PersistenceDiagramClustering::run(
     };
     this->printMsg(rows);
 
-    if(!UseProgressive && this->NumberOfClusters > 1) {
+    if(!use_progressive_ && this->NumberOfClusters > 1) {
       clustering_ = old_clustering_; // reverting to last clustering
     }
     invertClusters(); // this is to pass the old inverse clustering to the VTK
@@ -3015,4 +3018,60 @@ void PersistenceDiagramClustering::computeBarycenterForTwo(
       all_matchings_per_type_and_cluster[0][2][1].push_back(matching_to_add[j]);
     }
   }
+}
+
+void ttk::PersistenceDiagramClustering::clear() {
+  this->barycenter_inputs_reset_flag = {};
+  this->precision_criterion_ = false;
+  this->precision_max_ = false;
+  this->precision_min_ = false;
+  this->precision_sad_ = false;
+
+  // reset use_progressive_ from user-provided value
+  this->use_progressive_ = this->UseProgressive;
+
+  this->use_kdtree_ = true;
+  this->epsilon_min_ = {1e-8};
+  this->epsilon_ = {};
+  this->cost_ = this->cost_min_ = this->cost_sad_ = this->cost_max_ = {};
+  this->original_dos = {false, false, false};
+  this->do_min_ = false;
+  this->do_sad_ = false;
+  this->do_max_ = false;
+  this->n_iterations_ = {};
+
+  this->barycenter_computer_min_.clear();
+  this->barycenter_computer_sad_.clear();
+  this->barycenter_computer_max_.clear();
+  this->current_bidder_ids_min_.clear();
+  this->current_bidder_ids_sad_.clear();
+  this->current_bidder_ids_max_.clear();
+  this->inputDiagramsMin_.clear();
+  this->inputDiagramsSaddle_.clear();
+  this->inputDiagramsMax_.clear();
+
+  this->bidder_diagrams_min_.clear();
+  this->current_bidder_diagrams_min_.clear();
+  this->centroids_min_.clear();
+  this->centroids_with_price_min_.clear();
+  this->bidder_diagrams_saddle_.clear();
+  this->current_bidder_diagrams_saddle_.clear();
+  this->centroids_saddle_.clear();
+  this->centroids_with_price_saddle_.clear();
+  this->bidder_diagrams_max_.clear();
+  this->current_bidder_diagrams_max_.clear();
+  this->centroids_max_.clear();
+  this->centroids_with_price_max_.clear();
+
+  this->clustering_.clear();
+  this->old_clustering_.clear();
+  this->inv_clustering_.clear();
+
+  this->centroids_sizes_.clear();
+
+  this->r_.clear();
+  this->u_.clear();
+  this->l_.clear();
+  this->centroidsDistanceMatrix_.clear();
+  this->distanceToCentroid_.clear();
 }

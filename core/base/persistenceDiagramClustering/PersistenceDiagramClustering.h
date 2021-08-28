@@ -154,6 +154,7 @@ namespace ttk {
     }
     inline void setUseProgressive(const bool use_progressive) {
       UseProgressive = use_progressive;
+      use_progressive_ = use_progressive;
     }
     inline void setKMeanspp(const bool use_kmeanspp) {
       UseKmeansppInit = use_kmeanspp;
@@ -206,6 +207,8 @@ namespace ttk {
       }
     }
 
+    void clear();
+
     // data members
     std::vector<PersistenceDiagramBarycenter> barycenter_computer_min_{};
     std::vector<PersistenceDiagramBarycenter> barycenter_computer_sad_{};
@@ -233,7 +236,10 @@ namespace ttk {
     int numberOfInputs_{};
     int NumberOfClusters{1};
     int PairTypeClustering{-1};
+    // user-provided value
     bool UseProgressive{true};
+    // copy of UseProgressive, modified inside run()
+    bool use_progressive_{true};
     bool UseAccelerated{false};
     bool UseKmeansppInit{false};
     bool use_kdtree_{true};
