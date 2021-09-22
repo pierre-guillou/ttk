@@ -2,9 +2,11 @@ name: test_build
 
 on:
   push:
+    # enabled on pushes on branches "dev" and "stable"
+    branches:
+      - 'dev'
+      - 'stable'
     # triggered on tag pushes with tags beginning with either "v" or "dev"
-    branch-ignore:
-      - '*'
     tags:
       - 'v*'
       - 'dev*'
@@ -12,8 +14,7 @@ on:
       - 'build*'
       - 'test*'
   pull_request:
-    # triggered when PRs are opened & closed (merged or not)
-    types: [assigned, opened, synchronize, reopened, closed]
+    # also triggered by pull requests on the "dev" branch
     branches:
       - 'dev'
 
@@ -24,8 +25,6 @@ jobs:
   # Test Ubuntu build #
   # ------------------#
   test-build-ubuntu:
-    # job is not run when PR is closed without a merge
-    if: github.event.pull_request.merged == 'true' || github.event.action != 'closed'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -161,7 +160,6 @@ jobs:
   # Test macOS build #
   # -----------------#
   test-build-macos:
-    if: github.event.pull_request.merged == 'true' || github.event.action != 'closed'
     runs-on: macos-latest
     env:
       CCACHE_DIR: /Users/runner/work/ttk/.ccache
@@ -277,7 +275,6 @@ jobs:
   # Test Windows build #
   # ------------------ #
   test-build-windows:
-    if: github.event.pull_request.merged == 'true' || github.event.action != 'closed'
     runs-on: windows-latest
     env:
       VCVARS: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat
