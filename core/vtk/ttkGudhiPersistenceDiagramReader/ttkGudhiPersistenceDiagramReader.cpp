@@ -10,6 +10,7 @@
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
+#include <vtkUnsignedCharArray.h>
 #include <vtkUnstructuredGrid.h>
 
 #include <array>
@@ -65,8 +66,8 @@ struct PersistencePair {
 using PersistenceDiagram = std::vector<PersistencePair>;
 
 int ttkGudhiPersistenceDiagramReader::RequestData(
-  vtkInformation *request,
-  vtkInformationVector **inputVector,
+  vtkInformation *ttkNotUsed(request),
+  vtkInformationVector **ttkNotUsed(inputVector),
   vtkInformationVector *outputVector) {
 
   // read data from input file

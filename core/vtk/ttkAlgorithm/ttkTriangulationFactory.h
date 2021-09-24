@@ -12,9 +12,14 @@ class vtkImageData;
 class vtkPointSet;
 class vtkPoints;
 class vtkCellArray;
+
+#ifdef _WIN32
+#include <AbstractTriangulation.h>
+#else
 namespace ttk {
   class AbstractTriangulation;
 }
+#endif
 
 // allow to store 2 triangulation pointers (for implicit + periodic)
 using RegistryTriangulation

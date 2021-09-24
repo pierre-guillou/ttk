@@ -2,9 +2,11 @@ name: test_build
 
 on:
   push:
+    # enabled on pushes on branches "dev" and "stable"
+    branches:
+      - 'dev'
+      - 'stable'
     # triggered on tag pushes with tags beginning with either "v" or "dev"
-    branch-ignore:
-      - '*'
     tags:
       - 'v*'
       - 'dev*'
