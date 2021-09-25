@@ -160,13 +160,9 @@ jobs:
       run: |
         ccache -M 128M && ccache -c
 
-    - uses: stryd/fetch-release-asset@v1
-      name: Fetch TTK-ParaView headless macOS binary archive
-      with:
-        access_token: ${{ secrets.GH_TOKEN }}
-        repo: "pierre-guillou/paraview-ttk"
-        version: "tags/5.9.1-headless"
-        asset_name: "ttk-paraview-headless.tar.gz"
+    - name: Fetch TTK-ParaView headless macOS binary archive
+      run: |
+        wget https://github.com/pierre-guillou/paraview-ttk/releases/download/5.9.1-headless/ttk-paraview-headless.tar.gz
 
     - name: Install ParaView
       run: |
@@ -226,13 +222,11 @@ jobs:
       run: |
         rm -rf C:/hostedtoolcache/windows/Python
 
-    - uses: stryd/fetch-release-asset@v1
-      name: Fetch TTK-ParaView headless Windows installer
-      with:
-        access_token: ${{ secrets.GH_TOKEN }}
-        repo: "pierre-guillou/paraview-ttk"
-        version: "tags/5.9.1-headless"
-        asset_name: "ttk-paraview-headless.exe"
+    - name: Fetch TTK-ParaView headless Windows installer
+      run: |
+        Invoke-WebRequest `
+        -OutFile ttk-paraview-headless.exe `
+        -Uri https://github.com/pierre-guillou/paraview-ttk/releases/download/5.9.1-headless/ttk-paraview-headless.exe
 
     - name: Install ParaView
       shell: cmd
