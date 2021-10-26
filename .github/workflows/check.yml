@@ -81,6 +81,16 @@ jobs:
           | grep -E "\.h$|\.hpp$" \
           | xargs grep "using namespace"
 
+    - name: Keep the manual memory management under control
+      run: |
+        n_delete=$(git ls-files \
+          | grep "core/base" \
+          | grep -E "\.cpp$|\.cxx$|\.h$|\.hpp$" \
+          | xargs grep -e "^ *delete " \
+          | wc -l)
+        echo $n_delete
+        [ $n_delete = 26 ]
+
 
   # ------------- #
   # Code lint job #
