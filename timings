@@ -1,0 +1,86 @@
+ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu
+[MorseSmaleComplex] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[TwoSkeleton] Built 69897596 triangles ....................... [12.779s|1T|100%]
+[OneSkeleton] Built 42136128 edges ............................ [4.308s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex edges ..................... [3.446s|1T|100%]
+[TwoSkeleton] Built 69897596 triangle edges .................. [0.830s|16T|100%]
+[ZeroSkeleton] Built 7077888 vertex neighbors ................. [2.733s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex stars ..................... [1.863s|1T|100%]
+[OneSkeleton] Built 42136128 edge stars ...................... [1.825s|16T|100%]
+[TwoSkeleton] Built 7077888 vertex triangles ................. [2.962s|16T|100%]
+[TwoSkeleton] Built 42136128 edge triangles .................. [8.930s|16T|100%]
+[DiscreteGradient] Initialized discrete gradient memory ...... [0.626s|16T|100%]
+[ThreeSkeleton] Built 34839355 cell edges .................... [1.033s|16T|100%]
+[ThreeSkeleton] Built 34839355 cell neighbors ................ [2.709s|16T|100%]
+[MorseSmaleComplex] Preprocessing ........................... [50.920s|16T|100%]
+[MorseSmaleComplex] Launching computation on field `ImageFile_Order'...
+[DiscreteGradient] Built discrete gradient ................... [2.321s|16T|100%]
+[MorseSmaleComplex3D] Ascending 2-separatrices computed ...... [6.834s|16T|100%]
+[MorseSmaleComplex3D] Data-set (7077888 points) processed .... [9.891s|16T|100%]
+ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu  262,04s user 53,86s system 432% cpu 1:13,00 total
+
+ ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu -t 1
+[MorseSmaleComplex] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[TwoSkeleton] Built 69897596 triangles ....................... [11.879s|1T|100%]
+[OneSkeleton] Built 42136128 edges ............................ [3.530s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex edges ..................... [2.898s|1T|100%]
+[TwoSkeleton] Built 69897596 triangle edges ................... [4.887s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex neighbors ................. [2.500s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex stars ..................... [1.171s|1T|100%]
+[OneSkeleton] Built 42136128 edge stars ...................... [16.862s|1T|100%]
+[TwoSkeleton] Built 7077888 vertex triangles .................. [5.838s|1T|100%]
+[TwoSkeleton] Built 42136128 edge triangles .................. [11.677s|1T|100%]
+[DiscreteGradient] Initialized discrete gradient memory ....... [0.512s|1T|100%]
+[ThreeSkeleton] Built 34839355 cell edges ..................... [3.520s|1T|100%]
+[ThreeSkeleton] Built 34839355 cell neighbors ................. [7.406s|1T|100%]
+[MorseSmaleComplex] Preprocessing ............................ [78.308s|1T|100%]
+[MorseSmaleComplex] Launching computation on field `ImageFile_Order'...
+[DiscreteGradient] Built discrete gradient ................... [20.273s|1T|100%]
+[MorseSmaleComplex3D] Ascending 2-separatrices computed ...... [36.476s|1T|100%]
+[MorseSmaleComplex3D] Data-set (7077888 points) processed .... [57.968s|1T|100%]
+[MorseSmaleComplex] Complete ................................ [136.500s|1T|100%]
+ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu  129,47s user 32,56s system 97% cpu 2:45,90 total
+
+ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu
+[MorseSmaleComplex] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[TwoSkeleton] Built 69897596 triangles ........................ [6.775s|1T|100%]
+[ExplicitTriangulation] Extracted boundary vertices ........... [7.204s|1T|100%]
+[OneSkeleton] Built 42136128 edges ............................ [5.900s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex edges ..................... [0.318s|1T|100%]
+[TwoSkeleton] Built 69897596 triangle edges .................. [0.750s|16T|100%]
+[ExplicitTriangulation] Extracted boundary edges .............. [1.620s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex neighbors ................. [0.424s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex stars ..................... [1.147s|1T|100%]
+[ExplicitTriangulation] Extracted boundary triangles .......... [0.055s|1T|100%]
+[TwoSkeleton] Built 7077888 vertex triangles .................. [1.328s|1T|100%]
+[TwoSkeleton] Built 42136128 edge triangles .................. [1.108s|16T|100%]
+[DiscreteGradient] Initialized discrete gradient memory ...... [0.539s|16T|100%]
+[ThreeSkeleton] Built 34839355 cell neighbors ................. [1.076s|1T|100%]
+[MorseSmaleComplex] Preprocessing ........................... [20.935s|16T|100%]
+[MorseSmaleComplex] Launching computation on field `ImageFile_Order'...
+[DiscreteGradient] Built discrete gradient ................... [2.364s|16T|100%]
+[MorseSmaleComplex3D] Ascending 2-separatrices computed ...... [5.767s|16T|100%]
+[MorseSmaleComplex3D] Data-set (7077888 points) processed .... [8.819s|16T|100%]
+ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu  98,65s user 19,06s system 372% cpu 31,606 total
+
+ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu -t 1
+[MorseSmaleComplex] %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[TwoSkeleton] Built 69897596 triangles ........................ [5.389s|1T|100%]
+[ExplicitTriangulation] Extracted boundary vertices ........... [5.729s|1T|100%]
+[OneSkeleton] Built 42136128 edges ............................ [4.109s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex edges ..................... [0.321s|1T|100%]
+[TwoSkeleton] Built 69897596 triangle edges ................... [4.086s|1T|100%]
+[ExplicitTriangulation] Extracted boundary edges .............. [4.913s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex neighbors ................. [0.449s|1T|100%]
+[ZeroSkeleton] Built 7077888 vertex stars ..................... [0.849s|1T|100%]
+[ExplicitTriangulation] Extracted boundary triangles .......... [0.054s|1T|100%]
+[TwoSkeleton] Built 7077888 vertex triangles .................. [1.122s|1T|100%]
+[TwoSkeleton] Built 42136128 edge triangles ................... [1.135s|1T|100%]
+[DiscreteGradient] Initialized discrete gradient memory ....... [0.473s|1T|100%]
+[ThreeSkeleton] Built 34839355 cell neighbors ................. [0.961s|1T|100%]
+[MorseSmaleComplex] Preprocessing ............................ [20.221s|1T|100%]
+[MorseSmaleComplex] Launching computation on field `ImageFile_Order'...
+[DiscreteGradient] Built discrete gradient ................... [17.415s|1T|100%]
+[MorseSmaleComplex3D] Ascending 2-separatrices computed ...... [25.581s|1T|100%]
+[MorseSmaleComplex3D] Data-set (7077888 points) processed .... [43.756s|1T|100%]
+ttkMorseSmaleComplexCmd -i datasets/aneurism_256x256x256_uint8_order_expl.vtu  55,79s user 9,86s system 99% cpu 1:05,75 total
