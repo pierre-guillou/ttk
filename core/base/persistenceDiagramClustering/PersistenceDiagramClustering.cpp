@@ -435,8 +435,7 @@ std::vector<int> PersistenceDiagramClustering::run(
     for(int c = 0; c < 3; c++) {
       diagrams_complete[c] = (!use_progressive_) || (!original_dos[c]);
     }
-    bool all_diagrams_complete
-      = diagrams_complete[0] && diagrams_complete[1] && diagrams_complete[2];
+    bool all_diagrams_complete{false};
     n_iterations_ = 0;
     double total_time = 0;
 
@@ -1840,20 +1839,13 @@ std::vector<double> PersistenceDiagramClustering::updateCentroidsPosition(
           // Diagram was already linked to this centroid before
           if(do_min_) {
             centroids_with_price_min.push_back(centroids_with_price_min_[idx]);
-            number_of_points_min += centroids_with_price_min_[idx].size()
-                                    + current_bidder_diagrams_min_[idx].size();
           }
           if(do_sad_) {
             centroids_with_price_sad.push_back(
               centroids_with_price_saddle_[idx]);
-            number_of_points_sad
-              += centroids_with_price_saddle_[idx].size()
-                 + current_bidder_diagrams_saddle_[idx].size();
           }
           if(do_max_) {
             centroids_with_price_max.push_back(centroids_with_price_max_[idx]);
-            number_of_points_max += centroids_with_price_max_[idx].size()
-                                    + current_bidder_diagrams_max_[idx].size();
           }
         } else {
           // Otherwise, centroid is given 0 prices and the diagram is given 0

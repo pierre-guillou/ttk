@@ -36,9 +36,9 @@ std::vector<std::vector<ttk::MatchingType>>
   }
 
   int min_points_to_add = std::numeric_limits<int>::max();
-  min_persistence = this->enrichCurrentBidderDiagrams(
-    2 * max_persistence, min_persistence, min_diag_price, min_price,
-    min_points_to_add, false);
+  this->enrichCurrentBidderDiagrams(2 * max_persistence, min_persistence,
+                                    min_diag_price, min_price,
+                                    min_points_to_add, false);
 
   int n_iterations = 0;
 
@@ -612,7 +612,6 @@ void ttk::PersistenceDiagramBarycenter::setInitialBarycenter(
     random_idx
       = deterministic_ ? iter % numberOfInputs_ : rand() % numberOfInputs_;
     const auto &CTDiagram = inputDiagrams[random_idx];
-    size = CTDiagram.size();
     for(int i = 0; i < numberOfInputs_; i++) {
       GoodDiagram goods;
       int count = 0;
