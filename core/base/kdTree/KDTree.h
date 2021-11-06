@@ -332,14 +332,13 @@ namespace ttk {
       costs.push_back(cost);
     } else {
       // 1.1- Find the most costly amongst neighbours
-      std::vector<int> idx(k);
-      for(unsigned int i = 0; i < k; i++) {
-        idx[i] = i;
+      int idx_max_cost{0};
+      for(unsigned int i = 1; i < k; ++i) {
+        if(costs[i] > costs[idx_max_cost]) {
+          idx_max_cost = i;
+        }
       }
-      int idx_max_cost = *std::max_element(
-        idx.begin(), idx.end(),
-        [&costs](int &a, int &b) { return costs[a] < costs[b]; });
-      dataType max_cost = costs[idx_max_cost];
+      const auto max_cost = costs[idx_max_cost];
 
       // 1.2- If the current KDTree is less costly, put it in the neighbours and
       // update costs.
