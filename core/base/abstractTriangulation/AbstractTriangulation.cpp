@@ -1,18 +1,15 @@
 #include <AbstractTriangulation.h>
 
-using namespace std;
 using namespace ttk;
 
 AbstractTriangulation::AbstractTriangulation() {
-
   setDebugMsgPrefix("AbstractTriangulation");
   clear();
 }
 
 AbstractTriangulation::~AbstractTriangulation() = default;
 
-int AbstractTriangulation::clear() {
-
+void AbstractTriangulation::clear() {
   hasPeriodicBoundaries_ = false;
   hasPreconditionedBoundaryEdges_ = false;
   hasPreconditionedBoundaryTriangles_ = false;
@@ -58,35 +55,11 @@ int AbstractTriangulation::clear() {
   vertexNeighborList_.clear();
   vertexStarList_.clear();
   vertexTriangleList_.clear();
-
-  return 0;
-}
-
-template <class itemType>
-size_t AbstractTriangulation::tableTableFootprint(
-  const vector<vector<itemType>> &table,
-  const string &tableName,
-  ostream &stream) const {
-
-  size_t localByteNumber = 0;
-  stringstream msg;
-
-  for(size_t i = 0; i < table.size(); i++) {
-    localByteNumber += table[i].size() * sizeof(itemType);
-  }
-
-  if((localByteNumber) && (tableName.length()) && (msg)) {
-    msg << tableName << ": " << localByteNumber << " bytes";
-    printMsg(msg.str(), debug::Priority::INFO, debug::LineMode::NEW, stream);
-  }
-
-  return localByteNumber;
 }
 
 size_t AbstractTriangulation::footprint(size_t size) const {
 
   size += sizeof(*this);
-  stringstream msg;
 
   const auto printArrayFootprint
     = [this](const FlatJaggedArray &array, const std::string &name) {
@@ -119,8 +92,8 @@ size_t AbstractTriangulation::footprint(size_t size) const {
   size += tableFootprint(boundaryEdges_, "boundaryEdges_");
   size += tableFootprint(boundaryTriangles_, "boundaryTriangles_");
 
-  msg << "Total footprint: " << (size / 1024) / 1024 << " MiB.";
-  printMsg(msg.str());
+  this->printMsg("Total footprint: " + std::to_string((size / 1024) / 1024)
+                 + " MiB.");
 
   return size;
 }

@@ -71,8 +71,7 @@ namespace ttk {
     AbstractTriangulation &operator=(AbstractTriangulation &&) = default;
 
     /// Reset the triangulation data-structures.
-    /// \return Returns 0 upon success, negative values otherwise.
-    int clear();
+    void clear();
 
     /// Computes and displays the memory footprint of the data-structure.
     /// \return Returns 0 upon success, negative values otherwise.
@@ -3713,11 +3712,6 @@ namespace ttk {
 
       return table.size() * sizeof(itemType);
     }
-
-    template <class itemType>
-    size_t tableTableFootprint(const std::vector<std::vector<itemType>> &table,
-                               const std::string &tableName = "",
-                               std::ostream &stream = std::cout) const;
 
     int updateProgress(const float &ttkNotUsed(progress)) override {
       return 0;
