@@ -177,7 +177,7 @@ namespace ttk {
     /// from any time performance measurement.
     /// \return Returns a pointer to the cell edge list.
     /// \sa getCellNeighbors()
-    virtual inline const std::vector<std::vector<SimplexId>> *getCellEdges() {
+    virtual inline const FlatJaggedArray *getCellEdges() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(!hasPreconditionedCellEdges())
         return nullptr;
@@ -273,8 +273,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the cell neighbor list.
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getCellNeighbors() {
+    virtual inline const FlatJaggedArray *getCellNeighbors() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(!hasPreconditionedCellNeighbors())
         return nullptr;
@@ -386,8 +385,7 @@ namespace ttk {
     /// from any time performance measurement.
     /// \return Returns a pointer to the cell triangle list.
     /// \sa getCellNeighbors()
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getCellTriangles() {
+    virtual inline const FlatJaggedArray *getCellTriangles() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() == 1)
         return nullptr;
@@ -555,7 +553,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the edge link list.
-    virtual inline const std::vector<std::vector<SimplexId>> *getEdgeLinks() {
+    virtual inline const FlatJaggedArray *getEdgeLinks() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() == 1)
         return nullptr;
@@ -661,7 +659,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the edge star list.
-    virtual inline const std::vector<std::vector<SimplexId>> *getEdgeStars() {
+    virtual inline const FlatJaggedArray *getEdgeStars() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() == 1)
         return nullptr;
@@ -765,8 +763,7 @@ namespace ttk {
     /// from any time performance measurement.
     /// \return Returns a pointer to the edge triangle list.
     /// \sa getEdgeStars
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getEdgeTriangles() {
+    virtual inline const FlatJaggedArray *getEdgeTriangles() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() == 1)
         return nullptr;
@@ -1016,8 +1013,7 @@ namespace ttk {
     /// from any time performance measurement.
     /// \return Returns a pointer to the triangle edge list.
     /// \sa getCellEdges()
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getTriangleEdges() {
+    virtual inline const FlatJaggedArray *getTriangleEdges() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() == 1)
         return nullptr;
@@ -1115,8 +1111,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the triangle link list.
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getTriangleLinks() {
+    virtual inline const FlatJaggedArray *getTriangleLinks() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() != 3)
         return nullptr;
@@ -1214,8 +1209,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the triangle star list.
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getTriangleStars() {
+    virtual inline const FlatJaggedArray *getTriangleStars() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() != 3)
         return nullptr;
@@ -1358,7 +1352,7 @@ namespace ttk {
     /// from any time performance measurement.
     /// \return Returns a pointer to the vertex edge list.
     /// \sa getVertexStars()
-    virtual inline const std::vector<std::vector<SimplexId>> *getVertexEdges() {
+    virtual inline const FlatJaggedArray *getVertexEdges() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(!hasPreconditionedVertexEdges())
         return nullptr;
@@ -1448,7 +1442,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the vertex link list.
-    virtual inline const std::vector<std::vector<SimplexId>> *getVertexLinks() {
+    virtual inline const FlatJaggedArray *getVertexLinks() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(!hasPreconditionedVertexLinks())
         return nullptr;
@@ -1528,8 +1522,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the vertex neighbor list.
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getVertexNeighbors() {
+    virtual inline const FlatJaggedArray *getVertexNeighbors() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(!hasPreconditionedVertexNeighbors())
         return nullptr;
@@ -1631,7 +1624,7 @@ namespace ttk {
     /// \note It is recommended to exclude such a preconditioning step
     /// from any time performance measurement.
     /// \return Returns a pointer to the vertex star list.
-    virtual inline const std::vector<std::vector<SimplexId>> *getVertexStars() {
+    virtual inline const FlatJaggedArray *getVertexStars() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(!hasPreconditionedVertexStars())
         return nullptr;
@@ -1733,8 +1726,7 @@ namespace ttk {
     /// from any time performance measurement.
     /// \return Returns a pointer to the vertex triangle list.
     /// \sa getVertexStars()
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getVertexTriangles() {
+    virtual inline const FlatJaggedArray *getVertexTriangles() {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(getDimensionality() == 1)
         return nullptr;
@@ -3009,8 +3001,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getCellEdgesInternal() {
+    virtual inline const FlatJaggedArray *getCellEdgesInternal() {
       return nullptr;
     }
 
@@ -3026,8 +3017,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getCellNeighborsInternal() {
+    virtual inline const FlatJaggedArray *getCellNeighborsInternal() {
       return nullptr;
     }
 
@@ -3043,8 +3033,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getCellTrianglesInternal() {
+    virtual inline const FlatJaggedArray *getCellTrianglesInternal() {
       return nullptr;
     }
 
@@ -3081,8 +3070,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getEdgeLinksInternal() {
+    virtual inline const FlatJaggedArray *getEdgeLinksInternal() {
       return nullptr;
     }
 
@@ -3098,8 +3086,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getEdgeStarsInternal() {
+    virtual inline const FlatJaggedArray *getEdgeStarsInternal() {
       return nullptr;
     }
 
@@ -3115,8 +3102,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getEdgeTrianglesInternal() {
+    virtual inline const FlatJaggedArray *getEdgeTrianglesInternal() {
       return nullptr;
     }
 
@@ -3160,8 +3146,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getTriangleEdgesInternal() {
+    virtual inline const FlatJaggedArray *getTriangleEdgesInternal() {
       return nullptr;
     }
 
@@ -3177,8 +3162,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getTriangleLinksInternal() {
+    virtual inline const FlatJaggedArray *getTriangleLinksInternal() {
       return nullptr;
     }
 
@@ -3194,8 +3178,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getTriangleStarsInternal() {
+    virtual inline const FlatJaggedArray *getTriangleStarsInternal() {
       return nullptr;
     }
 
@@ -3218,8 +3201,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getVertexEdgesInternal() {
+    virtual inline const FlatJaggedArray *getVertexEdgesInternal() {
       return nullptr;
     }
 
@@ -3235,8 +3217,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getVertexLinksInternal() {
+    virtual inline const FlatJaggedArray *getVertexLinksInternal() {
       return nullptr;
     }
 
@@ -3252,8 +3233,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getVertexNeighborsInternal() {
+    virtual inline const FlatJaggedArray *getVertexNeighborsInternal() {
       return nullptr;
     }
 
@@ -3277,8 +3257,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getVertexStarsInternal() {
+    virtual inline const FlatJaggedArray *getVertexStarsInternal() {
       return nullptr;
     }
 
@@ -3294,8 +3273,7 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline const std::vector<std::vector<SimplexId>> *
-      getVertexTrianglesInternal() {
+    virtual inline const FlatJaggedArray *getVertexTrianglesInternal() {
       return nullptr;
     }
 
