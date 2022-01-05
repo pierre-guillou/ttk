@@ -43,7 +43,11 @@ int ttk::PersistentSimplexPairs::pairCells(
 
   Timer tm{};
 
-  for(const auto &c : filtration) {
+  this->printMsg("Computing pairs", 0, 0, 1, ttk::debug::LineMode::REPLACE);
+
+  for(size_t i = 0; i < filtration.size(); ++i) {
+
+    const auto &c{filtration[i]};
 
     // skip vertices
     if(c.dim_ == 0) {
@@ -63,6 +67,13 @@ int ttk::PersistentSimplexPairs::pairCells(
       if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
         pairs.emplace_back(partner, c.id_, c.dim_ - 1);
       }
+    }
+
+    if(i % (filtration.size() / 10) == 0) {
+      this->printMsg(
+        "Computing pairs",
+        std::round(10 * i / static_cast<float>(filtration.size())) / 10.0f,
+        tm.getElapsedTime(), 1, ttk::debug::LineMode::REPLACE);
     }
   }
 
