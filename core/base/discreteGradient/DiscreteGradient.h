@@ -213,6 +213,22 @@ in the gradient.
                               const triangulationType &triangulation,
                               bool isReverse = false) const;
 
+#ifndef TTK_ENABLE_DCG_OPTIMIZE_MEMORY
+      inline SimplexId getPairedCell(const Cell &cell) const {
+        if(cell.dim_ < 0 || cell.dim_ > this->dimensionality_ - 1) {
+          return -1;
+        }
+        return (*this->gradient_)[2 * cell.dim_][cell.id_];
+      }
+
+      inline SimplexId getReversePairedCell(const Cell &cell) const {
+        if(cell.dim_ < 1 || cell.dim_ > this->dimensionality_) {
+          return -1;
+        }
+        return (*this->gradient_)[2 * cell.dim_ - 1][cell.id_];
+      }
+#endif // TTK_ENABLE_DCG_OPTIMIZE_MEMORY
+
       /**
        * Return the VPath coming from the given cell.
        */
