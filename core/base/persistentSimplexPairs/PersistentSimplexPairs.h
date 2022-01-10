@@ -11,9 +11,7 @@
 
 #pragma once
 
-#include <AbstractTriangulation.h>
-#include <Debug.h>
-#include <VisitedMask.h>
+#include <DiscreteGradient.h>
 
 #include <algorithm>
 #include <string>
@@ -44,15 +42,8 @@ namespace ttk {
      */
     inline void preconditionTriangulation(AbstractTriangulation *const data) {
       if(data != nullptr) {
+        this->dg_.preconditionTriangulation(data);
         const auto dim = data->getDimensionality();
-        data->preconditionEdges();
-        if(dim == 2) {
-          data->preconditionCellEdges();
-        } else if(dim == 3) {
-          data->preconditionTriangles();
-          data->preconditionTriangleEdges();
-          data->preconditionCellTriangles();
-        }
         this->nVerts_ = data->getNumberOfVertices();
         this->nEdges_ = data->getNumberOfEdges();
         this->nTri_ = dim > 1 ? data->getNumberOfTriangles() : 0;
@@ -193,6 +184,7 @@ namespace ttk {
     SimplexId nEdges_{0};
     SimplexId nTri_{0};
     SimplexId nTetra_{0};
+    mutable ttk::dcg::DiscreteGradient dg_{};
   };
 
 } // namespace ttk
@@ -204,6 +196,9 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
   const triangulationType &triangulation) const {
 
   Timer tm{};
+
+  this->dg_.setInputOffsets(orderField);
+  this->dg_.buildGradient(triangulation);
 
   // every simplex in the triangulation, sorted by filtration
   const auto filtration
