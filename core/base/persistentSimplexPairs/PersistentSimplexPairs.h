@@ -172,6 +172,7 @@ namespace ttk {
 
     SimplexId eliminateBoundaries(const Simplex &c,
                                   VisitedMask &boundary,
+                                  const std::vector<Simplex> &filtration,
                                   const std::vector<SimplexId> &filtOrder,
                                   const std::vector<Simplex> &partners) const;
 

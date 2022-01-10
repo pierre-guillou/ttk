@@ -7,6 +7,7 @@ ttk::PersistentSimplexPairs::PersistentSimplexPairs() {
 ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
   const Simplex &c,
   VisitedMask &boundary,
+  const std::vector<Simplex> &filtration,
   const std::vector<SimplexId> &filtOrder,
   const std::vector<Simplex> &partners) const {
 
@@ -20,11 +21,19 @@ ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
         return filtOrder[getCellId(c.dim_ - 1, a)]
                < filtOrder[getCellId(c.dim_ - 1, b)];
       })};
-    const auto &partnerTau{partners[getCellId(c.dim_ - 1, tau)]};
-    if(partnerTau.dim_ == -1 || partnerTau.id_ == -1) {
+    const Cell cTau{c.dim_ - 1, tau};
+    const auto pTau{this->dg_.getPairedCell(cTau)};
+    const Simplex *partnerTau{}; // co-facet of tau
+    if(pTau == -1) {
+      // tau is a critical cell
+      partnerTau = &partners[getCellId(c.dim_ - 1, tau)];
+    } else {
+      partnerTau = &filtration[filtOrder[getCellId(c.dim_, pTau)]];
+    }
+    if(partnerTau->dim_ == -1 || partnerTau->id_ == -1) {
       return tau;
     }
-    addCellBoundary(partnerTau, boundary);
+    addCellBoundary(*partnerTau, boundary);
   }
 
   return -1;
@@ -41,23 +50,28 @@ int ttk::PersistentSimplexPairs::pairCells(
   // paired simplices
   std::vector<Simplex> partners(filtration.size());
 
+  // critical simplices indices in filtration vector
+  std::vector<SimplexId> critFilt{};
+  for(size_t i = 0; i < filtration.size(); ++i) {
+    const auto &s{filtration[i]};
+    if(this->dg_.isCellCritical(Cell{s.dim_, s.id_}) && s.dim_ > 0) {
+      critFilt.emplace_back(i);
+    }
+  }
+
   Timer tm{};
 
   this->printMsg("Computing pairs", 0, 0, 1, ttk::debug::LineMode::REPLACE);
 
-  for(size_t i = 0; i < filtration.size(); ++i) {
+  for(size_t i = 0; i < critFilt.size(); ++i) {
 
-    const auto &c{filtration[i]};
-
-    // skip vertices
-    if(c.dim_ == 0) {
-      continue;
-    }
+    const auto &c{filtration[critFilt[i]]};
 
     // store the boundary cells
     VisitedMask vm{boundaries[c.dim_ - 1], visitedIds};
 
-    const auto partner = eliminateBoundaries(c, vm, filtOrder, partners);
+    const auto partner
+      = eliminateBoundaries(c, vm, filtration, filtOrder, partners);
     if(partner != -1) {
       const auto &pc{filtration[filtOrder[getCellId(c.dim_ - 1, partner)]]};
       partners[c.cellId_] = pc;
@@ -69,10 +83,10 @@ int ttk::PersistentSimplexPairs::pairCells(
       }
     }
 
-    if(i % (filtration.size() / 10) == 0) {
+    if(i % (critFilt.size() / 10) == 0) {
       this->printMsg(
         "Computing pairs",
-        std::round(10 * i / static_cast<float>(filtration.size())) / 10.0f,
+        std::round(10 * i / static_cast<float>(critFilt.size())) / 10.0f,
         tm.getElapsedTime(), 1, ttk::debug::LineMode::REPLACE);
     }
   }
@@ -85,20 +99,22 @@ int ttk::PersistentSimplexPairs::pairCells(
 
   // get infinite pairs
   for(SimplexId i = 0; i < this->nVerts_; ++i) {
-    if(partners[i].id_ == -1) {
+    if(partners[i].id_ == -1 && this->dg_.isCellCritical(Cell{0, i})) {
       pairs.emplace_back(i, -1, 0);
     }
   }
   if(this->nTri_ > 0) {
     for(SimplexId i = 0; i < this->nEdges_; ++i) {
-      if(partners[i + this->nVerts_].id_ == -1) {
+      if(partners[i + this->nVerts_].id_ == -1
+         && this->dg_.isCellCritical(Cell{1, i})) {
         pairs.emplace_back(i, -1, 1);
       }
     }
   }
   if(this->nTetra_ > 0) {
     for(SimplexId i = 0; i < this->nTri_; ++i) {
-      if(partners[i + this->nVerts_ + this->nEdges_].id_ == -1) {
+      if(partners[i + this->nVerts_ + this->nEdges_].id_ == -1
+         && this->dg_.isCellCritical(Cell{2, i})) {
         pairs.emplace_back(i, -1, 2);
       }
     }
