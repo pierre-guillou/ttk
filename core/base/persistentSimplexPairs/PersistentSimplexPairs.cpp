@@ -81,11 +81,11 @@ int ttk::PersistentSimplexPairs::pairCells(
   std::vector<Container> boundaries(filtration.size(), Container(cmpSimplices));
 
   // critical simplices indices in filtration vector
-  std::vector<SimplexId> critFilt{};
+  std::array<std::vector<SimplexId>, 3> critFilt{};
   for(size_t i = 0; i < filtration.size(); ++i) {
     const auto &s{filtration[i]};
     if(this->dg_.isCellCritical(Cell{s.dim_, s.id_}) && s.dim_ > 0) {
-      critFilt.emplace_back(i);
+      critFilt[s.dim_ - 1].emplace_back(i);
     }
   }
 
@@ -94,36 +94,50 @@ int ttk::PersistentSimplexPairs::pairCells(
 
   Timer tm{};
 
-  this->printMsg("Computing pairs", 0, 0, 1, ttk::debug::LineMode::REPLACE);
+  const auto processDim = [&](const std::vector<SimplexId> &critSimplices) {
+    for(size_t i = 0; i < critSimplices.size(); ++i) {
 
-  for(size_t i = 0; i < critFilt.size(); ++i) {
+      const auto &c{filtration[critSimplices[i]]};
 
-    const auto &c{filtration[critFilt[i]]};
+      const auto partner = eliminateBoundaries(
+        c, onBoundary, boundaries, filtration, filtOrder, partners);
+      if(partner != -1) {
+        const auto &pc{filtration[filtOrder[getCellId(c.dim_ - 1, partner)]]};
+        partners[c.cellId_] = pc;
+        partners[pc.cellId_] = c;
 
-    const auto partner = eliminateBoundaries(
-      c, onBoundary, boundaries, filtration, filtOrder, partners);
-    if(partner != -1) {
-      const auto &pc{filtration[filtOrder[getCellId(c.dim_ - 1, partner)]]};
-      partners[c.cellId_] = pc;
-      partners[pc.cellId_] = c;
+        // only record pairs with non-null persistence
+        if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
+          pairs.emplace_back(partner, c.id_, c.dim_ - 1);
+        }
+      }
 
-      // only record pairs with non-null persistence
-      if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
-        pairs.emplace_back(partner, c.id_, c.dim_ - 1);
+      // clean mask
+      for(const auto e : boundaries[c.cellId_]) {
+        onBoundary[e] = false;
       }
     }
+  };
 
-    // clean mask
-    for(const auto e : boundaries[c.cellId_]) {
-      onBoundary[e] = false;
-    }
+  const auto dim{this->dg_.getDimensionality()};
 
-    if(i % (critFilt.size() / 10) == 0) {
-      this->printMsg(
-        "Computing pairs",
-        std::round(10 * i / static_cast<float>(critFilt.size())) / 10.0f,
-        tm.getElapsedTime(), 1, ttk::debug::LineMode::REPLACE);
-    }
+  {
+    Timer tcrit{};
+    processDim(critFilt[0]);
+    this->printMsg("Computed min-saddle pairs", 1.0, tcrit.getElapsedTime(), 1);
+  }
+
+  if(dim > 1) {
+    Timer tcrit{};
+    processDim(critFilt[dim - 1]);
+    this->printMsg("Computed saddle-max pairs", 1.0, tcrit.getElapsedTime(), 1);
+  }
+
+  if(dim > 2) {
+    Timer tcrit{};
+    processDim(critFilt[1]);
+    this->printMsg(
+      "Computed saddle-saddle pairs", 1.0, tcrit.getElapsedTime(), 1);
   }
 
   const auto nRegPairs{pairs.size()};
