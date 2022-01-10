@@ -51,6 +51,18 @@ namespace ttk {
       }
     }
 
+    enum class Variant {
+      ORIGINAL,
+      DG,
+      CACHE_BOUNDARIES,
+      SANDWICH,
+      PARALLEL_PRE_COMPUTE,
+    };
+
+    inline void setVariant(Variant va) {
+      this->va_ = va;
+    }
+
     /**
      * @brief Compute the persistence pairs from the triangulation
      * simplicial complex
@@ -193,6 +205,7 @@ namespace ttk {
     SimplexId nTri_{0};
     SimplexId nTetra_{0};
     mutable ttk::dcg::DiscreteGradient dg_{};
+    Variant va_{Variant::ORIGINAL};
   };
 
 } // namespace ttk

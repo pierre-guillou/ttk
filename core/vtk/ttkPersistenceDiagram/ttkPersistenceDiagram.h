@@ -178,6 +178,12 @@ public:
   ttkSetEnumMacro(BackEnd, BACKEND);
   vtkGetEnumMacro(BackEnd, BACKEND);
 
+  void SetZomorodianVariant(const int va) {
+    this->setZomorodianVariant(
+      static_cast<ttk::PersistentSimplexPairs::Variant>(va));
+    this->Modified();
+  }
+
   vtkGetMacro(StartingResolutionLevel, int);
   vtkSetMacro(StartingResolutionLevel, int);
 

@@ -227,6 +227,10 @@ namespace ttk {
                                    const scalarType *inputScalars,
                                    const triangulationType *triangulation);
 
+    inline void setZomorodianVariant(PersistentSimplexPairs::Variant va) {
+      this->psp_.setVariant(va);
+    }
+
     template <class triangulationType>
     int executePersistentSimplex(std::vector<PersistencePair> &CTDiagram,
                                  const SimplexId *inputOffsets,

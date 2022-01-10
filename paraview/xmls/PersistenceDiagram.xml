@@ -458,6 +458,30 @@
         </Documentation>
       </IntVectorProperty>
 
+      <IntVectorProperty
+          name="ZomoVariant"
+          label="Zomorodian Variant"
+          command="SetZomorodianVariant"
+          number_of_elements="1"
+          default_values="0" panel_visibility="advanced">
+        <EnumerationDomain name="enum">
+          <Entry value="0" text="Original PairCells"/>
+          <Entry value="1" text="PairCells + DiscreteGradient"/>
+          <Entry value="2" text="DiscreteGradient + CacheBoundaries"/>
+          <Entry value="3" text="CacheBoundaries + Sandwich"/>
+          <Entry value="4" text="Sandwich + Parallel PreCompute"/>
+        </EnumerationDomain>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="BackEnd"
+                                   value="4" />
+        </Hints>
+        <Documentation>
+          Set the Zomorodian variant
+        </Documentation>
+      </IntVectorProperty>
+
       <IntVectorProperty name="ShowInsideDomain"
                          label="Embed in Domain"
                          command="SetShowInsideDomain"
@@ -494,6 +518,7 @@
         <Property name="ForceInputOffsetScalarField"/>
         <Property name="InputOffsetScalarFieldNameNew"/>
         <Property name="BackEnd" />
+        <Property name="ZomoVariant" />
         <Property name="StartingResolutionLevel" />
         <Property name="StoppingResolutionLevel" />
         <Property name="IsResumable" />
