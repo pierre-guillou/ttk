@@ -189,6 +189,54 @@ namespace ttk {
     }
 
     template <typename Container>
+    SimplexId eliminateBoundariesV4(const Simplex &c,
+                                    std::vector<bool> &onBoundary,
+                                    std::vector<Container> &boundaries,
+                                    const std::vector<Simplex> &filtration,
+                                    const std::vector<SimplexId> &filtOrder,
+                                    const std::vector<Simplex> &partners) const;
+
+    int pairCellsV4(std::vector<PersistencePair> &pairs,
+                    const std::vector<Simplex> &filtration,
+                    const std::vector<SimplexId> &filtOrder) const;
+
+    template <typename Container>
+    SimplexId eliminateBoundariesV3(const Simplex &c,
+                                    std::vector<bool> &onBoundary,
+                                    std::vector<Container> &boundaries,
+                                    const std::vector<Simplex> &filtration,
+                                    const std::vector<SimplexId> &filtOrder,
+                                    const std::vector<Simplex> &partners) const;
+
+    int pairCellsV3(std::vector<PersistencePair> &pairs,
+                    const std::vector<Simplex> &filtration,
+                    const std::vector<SimplexId> &filtOrder) const;
+
+    template <typename Container>
+    SimplexId eliminateBoundariesV2(const Simplex &c,
+                                    std::vector<bool> &onBoundary,
+                                    std::vector<Container> &boundaries,
+                                    const std::vector<Simplex> &filtration,
+                                    const std::vector<SimplexId> &filtOrder,
+                                    const std::vector<Simplex> &partners) const;
+
+    int pairCellsV2(std::vector<PersistencePair> &pairs,
+                    const std::vector<Simplex> &filtration,
+                    const std::vector<SimplexId> &filtOrder) const;
+
+    template <typename Container>
+    SimplexId eliminateBoundariesV1(const Simplex &c,
+                                    std::vector<bool> &onBoundary,
+                                    std::vector<Container> &boundaries,
+                                    const std::vector<Simplex> &filtration,
+                                    const std::vector<SimplexId> &filtOrder,
+                                    const std::vector<Simplex> &partners) const;
+
+    int pairCellsV1(std::vector<PersistencePair> &pairs,
+                    const std::vector<Simplex> &filtration,
+                    const std::vector<SimplexId> &filtOrder) const;
+
+    template <typename Container>
     SimplexId eliminateBoundaries(const Simplex &c,
                                   std::vector<bool> &onBoundary,
                                   std::vector<Container> &boundaries,
@@ -218,8 +266,10 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
 
   Timer tm{};
 
-  this->dg_.setInputOffsets(orderField);
-  this->dg_.buildGradient(triangulation);
+  if(this->va_ != Variant::ORIGINAL) {
+    this->dg_.setInputOffsets(orderField);
+    this->dg_.buildGradient(triangulation);
+  }
 
   // every simplex in the triangulation, sorted by filtration
   const auto filtration
@@ -235,7 +285,28 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
     filtOrder[filtration[i].cellId_] = i;
   }
 
-  this->pairCells(pairs, filtration, filtOrder);
+  switch(this->va_) {
+    case Variant::ORIGINAL:
+      this->printMsg("Using the original Zomorodian variant");
+      this->pairCells(pairs, filtration, filtOrder);
+      break;
+    case Variant::DG:
+      this->printMsg("Using Zomorodian + DiscreteGradient");
+      this->pairCellsV1(pairs, filtration, filtOrder);
+      break;
+    case Variant::CACHE_BOUNDARIES:
+      this->printMsg("Using Zomorodian + DiscreteGradient + boundary caching");
+      this->pairCellsV2(pairs, filtration, filtOrder);
+      break;
+    case Variant::SANDWICH:
+      this->printMsg("Using the Sandwich variant");
+      this->pairCellsV3(pairs, filtration, filtOrder);
+      break;
+    case Variant::PARALLEL_PRE_COMPUTE:
+      this->printMsg("Pre-compute boundaries in parallel");
+      this->pairCellsV4(pairs, filtration, filtOrder);
+      break;
+  };
 
   this->printMsg("Computed " + std::to_string(pairs.size())
                    + " persistence pair" + (pairs.size() > 1 ? "s" : ""),
