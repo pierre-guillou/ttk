@@ -157,6 +157,17 @@ namespace ttk {
       computeFiltrationOrder(const SimplexId *const offset,
                              const triangulationType &triangulation) const;
 
+    inline void addCellBoundary(const Simplex &c, VisitedMask &boundary) const {
+      for(SimplexId i = 0; i < c.dim_ + 1; ++i) {
+        const auto f{c.faceIds_[i]};
+        if(!boundary.isVisited_[f]) {
+          boundary.insert(f);
+        } else {
+          boundary.remove(f);
+        }
+      }
+    }
+
     template <typename Container>
     inline void addCellBoundary(const Simplex &c,
                                 std::vector<bool> &onBoundary,
@@ -224,27 +235,24 @@ namespace ttk {
                     const std::vector<Simplex> &filtration,
                     const std::vector<SimplexId> &filtOrder) const;
 
-    template <typename Container>
     SimplexId eliminateBoundariesV1(const Simplex &c,
-                                    std::vector<bool> &onBoundary,
-                                    std::vector<Container> &boundaries,
+                                    VisitedMask &boundary,
                                     const std::vector<Simplex> &filtration,
                                     const std::vector<SimplexId> &filtOrder,
                                     const std::vector<Simplex> &partners) const;
 
     int pairCellsV1(std::vector<PersistencePair> &pairs,
+                    std::array<std::vector<bool>, 3> &boundaries,
                     const std::vector<Simplex> &filtration,
                     const std::vector<SimplexId> &filtOrder) const;
 
-    template <typename Container>
     SimplexId eliminateBoundaries(const Simplex &c,
-                                  std::vector<bool> &onBoundary,
-                                  std::vector<Container> &boundaries,
-                                  const std::vector<Simplex> &filtration,
+                                  VisitedMask &boundary,
                                   const std::vector<SimplexId> &filtOrder,
                                   const std::vector<Simplex> &partners) const;
 
     int pairCells(std::vector<PersistencePair> &pairs,
+                  std::array<std::vector<bool>, 3> &boundaries,
                   const std::vector<Simplex> &filtration,
                   const std::vector<SimplexId> &filtOrder) const;
 
@@ -286,14 +294,22 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
   }
 
   switch(this->va_) {
-    case Variant::ORIGINAL:
+    case Variant::ORIGINAL: {
+      std::array<std::vector<bool>, 3> boundaries{};
+      boundaries[0].resize(this->nVerts_);
+      boundaries[1].resize(this->nEdges_);
+      boundaries[2].resize(this->nTri_);
       this->printMsg("Using the original Zomorodian variant");
-      this->pairCells(pairs, filtration, filtOrder);
-      break;
-    case Variant::DG:
+      this->pairCells(pairs, boundaries, filtration, filtOrder);
+    } break;
+    case Variant::DG: {
+      std::array<std::vector<bool>, 3> boundaries{};
+      boundaries[0].resize(this->nVerts_);
+      boundaries[1].resize(this->nEdges_);
+      boundaries[2].resize(this->nTri_);
       this->printMsg("Using Zomorodian + DiscreteGradient");
-      this->pairCellsV1(pairs, filtration, filtOrder);
-      break;
+      this->pairCellsV1(pairs, boundaries, filtration, filtOrder);
+    } break;
     case Variant::CACHE_BOUNDARIES:
       this->printMsg("Using Zomorodian + DiscreteGradient + boundary caching");
       this->pairCellsV2(pairs, filtration, filtOrder);
