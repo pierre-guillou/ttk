@@ -133,9 +133,17 @@ int ttk::PersistentSimplexPairs::pairCells(
     this->printMsg("Computed saddle-max pairs", 1.0, tcrit.getElapsedTime(), 1);
   }
 
-  if(dim > 2) {
+  if(dim > 2) { // sandwich
     Timer tcrit{};
-    processDim(critFilt[1]);
+    std::vector<SimplexId> nonPaired2Saddles{};
+    nonPaired2Saddles.reserve(critFilt[1].size());
+    for(const auto s2 : critFilt[1]) {
+      const auto &p{partners[filtration[s2].cellId_]};
+      if(p.id_ == -1 || p.dim_ == -1) {
+        nonPaired2Saddles.emplace_back(s2);
+      }
+    }
+    processDim(nonPaired2Saddles);
     this->printMsg(
       "Computed saddle-saddle pairs", 1.0, tcrit.getElapsedTime(), 1);
   }
