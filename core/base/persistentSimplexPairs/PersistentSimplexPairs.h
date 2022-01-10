@@ -145,13 +145,19 @@ namespace ttk {
       computeFiltrationOrder(const SimplexId *const offset,
                              const triangulationType &triangulation) const;
 
-    inline void addCellBoundary(const Simplex &c, VisitedMask &boundary) const {
+    template <typename Container>
+    inline void addCellBoundary(const Simplex &c,
+                                std::vector<bool> &onBoundary,
+                                Container &boundary) const {
       for(SimplexId i = 0; i < c.dim_ + 1; ++i) {
-        const auto f{c.faceIds_[i]};
-        if(!boundary.isVisited_[f]) {
-          boundary.insert(f);
+        const auto f{this->getCellId(c.dim_ - 1, c.faceIds_[i])};
+        if(!onBoundary[f]) {
+          boundary.emplace(f);
+          onBoundary[f] = true;
         } else {
-          boundary.remove(f);
+          const auto it{boundary.find(f)};
+          boundary.erase(it);
+          onBoundary[f] = false;
         }
       }
     }
@@ -170,14 +176,15 @@ namespace ttk {
       return -1;
     }
 
+    template <typename Container>
     SimplexId eliminateBoundaries(const Simplex &c,
-                                  VisitedMask &boundary,
+                                  std::vector<bool> &onBoundary,
+                                  std::vector<Container> &boundaries,
                                   const std::vector<Simplex> &filtration,
                                   const std::vector<SimplexId> &filtOrder,
                                   const std::vector<Simplex> &partners) const;
 
     int pairCells(std::vector<PersistencePair> &pairs,
-                  std::array<std::vector<bool>, 3> &boundaries,
                   const std::vector<Simplex> &filtration,
                   const std::vector<SimplexId> &filtOrder) const;
 
@@ -205,11 +212,6 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
   const auto filtration
     = this->computeFiltrationOrder(orderField, triangulation);
 
-  std::array<std::vector<bool>, 3> boundaries{};
-  boundaries[0].resize(this->nVerts_, false);
-  boundaries[1].resize(this->nEdges_, false);
-  boundaries[2].resize(this->nTri_, false);
-
   // simplex id -> filtration order
   std::vector<SimplexId> filtOrder(filtration.size());
 
@@ -220,7 +222,7 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
     filtOrder[filtration[i].cellId_] = i;
   }
 
-  this->pairCells(pairs, boundaries, filtration, filtOrder);
+  this->pairCells(pairs, filtration, filtOrder);
 
   this->printMsg("Computed " + std::to_string(pairs.size())
                    + " persistence pair" + (pairs.size() > 1 ? "s" : ""),
