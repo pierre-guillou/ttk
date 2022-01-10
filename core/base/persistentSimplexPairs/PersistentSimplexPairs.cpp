@@ -66,6 +66,8 @@ int ttk::PersistentSimplexPairs::pairCells(
   const std::vector<Simplex> &filtration,
   const std::vector<SimplexId> &filtOrder) const {
 
+  Timer tmall{};
+
   // paired simplices
   std::vector<Simplex> partners(filtration.size());
   std::vector<bool> onBoundary(filtration.size(), false);
@@ -86,6 +88,9 @@ int ttk::PersistentSimplexPairs::pairCells(
       critFilt.emplace_back(i);
     }
   }
+
+  this->printMsg("Memory allocations", 1.0, tmall.getElapsedTime(), 1,
+                 debug::LineMode::NEW, debug::Priority::DETAIL);
 
   Timer tm{};
 
