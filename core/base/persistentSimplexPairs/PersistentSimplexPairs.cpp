@@ -14,7 +14,13 @@ ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
   const std::vector<Simplex> &partners) const {
 
   auto &boundary{boundaries[c.cellId_]};
-  this->addCellBoundary(c, onBoundary, boundary);
+  if(!boundary.empty()) {
+    for(const auto e : boundary) {
+      onBoundary[e] = true;
+    }
+  } else {
+    this->addCellBoundary(c, onBoundary, boundary);
+  }
 
   const auto getLocalId = [&c, this](const SimplexId a) {
     if(c.dim_ == 1) {
@@ -91,6 +97,26 @@ int ttk::PersistentSimplexPairs::pairCells(
 
   this->printMsg("Memory allocations", 1.0, tmall.getElapsedTime(), 1,
                  debug::LineMode::NEW, debug::Priority::DETAIL);
+
+  Timer tmpar{};
+
+  for(const auto &vec : critFilt) {
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_) schedule(dynamic) \
+  firstprivate(onBoundary)
+#endif // TTK_ENABLE_OPENMP
+    for(size_t i = 0; i < vec.size(); ++i) {
+      const auto &c{filtration[vec[i]]};
+
+      this->eliminateBoundaries(
+        c, onBoundary, boundaries, filtration, filtOrder, partners);
+
+      // clean mask
+      for(const auto e : boundaries[c.cellId_]) {
+        onBoundary[e] = false;
+      }
+    }
+  }
 
   Timer tm{};
 
