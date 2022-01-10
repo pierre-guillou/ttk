@@ -120,7 +120,8 @@ int ttk::PersistentSimplexPairs::pairCells(
 
   Timer tm{};
 
-  const auto processDim = [&](const std::vector<SimplexId> &critSimplices) {
+  const auto processDim = [&](const std::vector<SimplexId> &critSimplices,
+                              std::vector<PersistencePair> &res) {
     for(size_t i = 0; i < critSimplices.size(); ++i) {
 
       const auto &c{filtration[critSimplices[i]]};
@@ -134,7 +135,7 @@ int ttk::PersistentSimplexPairs::pairCells(
 
         // only record pairs with non-null persistence
         if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
-          pairs.emplace_back(partner, c.id_, c.dim_ - 1);
+          res.emplace_back(partner, c.id_, c.dim_ - 1);
         }
       }
 
@@ -147,17 +148,35 @@ int ttk::PersistentSimplexPairs::pairCells(
 
   const auto dim{this->dg_.getDimensionality()};
 
+  // avoid concurrent writes into pairs vector
+  std::vector<PersistencePair> pairsSaddleMax{};
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel sections if(dim > 1)
+#endif // TTK_ENABLE_OPENMP
   {
-    Timer tcrit{};
-    processDim(critFilt[0]);
-    this->printMsg("Computed min-saddle pairs", 1.0, tcrit.getElapsedTime(), 1);
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp section
+#endif // TTK_ENABLE_OPENMP
+    {
+      Timer tcrit{};
+      processDim(critFilt[0], pairs);
+      this->printMsg(
+        "Computed min-saddle pairs", 1.0, tcrit.getElapsedTime(), 1);
+    }
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp section
+#endif // TTK_ENABLE_OPENMP
+    if(dim > 1) {
+      Timer tcrit{};
+      processDim(critFilt[dim - 1], pairsSaddleMax);
+      this->printMsg(
+        "Computed saddle-max pairs", 1.0, tcrit.getElapsedTime(), 1);
+    }
   }
 
-  if(dim > 1) {
-    Timer tcrit{};
-    processDim(critFilt[dim - 1]);
-    this->printMsg("Computed saddle-max pairs", 1.0, tcrit.getElapsedTime(), 1);
-  }
+  pairs.insert(pairs.end(), pairsSaddleMax.begin(), pairsSaddleMax.end());
 
   if(dim > 2) { // sandwich
     Timer tcrit{};
@@ -169,7 +188,7 @@ int ttk::PersistentSimplexPairs::pairCells(
         nonPaired2Saddles.emplace_back(s2);
       }
     }
-    processDim(nonPaired2Saddles);
+    processDim(nonPaired2Saddles, pairs);
     this->printMsg(
       "Computed saddle-saddle pairs", 1.0, tcrit.getElapsedTime(), 1);
   }
