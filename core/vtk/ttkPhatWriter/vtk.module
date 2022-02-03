@@ -1,0 +1,4 @@
+NAME
+ ttkPhatWriter
+DEPENDS
+  ttkAlgorithm

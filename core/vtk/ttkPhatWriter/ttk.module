@@ -1,0 +1,9 @@
+NAME
+  ttkPhatWriter
+SOURCES
+  ttkPhatWriter.cpp
+HEADERS
+  ttkPhatWriter.h
+DEPENDS
+  ttkAlgorithm
+  discreteMorseFunction
