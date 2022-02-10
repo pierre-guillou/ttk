@@ -117,6 +117,7 @@ jobs:
 
     - name: Run ttk-data states [NOT ENFORCED]
       id: validate
+      if: false
       continue-on-error: true
       run: |
         cd ttk-data/tests
