@@ -58,6 +58,7 @@ int ttkTrackingFromFields::trackWithPersistenceMatching(
 
   ttk::TrackingFromPersistenceDiagrams tfp{};
   tfp.setThreadNumber(this->threadNumber_);
+  tfp.setDebugLevel(this->debugLevel_);
   tfp.performMatchings<dataType>(
     (int)fieldNumber, persistenceDiagrams, outputMatchings,
     algorithm, // Not from paraview, from enclosing tracking plugin
@@ -90,8 +91,7 @@ int ttkTrackingFromFields::trackWithPersistenceMatching(
   tfp.performTracking<dataType>(
     persistenceDiagrams, outputMatchings, trackingsBase);
 
-  std::vector<std::set<int>> trackingTupleToMerged(
-    trackingsBase.size(), std::set<int>());
+  std::vector<std::set<int>> trackingTupleToMerged(trackingsBase.size());
 
   if(DoPostProc) {
     tfp.performPostProcess<dataType>(persistenceDiagrams, trackingsBase,
