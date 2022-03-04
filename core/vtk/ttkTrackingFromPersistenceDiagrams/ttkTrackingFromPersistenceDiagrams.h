@@ -84,23 +84,23 @@ public:
   using trackingTuple = ttk::trackingTuple;
 
   template <typename dataType>
-  static int
-    buildMesh(std::vector<trackingTuple> &trackings,
-              std::vector<std::vector<matchingTuple>> &outputMatchings,
-              std::vector<std::vector<diagramTuple>> &inputPersistenceDiagrams,
-              bool useGeometricSpacing,
-              double spacing,
-              bool DoPostProc,
-              std::vector<std::set<int>> &trackingTupleToMerged,
-              vtkPoints *points,
-              vtkUnstructuredGrid *persistenceDiagram,
-              vtkDoubleArray *persistenceScalars,
-              vtkDoubleArray *valueScalars,
-              vtkIntArray *matchingIdScalars,
-              vtkIntArray *lengthScalars,
-              vtkIntArray *timeScalars,
-              vtkIntArray *componentIds,
-              vtkIntArray *pointTypeScalars);
+  static int buildMesh(
+    const std::vector<trackingTuple> &trackings,
+    const std::vector<std::vector<matchingTuple>> &outputMatchings,
+    const std::vector<std::vector<diagramTuple>> &inputPersistenceDiagrams,
+    const bool useGeometricSpacing,
+    const double spacing,
+    const bool DoPostProc,
+    const std::vector<std::set<int>> &trackingTupleToMerged,
+    vtkPoints *points,
+    vtkUnstructuredGrid *persistenceDiagram,
+    vtkDoubleArray *persistenceScalars,
+    vtkDoubleArray *valueScalars,
+    vtkIntArray *matchingIdScalars,
+    vtkIntArray *lengthScalars,
+    vtkIntArray *timeScalars,
+    vtkIntArray *componentIds,
+    vtkIntArray *pointTypeScalars);
 
 protected:
   ttkTrackingFromPersistenceDiagrams();
@@ -154,13 +154,13 @@ private:
 
 template <typename dataType>
 int ttkTrackingFromPersistenceDiagrams::buildMesh(
-  std::vector<trackingTuple> &trackings,
-  std::vector<std::vector<matchingTuple>> &outputMatchings,
-  std::vector<std::vector<diagramTuple>> &inputPersistenceDiagrams,
-  bool useGeometricSpacing,
-  double spacing,
-  bool ttkNotUsed(DoPostProc),
-  std::vector<std::set<int>> &trackingTupleToMerged,
+  const std::vector<trackingTuple> &trackings,
+  const std::vector<std::vector<matchingTuple>> &outputMatchings,
+  const std::vector<std::vector<diagramTuple>> &inputPersistenceDiagrams,
+  const bool useGeometricSpacing,
+  const double spacing,
+  const bool DoPostProc,
+  const std::vector<std::set<int>> &trackingTupleToMerged,
   vtkPoints *points,
   vtkUnstructuredGrid *persistenceDiagram,
   vtkDoubleArray *persistenceScalars,
@@ -170,13 +170,13 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
   vtkIntArray *timeScalars,
   vtkIntArray *componentIds,
   vtkIntArray *pointTypeScalars) {
+
   int currentVertex = 0;
-  for(unsigned int k = 0; k < trackings.size(); ++k) {
-    trackingTuple tt = trackings.at((unsigned long)k);
+  for(size_t k = 0; k < trackings.size(); ++k) {
+    const trackingTuple &tt = trackings[k];
 
     int numStart = std::get<0>(tt);
-    //     int numEnd = std::get<1>(tt);
-    std::vector<BIdVertex> chain = std::get<2>(tt);
+    const std::vector<BIdVertex> &chain = std::get<2>(tt);
     int chainLength = chain.size();
 
     if(chain.size() <= 1) {
@@ -185,11 +185,11 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
     }
 
     for(int c = 0; c < (int)chain.size() - 1; ++c) {
-      std::vector<matchingTuple> &matchings1 = outputMatchings[numStart + c];
+      const auto &matchings1 = outputMatchings[numStart + c];
       int d1id = numStart + c;
       int d2id = d1id + 1; // c % 2 == 0 ? d1id + 1 : d1id;
-      std::vector<diagramTuple> &diagram1 = inputPersistenceDiagrams[d1id];
-      std::vector<diagramTuple> &diagram2 = inputPersistenceDiagrams[d2id];
+      const auto &diagram1 = inputPersistenceDiagrams[d1id];
+      const auto &diagram2 = inputPersistenceDiagrams[d2id];
 
       // Insert segments
       vtkIdType ids[2];
@@ -198,7 +198,7 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
 
       // Search for right matching.
       double cost = 0.0;
-      for(matchingTuple tup : matchings1) {
+      for(const matchingTuple &tup : matchings1) {
         auto d1id1 = (int)std::get<0>(tup);
         if(d1id1 == n1) {
           cost = std::get<2>(tup);
@@ -206,8 +206,8 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
         }
       }
 
-      diagramTuple tuple1 = diagram1[n1];
-      diagramTuple tuple2 = diagram2[n2];
+      const diagramTuple &tuple1 = diagram1[n1];
+      const diagramTuple &tuple2 = diagram2[n2];
 
       double x1, y1, z1, x2, y2, z2;
 
@@ -246,12 +246,11 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
       // Postproc component ids.
       int cid = k;
       bool hasMergedFirst = false;
-      // if(DoPostProc) {
-      if(0) {
-        std::set<int> &connected = trackingTupleToMerged[k];
+      if(DoPostProc) {
+        const std::set<int> &connected = trackingTupleToMerged[k];
         if(!connected.empty()) {
           int min = *(connected.begin());
-          trackingTuple ttt = trackings.at((unsigned long)min);
+          const trackingTuple &ttt = trackings[min];
           // int numStart2 = std::get<0>(ttt);
           int numEnd2 = std::get<1>(ttt);
           if((numEnd2 > 0 && numStart + c > numEnd2 + 1) && min < (int)k) {
@@ -266,11 +265,10 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
 
             // Replace former first end of the segment with previous ending
             // segment.
-            std::vector<BIdVertex> chain3 = std::get<2>(ttt);
-            auto nn = (int)chain3.at(chain3.size() - 1);
-            std::vector<diagramTuple> &diagramRematch
-              = inputPersistenceDiagrams[numEnd2];
-            diagramTuple tupleN = diagramRematch.at((unsigned long)nn);
+            const std::vector<BIdVertex> &chain3 = std::get<2>(ttt);
+            int nn = chain3.back();
+            const auto &diagramRematch = inputPersistenceDiagrams[numEnd2];
+            const diagramTuple &tupleN = diagramRematch[nn];
 
             point1Type1 = std::get<1>(tupleN);
             point1Type2 = std::get<3>(tupleN);
