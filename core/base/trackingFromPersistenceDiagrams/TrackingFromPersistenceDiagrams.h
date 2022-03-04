@@ -60,10 +60,11 @@ namespace ttk {
                         std::vector<trackingTuple> &trackings);
 
     template <typename dataType>
-    int performPostProcess(std::vector<std::vector<diagramTuple>> &allDiagrams,
-                           std::vector<trackingTuple> &trackings,
-                           std::vector<std::set<int>> &trackingTupleToMerged,
-                           double postProcThresh);
+    int performPostProcess(
+      const std::vector<std::vector<diagramTuple>> &allDiagrams,
+      const std::vector<trackingTuple> &trackings,
+      std::vector<std::set<int>> &trackingTupleToMerged,
+      const double postProcThresh);
 
     /// Pass a pointer to an input array representing a scalarfield.
     /// The array is expected to be correctly allocated. idx in
@@ -275,27 +276,28 @@ int ttk::TrackingFromPersistenceDiagrams::performTracking(
 
 template <typename dataType>
 int ttk::TrackingFromPersistenceDiagrams::performPostProcess(
-  std::vector<std::vector<diagramTuple>> &allDiagrams,
-  std::vector<trackingTuple> &trackings,
+  const std::vector<std::vector<diagramTuple>> &allDiagrams,
+  const std::vector<trackingTuple> &trackings,
   std::vector<std::set<int>> &trackingTupleToMerged,
-  double postProcThresh) {
-  auto numPersistenceDiagramsInput = (int)allDiagrams.size();
+  const double postProcThresh) {
+
+  const int numPersistenceDiagramsInput = allDiagrams.size();
 
   // Merge close connected components with threshold.
-  for(unsigned int k = 0; k < trackings.size(); ++k) {
-    trackingTuple tk = trackings[k];
+  for(size_t k = 0; k < trackings.size(); ++k) {
+    const trackingTuple &tk = trackings[k];
     int startK = std::get<0>(tk);
     int endK = std::get<1>(tk);
     if(endK < 0)
       endK = numPersistenceDiagramsInput - 1;
-    std::vector<BIdVertex> chainK = std::get<2>(tk);
-    std::vector<diagramTuple> &diagramStartK = allDiagrams[startK];
-    std::vector<diagramTuple> &diagramEndK = allDiagrams[endK];
+    const std::vector<BIdVertex> &chainK = std::get<2>(tk);
+    const std::vector<diagramTuple> &diagramStartK = allDiagrams[startK];
+    const std::vector<diagramTuple> &diagramEndK = allDiagrams[endK];
 
-    auto n1 = (int)chainK.at(0);
-    auto n2 = (int)chainK.at(chainK.size() - 1);
-    diagramTuple &tuple1 = diagramStartK[n1];
-    diagramTuple &tuple2 = diagramEndK[n2];
+    int n1 = chainK.front();
+    int n2 = chainK.back();
+    const diagramTuple &tuple1 = diagramStartK[n1];
+    const diagramTuple &tuple2 = diagramEndK[n2];
 
     double x1, y1, z1, x2, y2, z2;
 
@@ -336,11 +338,11 @@ int ttk::TrackingFromPersistenceDiagrams::performPostProcess(
       continue;
 
     // Check every other tracking trajectory.
-    for(unsigned int m = k + 1; m < trackings.size(); ++m) {
-      trackingTuple &tm = trackings[m];
+    for(size_t m = k + 1; m < trackings.size(); ++m) {
+      const trackingTuple &tm = trackings[m];
       int startM = std::get<0>(tm);
       int endM = std::get<1>(tm);
-      std::vector<BIdVertex> &chainM = std::get<2>(tm);
+      const std::vector<BIdVertex> &chainM = std::get<2>(tm);
       if((endK > 0 && startM > endK) || (endM > 0 && startK > endM))
         continue;
 
@@ -353,9 +355,9 @@ int ttk::TrackingFromPersistenceDiagrams::performPostProcess(
           continue;
 
         /// Check proximity.
-        auto n3 = (int)chainM[c];
-        std::vector<diagramTuple> &diagramM = allDiagrams[startM + c];
-        diagramTuple &tuple3 = diagramM[n3];
+        const int n3 = chainM[c];
+        const std::vector<diagramTuple> &diagramM = allDiagrams[startM + c];
+        const diagramTuple &tuple3 = diagramM[n3];
         double x3, y3, z3;
         BNodeType point3Type1 = std::get<1>(tuple3);
         BNodeType point3Type2 = std::get<3>(tuple3);
@@ -377,8 +379,8 @@ int ttk::TrackingFromPersistenceDiagrams::performPostProcess(
         bool hasMatched = false;
         if(doMatch1 && ((t3Max && t1Max) || (t3Min && t1Min))) {
           double dist13
-            = sqrt(Geometry::pow(x1 - x3, 2) + Geometry::pow(y1 - y3, 2)
-                   + Geometry::pow(z1 - z3, 2));
+            = std::sqrt(Geometry::pow(x1 - x3, 2) + Geometry::pow(y1 - y3, 2)
+                        + Geometry::pow(z1 - z3, 2));
           dist = dist13;
           if(dist13 >= postProcThresh)
             continue;
@@ -387,8 +389,8 @@ int ttk::TrackingFromPersistenceDiagrams::performPostProcess(
 
         if(doMatch2 && ((t3Max && t2Max) || (t3Min && t2Min))) {
           double dist23
-            = sqrt(Geometry::pow(x2 - x3, 2) + Geometry::pow(y2 - y3, 2)
-                   + Geometry::pow(z2 - z3, 2));
+            = std::sqrt(Geometry::pow(x2 - x3, 2) + Geometry::pow(y2 - y3, 2)
+                        + Geometry::pow(z2 - z3, 2));
           dist = dist23;
           if(dist23 >= postProcThresh)
             continue;
