@@ -200,7 +200,7 @@ int ttkTrackingFromPersistenceDiagrams::RequestData(
     trackingsBase, outputMatchings, inputPersistenceDiagrams,
     useGeometricSpacing, spacing, DoPostProc, trackingTupleToMerged, points,
     persistenceDiagram, persistenceScalars, valueScalars, matchingIdScalars,
-    lengthScalars, timeScalars, componentIds, pointTypeScalars);
+    lengthScalars, timeScalars, componentIds, pointTypeScalars, *this);
 
   outputMesh_->ShallowCopy(persistenceDiagram);
   outputMesh->ShallowCopy(outputMesh_);

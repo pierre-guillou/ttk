@@ -105,7 +105,7 @@ int ttkTrackingFromFields::trackWithPersistenceMatching(
     trackingsBase, outputMatchings, persistenceDiagrams, useGeometricSpacing,
     spacing, DoPostProc, trackingTupleToMerged, points, persistenceDiagram,
     persistenceScalars, valueScalars, matchingIdScalars, lengthScalars,
-    timeScalars, componentIds, pointTypeScalars);
+    timeScalars, componentIds, pointTypeScalars, *this);
 
   output->ShallowCopy(persistenceDiagram);
 

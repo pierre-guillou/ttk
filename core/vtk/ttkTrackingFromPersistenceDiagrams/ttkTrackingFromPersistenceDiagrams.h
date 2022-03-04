@@ -100,7 +100,8 @@ public:
     vtkIntArray *lengthScalars,
     vtkIntArray *timeScalars,
     vtkIntArray *componentIds,
-    vtkIntArray *pointTypeScalars);
+    vtkIntArray *pointTypeScalars,
+    const ttk::Debug &dbg);
 
 protected:
   ttkTrackingFromPersistenceDiagrams();
@@ -169,7 +170,8 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
   vtkIntArray *lengthScalars,
   vtkIntArray *timeScalars,
   vtkIntArray *componentIds,
-  vtkIntArray *pointTypeScalars) {
+  vtkIntArray *pointTypeScalars,
+  const ttk::Debug &dbg) {
 
   int currentVertex = 0;
   for(size_t k = 0; k < trackings.size(); ++k) {
@@ -180,7 +182,7 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
     int chainLength = chain.size();
 
     if(chain.size() <= 1) {
-      // printErr("Got an unexpected 0-size chain.");
+      dbg.printErr("Got an unexpected 0-size chain.");
       return 0;
     }
 
@@ -254,8 +256,8 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
           // int numStart2 = std::get<0>(ttt);
           int numEnd2 = std::get<1>(ttt);
           if((numEnd2 > 0 && numStart + c > numEnd2 + 1) && min < (int)k) {
-            // std::cout << "[ttkTrackingFromPersistenceDiagrams] Switched " <<
-            // k << " for " << min << std::endl;
+            dbg.printMsg("Switched " + std::to_string(k) + " for "
+                         + std::to_string(min));
             cid = min;
             hasMergedFirst = numStart + c <= numEnd2 + 3;
           }
