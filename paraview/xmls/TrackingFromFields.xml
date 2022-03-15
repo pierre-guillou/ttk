@@ -219,7 +219,7 @@ the extremum</Documentation>
         </Documentation>
       </DoubleVectorProperty>
 
-<!--      <IntVectorProperty
+     <IntVectorProperty
       name="Do post-proc"
       command="SetDoPostProc"
       label="Perform trajectory post-processing"
@@ -249,7 +249,7 @@ the extremum</Documentation>
           Threshold for merging/splitting trajectories in
           connected components array.
         </Documentation>
-      </DoubleVectorProperty>-->
+      </DoubleVectorProperty>
 
       <PropertyGroup panel_widget="Line" label="Input options">
         <Property name="StartTimestep" />
@@ -261,8 +261,8 @@ the extremum</Documentation>
       <PropertyGroup panel_widget="Line" label="Output options">
         <Property name="spacing" />
         <Property name="Use spacing" />
-<!--         <Property name="Do post-proc" /> -->
-<!--         <Property name="Post-proc threshold" /> -->
+        <Property name="Do post-proc" />
+        <Property name="Post-proc threshold" />
       </PropertyGroup>
 
       <!-- TTK internals -->
