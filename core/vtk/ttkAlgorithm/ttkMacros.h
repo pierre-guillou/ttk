@@ -125,10 +125,22 @@ using ttkSimplexIdTypeArray = vtkIntArray;
 
 // -----------------------------------------------------------------------------
 
+namespace ttk {
+  template <typename T>
+  inline int castToInt(const T a) {
+    return static_cast<int>(a);
+  }
+  // explicit template specialization
+  template <>
+  inline int castToInt<int>(const int a) {
+    return a;
+  }
+}; // namespace ttk
+
 #define ttkTypeMacroErrorCase(idx, type)                          \
   default: {                                                      \
     this->printErr("Unsupported " #idx "-th Template Data Type: " \
-                   + std::to_string(static_cast<int>(type)));     \
+                   + std::to_string(ttk::castToInt(type)));       \
   } break;
 
 #define ttkTypeMacroCase(enum, type, number, call) \
