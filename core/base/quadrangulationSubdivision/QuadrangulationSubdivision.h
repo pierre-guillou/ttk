@@ -22,6 +22,7 @@
 #include <Dijkstra.h>
 #include <Geometry.h>
 #include <Triangulation.h>
+#include <VisitedMask.h>
 
 #include <array>
 #include <cassert>
@@ -216,8 +217,9 @@ namespace ttk {
      */
     template <typename triangulationType>
     std::tuple<Point, SimplexId, size_t, SimplexId>
-      findProjection(size_t a,
-                     bool forceReverseProj,
+      findProjection(const size_t a,
+                     VisitedMask &trianglesTested,
+                     const bool forceReverseProj,
                      const triangulationType &triangulation) const;
 
     /**
@@ -414,6 +416,7 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
            ttk::SimplexId>
   ttk::QuadrangulationSubdivision::findProjection(
     const size_t a,
+    VisitedMask &trianglesTested,
     const bool forceReverseProj,
     const triangulationType &triangulation) const {
 
@@ -441,10 +444,6 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
   bool success = false;
   // list of triangle IDs to test to find a potential projection
   std::stack<SimplexId> trianglesToTest;
-  // list of triangle IDs already tested
-  // (takes more memory to reduce computation time)
-  std::vector<bool> trianglesTested(
-    triangulation.getNumberOfTriangles(), false);
   // number of triangles tested
   size_t trChecked{0};
   // vertex in triangle with highest barycentric coordinate
@@ -465,7 +464,7 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
     trianglesToTest.pop();
 
     // skip if already tested
-    if(trianglesTested[i]) {
+    if(trianglesTested.isVisited_[i]) {
       continue;
     }
 
@@ -499,7 +498,7 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
       // check if triangle plane is parallel to quad normal
       if(std::abs(denom) < PREC_FLT) {
         // skip this iteration after filling pipeline
-        trianglesTested[i] = true;
+        trianglesTested.insert(i);
         // fill pipeline with neighboring triangles
         for(auto &vert : tverts) {
           auto ntr = triangulation.getVertexTriangleNumber(vert);
@@ -547,7 +546,7 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
     }
 
     // mark triangle as tested
-    trianglesTested[i] = true;
+    trianglesTested.insert(i);
     trChecked++;
 
     if(inTriangle) {
@@ -599,7 +598,7 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
                           std::back_inserter(common_triangles));
 
     for(auto &ntid : common_triangles) {
-      if(!trianglesTested[ntid]) {
+      if(!trianglesTested.isVisited_[ntid]) {
         trianglesToTest.push(ntid);
       }
     }
@@ -613,7 +612,12 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
 
   if(!success) {
     if(!forceReverseProj) {
-      return findProjection(a, true, triangulation);
+      // clean VisitedMask
+      for(const auto t : trianglesTested.visitedIds_) {
+        trianglesTested.isVisited_[t] = false;
+      }
+      trianglesTested.visitedIds_.clear();
+      return findProjection(a, trianglesTested, true, triangulation);
     }
     // replace proj by the nearest vertex?
     std::vector<float> dists(vertexNumber_);
@@ -648,10 +652,16 @@ int ttk::QuadrangulationSubdivision::project(
 
   // temp storage for projected points
   std::vector<Point> tmp(outputPoints_.size());
+  // list of triangle IDs already tested
+  // (takes more memory to reduce computation time)
+  std::vector<bool> trianglesTested(
+    triangulation.getNumberOfTriangles(), false);
+  std::vector<SimplexId> visitedIds{};
 
   // main loop
 #ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
+#pragma omp parallel for num_threads(threadNumber_) \
+  firstprivate(trianglesTested, visitedIds)
 #endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < outputPoints_.size(); i++) {
 
@@ -660,9 +670,10 @@ int ttk::QuadrangulationSubdivision::project(
       tmp[i] = outputPoints_[i];
       continue;
     }
+    VisitedMask vm{trianglesTested, visitedIds};
 
     // replace curr in outputPoints_ by its projection
-    auto res = findProjection(i, ReverseProjection, triangulation);
+    auto res = findProjection(i, vm, ReverseProjection, triangulation);
 
     tmp[i] = std::get<0>(res);
     nearestVertexIdentifier_[i] = std::get<1>(res);
