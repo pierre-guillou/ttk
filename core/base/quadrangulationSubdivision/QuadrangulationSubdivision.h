@@ -679,7 +679,8 @@ int ttk::QuadrangulationSubdivision::project(
   this->printMsg("Projected "
                    + std::to_string(outputPoints_.size() - filtered.size())
                    + " points",
-                 1.0, tm.getElapsedTime(), this->threadNumber_);
+                 1.0, tm.getElapsedTime(), this->threadNumber_,
+                 debug::LineMode::NEW, debug::Priority::DETAIL);
 
   return 0;
 }
@@ -1013,6 +1014,8 @@ int ttk::QuadrangulationSubdivision::execute(
   quadNeighbors_.resize(outputPoints_.size());
   getQuadNeighbors(outputQuads_, quadNeighbors_);
 
+  Timer tmproj{};
+
   // "relax" the new points, i.e. replace it by the barycenter of its
   // four neighbors
   for(size_t i = 0; i < RelaxationIterations; i++) {
@@ -1022,6 +1025,11 @@ int ttk::QuadrangulationSubdivision::execute(
     // points)
     project(filtered, triangulation, (i == RelaxationIterations - 1));
   }
+
+  this->printMsg("Relaxed/Projected " + std::to_string(outputPoints_.size())
+                   + " points in " + std::to_string(RelaxationIterations)
+                   + " iterations.",
+                 1.0, tmproj.getElapsedTime(), this->threadNumber_);
 
   // compute valence of every quadrangle vertex
   outputValences_.resize(outputPoints_.size());
