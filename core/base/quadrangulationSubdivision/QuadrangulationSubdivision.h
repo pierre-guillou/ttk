@@ -460,19 +460,19 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
   }
 
   while(!trianglesToTest.empty()) {
-    SimplexId i = trianglesToTest.top();
+    const SimplexId curr = trianglesToTest.top();
     trianglesToTest.pop();
 
     // skip if already tested
-    if(trianglesTested.isVisited_[i]) {
+    if(trianglesTested.isVisited_[curr]) {
       continue;
     }
 
     // get triangle vertices
     std::array<SimplexId, 3> tverts{};
-    triangulation.getTriangleVertex(i, 0, tverts[0]);
-    triangulation.getTriangleVertex(i, 1, tverts[1]);
-    triangulation.getTriangleVertex(i, 2, tverts[2]);
+    triangulation.getTriangleVertex(curr, 0, tverts[0]);
+    triangulation.getTriangleVertex(curr, 1, tverts[1]);
+    triangulation.getTriangleVertex(curr, 2, tverts[2]);
 
     // get coordinates of triangle vertices
     Point pm{}, pn{}, po{};
@@ -498,14 +498,14 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
       // check if triangle plane is parallel to quad normal
       if(std::abs(denom) < PREC_FLT) {
         // skip this iteration after filling pipeline
-        trianglesTested.insert(i);
+        trianglesTested.insert(curr);
         // fill pipeline with neighboring triangles
         for(auto &vert : tverts) {
           auto ntr = triangulation.getVertexTriangleNumber(vert);
           for(SimplexId j = 0; j < ntr; ++j) {
             SimplexId tid;
             triangulation.getVertexTriangle(vert, j, tid);
-            if(tid != i) {
+            if(tid != curr) {
               trianglesToTest.push(tid);
             }
           }
@@ -546,7 +546,7 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
     }
 
     // mark triangle as tested
-    trianglesTested.insert(i);
+    trianglesTested.insert(curr);
     trChecked++;
 
     if(inTriangle) {
@@ -560,7 +560,7 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
 
     // find the nearest triangle vertices (with the highest/positive
     // values in baryCoords) from proj
-    std::vector<SimplexId> vertices(2);
+    std::array<SimplexId, 2> vertices{};
     vertices[0] = tverts[extrema.second - baryCoords.begin()];
     for(size_t j = 0; j < baryCoords.size(); j++) {
       if(j != static_cast<size_t>(extrema.first - baryCoords.begin())
@@ -572,35 +572,35 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
 
     // store vertex with highest barycentric coordinate
     nearestVertex = vertices[0];
+    const auto secondNearVert{vertices[1]};
 
-    // triangles around vertices[0] and vertices[1]
-    std::array<std::set<SimplexId>, 2> vertsTriangles{};
-
-    // get triangles around vertices
-    for(size_t j = 0; j < vertices.size(); ++j) {
-      SimplexId tnum = triangulation.getVertexTriangleNumber(vertices[j]);
-      for(SimplexId k = 0; k < tnum; k++) {
-        SimplexId tid;
-        triangulation.getVertexTriangle(vertices[j], k, tid);
-        if(tid == i) {
-          continue;
-        }
-        vertsTriangles[j].insert(tid);
+    // get the triangle edge with the two vertices
+    SimplexId edge{};
+    const auto nEdges{triangulation.getVertexEdgeNumber(nearestVertex)};
+    for(SimplexId j = 0; j < nEdges; ++j) {
+      triangulation.getVertexEdge(nearestVertex, j, edge);
+      SimplexId v{};
+      triangulation.getEdgeVertex(edge, 0, v);
+      if(v == nearestVertex) {
+        triangulation.getEdgeVertex(edge, 1, v);
+      }
+      if(v == secondNearVert) {
+        break;
       }
     }
 
-    // triangles to test next
-    std::vector<SimplexId> common_triangles;
-
-    // look for triangles sharing the vertices with max values in baryCoords
-    std::set_intersection(vertsTriangles[0].begin(), vertsTriangles[0].end(),
-                          vertsTriangles[1].begin(), vertsTriangles[1].end(),
-                          std::back_inserter(common_triangles));
-
-    for(auto &ntid : common_triangles) {
-      if(!trianglesTested.isVisited_[ntid]) {
-        trianglesToTest.push(ntid);
+    // next triangle to visit
+    SimplexId next{};
+    const auto nTri{triangulation.getEdgeTriangleNumber(edge)};
+    for(SimplexId j = 0; j < nTri; ++j) {
+      triangulation.getEdgeTriangle(edge, j, next);
+      if(next != curr) {
+        break;
       }
+    }
+
+    if(!trianglesTested.isVisited_[next]) {
+      trianglesToTest.push(next);
     }
   }
 
