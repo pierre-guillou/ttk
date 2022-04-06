@@ -167,6 +167,9 @@ namespace ttk {
      */
     template <typename triangulationType>
     int project(const std::set<size_t> &filtered,
+                std::vector<Point> &tmpStorage,
+                std::vector<bool> &trianglesTested,
+                std::vector<SimplexId> &visitedTriangles,
                 const triangulationType &triangulation,
                 bool lastIter = false);
 
@@ -639,6 +642,9 @@ std::tuple<ttk::QuadrangulationSubdivision::Point,
 template <typename triangulationType>
 int ttk::QuadrangulationSubdivision::project(
   const std::set<size_t> &filtered,
+  std::vector<Point> &tmpStorage,
+  std::vector<bool> &trianglesTested,
+  std::vector<SimplexId> &visitedTriangles,
   const triangulationType &triangulation,
   const bool lastIter) {
   Timer tm;
@@ -650,32 +656,24 @@ int ttk::QuadrangulationSubdivision::project(
     projSucceeded_.resize(outputPoints_.size());
   }
 
-  // temp storage for projected points
-  std::vector<Point> tmp(outputPoints_.size());
-  // list of triangle IDs already tested
-  // (takes more memory to reduce computation time)
-  std::vector<bool> trianglesTested(
-    triangulation.getNumberOfTriangles(), false);
-  std::vector<SimplexId> visitedIds{};
-
   // main loop
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_) \
-  firstprivate(trianglesTested, visitedIds)
+  firstprivate(trianglesTested, visitedTriangles)
 #endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < outputPoints_.size(); i++) {
 
     // skip computation if i in filtered
     if(filtered.find(i) != filtered.end()) {
-      tmp[i] = outputPoints_[i];
+      tmpStorage[i] = outputPoints_[i];
       continue;
     }
-    VisitedMask vm{trianglesTested, visitedIds};
+    VisitedMask vm{trianglesTested, visitedTriangles};
 
     // replace curr in outputPoints_ by its projection
     auto res = findProjection(i, vm, ReverseProjection, triangulation);
 
-    tmp[i] = std::get<0>(res);
+    tmpStorage[i] = std::get<0>(res);
     nearestVertexIdentifier_[i] = std::get<1>(res);
 
     if(lastIter) {
@@ -685,7 +683,7 @@ int ttk::QuadrangulationSubdivision::project(
     }
   }
 
-  outputPoints_ = std::move(tmp);
+  std::swap(outputPoints_, tmpStorage);
 
   this->printMsg("Projected "
                    + std::to_string(outputPoints_.size() - filtered.size())
@@ -1027,6 +1025,14 @@ int ttk::QuadrangulationSubdivision::execute(
 
   Timer tmproj{};
 
+  // temp storage for projected points
+  std::vector<Point> tmp(outputPoints_.size());
+  // list of triangle IDs already tested
+  // (takes more memory to reduce computation time)
+  std::vector<bool> trianglesTested(
+    triangulation.getNumberOfTriangles(), false);
+  std::vector<SimplexId> visitedIds{};
+
   // "relax" the new points, i.e. replace it by the barycenter of its
   // four neighbors
   for(size_t i = 0; i < RelaxationIterations; i++) {
@@ -1034,7 +1040,8 @@ int ttk::QuadrangulationSubdivision::execute(
 
     // project all points on the nearest triangle (except MSC critical
     // points)
-    project(filtered, triangulation, (i == RelaxationIterations - 1));
+    project(filtered, tmp, trianglesTested, visitedIds, triangulation,
+            (i == RelaxationIterations - 1));
   }
 
   this->printMsg("Relaxed/Projected " + std::to_string(outputPoints_.size())
