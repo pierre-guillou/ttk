@@ -1,15 +1,19 @@
 #include <AbstractTriangulation.h>
 
+using namespace std;
 using namespace ttk;
 
 AbstractTriangulation::AbstractTriangulation() {
+
   setDebugMsgPrefix("AbstractTriangulation");
+
   clear();
 }
 
 AbstractTriangulation::~AbstractTriangulation() = default;
 
-void AbstractTriangulation::clear() {
+int AbstractTriangulation::clear() {
+
   hasPeriodicBoundaries_ = false;
   hasPreconditionedBoundaryEdges_ = false;
   hasPreconditionedBoundaryTriangles_ = false;
@@ -55,45 +59,86 @@ void AbstractTriangulation::clear() {
   vertexNeighborList_.clear();
   vertexStarList_.clear();
   vertexTriangleList_.clear();
+
+  return 0;
+}
+
+template <class itemType>
+size_t AbstractTriangulation::tableTableFootprint(
+  const vector<vector<itemType>> &table,
+  const string &tableName,
+  ostream &stream) const {
+
+  size_t localByteNumber = 0;
+  stringstream msg;
+
+  for(size_t i = 0; i < table.size(); i++) {
+    localByteNumber += table[i].size() * sizeof(itemType);
+  }
+
+  if((localByteNumber) && (tableName.length()) && (msg)) {
+    msg << tableName << ": " << localByteNumber << " bytes";
+    printMsg(msg.str(), debug::Priority::INFO, debug::LineMode::NEW, stream);
+  }
+
+  return localByteNumber;
 }
 
 size_t AbstractTriangulation::footprint(size_t size) const {
 
   size += sizeof(*this);
+  stringstream msg;
 
-  const auto printArrayFootprint
-    = [this](const FlatJaggedArray &array, const std::string &name) {
-        if(!array.empty() && !name.empty()) {
-          this->printMsg(name + std::string{": "}
-                         + std::to_string(array.footprint()) + " bytes");
-        }
-        return array.footprint();
-      };
+  size += tableFootprint<bool>(boundaryEdges_, "boundaryEdges_");
 
-  size += printArrayFootprint(vertexNeighborList_, "vertexNeighborList_");
-  size += printArrayFootprint(cellNeighborList_, "cellNeighborList_");
-  size += printArrayFootprint(vertexEdgeList_, "vertexEdgeList_");
-  size += printArrayFootprint(vertexTriangleList_, "vertexTriangleList_");
-  size += printArrayFootprint(edgeTriangleList_, "edgeTriangleList_");
-  size += printArrayFootprint(vertexStarList_, "vertexStarList_");
-  size += printArrayFootprint(edgeStarList_, "edgeStarList_");
-  size += printArrayFootprint(triangleStarList_, "triangleStarList_");
-  size += printArrayFootprint(vertexLinkList_, "vertexLinkList_");
-  size += printArrayFootprint(edgeLinkList_, "edgeLinkList_");
-  size += printArrayFootprint(triangleLinkList_, "triangleLinkList_");
+  size += tableFootprint<bool>(boundaryTriangles_, "boundaryTriangles_");
 
-  size += tableFootprint(edgeList_, "edgeList_");
-  size += tableFootprint(triangleList_, "triangleList_");
-  size += tableFootprint(triangleEdgeList_, "triangleEdgeList_");
+  size += tableFootprint<bool>(boundaryVertices_, "boundaryVertices_");
+
   size += tableFootprint(tetraEdgeList_, "tetraEdgeList_");
+
+  size
+    += tableTableFootprint<SimplexId>(cellNeighborList_, "cellNeighborList_");
+
   size += tableFootprint(tetraTriangleList_, "tetraTriangleList_");
 
-  size += tableFootprint(boundaryVertices_, "boundaryVertices_");
-  size += tableFootprint(boundaryEdges_, "boundaryEdges_");
-  size += tableFootprint(boundaryTriangles_, "boundaryTriangles_");
+  size += tableTableFootprint<SimplexId>(edgeLinkList_, "edgeLinkList_");
 
-  this->printMsg("Total footprint: " + std::to_string((size / 1024) / 1024)
-                 + " MiB.");
+  size += tableFootprint(edgeList_, "edgeList_");
+
+  size += tableTableFootprint<SimplexId>(edgeStarList_, "edgeStarList_");
+
+  size
+    += tableTableFootprint<SimplexId>(edgeTriangleList_, "edgeTriangleList_");
+
+  size += tableFootprint(triangleList_, "triangleList_");
+
+  size += tableFootprint(triangleEdgeList_, "triangleEdgeList_");
+
+  size
+    += tableTableFootprint<SimplexId>(triangleLinkList_, "triangleLinkList_");
+
+  size
+    += tableTableFootprint<SimplexId>(triangleStarList_, "triangleStarList_");
+
+  size += tableTableFootprint<SimplexId>(vertexEdgeList_, "vertexEdgeList_");
+
+  size += tableTableFootprint<SimplexId>(vertexLinkList_, "vertexLinkList_");
+
+  size += tableTableFootprint<SimplexId>(
+    vertexNeighborList_, "vertexNeighborList_");
+
+  size += tableTableFootprint<SimplexId>(vertexStarList_, "vertexStarList_");
+
+  size += tableTableFootprint<SimplexId>(
+    vertexTriangleList_, "vertexTriangleList_");
+
+  size += tableTableFootprint(cellEdgeVector_, "cellEdgeVector_");
+  size += tableTableFootprint(cellTriangleVector_, "cellTriangleVector_");
+  size += tableTableFootprint(triangleEdgeVector_, "triangleEdgeVector_");
+
+  msg << "Total footprint: " << (size / 1024) / 1024 << " MB.";
+  printMsg(msg.str());
 
   return size;
 }
