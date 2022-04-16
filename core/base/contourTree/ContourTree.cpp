@@ -330,7 +330,7 @@ int SubLevelSetTree::build() {
         int seedId = vertexSeeds[vertexId] - &(seeds[0]);
         if(!filtrationFront.empty())
           seedSuperArcs[seedId].push_back(openSuperArc(newNodeId));
-      } else if(starSets.size()) {
+      } else if(!starSets.empty()) {
         // we're dealing with a degree-2 node
         int seedId = starSets[0] - &(seeds[0]);
         int superArcId
@@ -569,7 +569,7 @@ int SubLevelSetTree::exportNodeColorToVtk(const int &nodeId, ofstream &o) {
 
   for(int i = 0; i < 8; i++) {
 
-    if(!nodeList_[nodeId].downSuperArcList_.size()) {
+    if(nodeList_[nodeId].downSuperArcList_.empty()) {
       // extremum
       if(minimumList_) {
         // minimum
@@ -577,7 +577,7 @@ int SubLevelSetTree::exportNodeColorToVtk(const int &nodeId, ofstream &o) {
       } else {
         o << "1 ";
       }
-    } else if(!nodeList_[nodeId].upSuperArcList_.size()) {
+    } else if(nodeList_[nodeId].upSuperArcList_.empty()) {
       if(minimumList_) {
         // maximum
         o << "1 ";
@@ -878,8 +878,8 @@ int SubLevelSetTree::exportToSvg(const string &fileName,
 
   for(int i = 0; i < (int)nodeList_.size(); i++) {
 
-    if((nodeList_[i].downSuperArcList_.size())
-       || (nodeList_[i].upSuperArcList_.size())) {
+    if((!nodeList_[i].downSuperArcList_.empty())
+       || (!nodeList_[i].upSuperArcList_.empty())) {
       // not a regular node
       if(!nodeList_[i].pruned_) {
         dotFile << "  \"f = ";
@@ -897,10 +897,10 @@ int SubLevelSetTree::exportToSvg(const string &fileName,
           // join tree
 
           // color
-          if(!nodeList_[i].upSuperArcList_.size()) {
+          if(nodeList_[i].upSuperArcList_.empty()) {
             // global maximum --> green
             dotFile << "fillcolor=green,";
-          } else if(!nodeList_[i].downSuperArcList_.size()) {
+          } else if(nodeList_[i].downSuperArcList_.empty()) {
             // minimum --> blue
             dotFile << "fillcolor=blue,fontcolor=white,";
           } else {
@@ -911,10 +911,10 @@ int SubLevelSetTree::exportToSvg(const string &fileName,
           // split tree
 
           // color
-          if(!nodeList_[i].upSuperArcList_.size()) {
+          if(nodeList_[i].upSuperArcList_.empty()) {
             // global minimum --> blue
             dotFile << "fillcolor=blue,fontcolor=white,";
-          } else if(!nodeList_[i].downSuperArcList_.size()) {
+          } else if(nodeList_[i].downSuperArcList_.empty()) {
             // maximum --> green
             dotFile << "fillcolor=green,";
           } else {
@@ -1175,10 +1175,10 @@ int SubLevelSetTree::buildExtremumList(vector<int> &extremumList,
   if((!triangulation_) /*|| triangulation_->isEmpty()*/)
     return -1;
 
-  if((!vertexScalars_) || (!vertexScalars_->size()))
+  if((!vertexScalars_) || (vertexScalars_->empty()))
     return -2;
 
-  if((!vertexSoSoffsets_) || (!vertexSoSoffsets_->size()))
+  if((!vertexSoSoffsets_) || (vertexSoSoffsets_->empty()))
     return -3;
 
   vector<pair<bool, pair<double, pair<int, int>>>> tmpList;
@@ -1269,7 +1269,7 @@ int SubLevelSetTree::getPersistenceDiagram(
     pairs = &defaultPairs;
   }
 
-  if(!pairs->size())
+  if(pairs->empty())
     getPersistencePairs(*pairs);
 
   // fast fix :(
@@ -1300,7 +1300,7 @@ int SubLevelSetTree::getPersistencePairs(
 
   Timer t;
 
-  if(!superArcList_.size())
+  if(superArcList_.empty())
     return -1;
 
   bool isMergeTree = true;
@@ -1455,7 +1455,7 @@ int SubLevelSetTree::getPersistencePlot(
     persistencePairs = &defaultPersistencePairs;
   }
 
-  if(!persistencePairs->size())
+  if(persistencePairs->empty())
     getPersistencePairs(*persistencePairs);
 
   plot.resize(persistencePairs->size());
@@ -1480,7 +1480,7 @@ bool SubLevelSetTree::buildPlanarLayout(const double &scaleX,
     return false;
   }
 
-  if((!vertexScalars_) || (!vertexScalars_->size()))
+  if((!vertexScalars_) || (vertexScalars_->empty()))
     return false;
 
   // global dimansions [0,1]x[0,1]
@@ -1512,7 +1512,7 @@ bool SubLevelSetTree::buildPlanarLayout(const double &scaleX,
     if(!superArcList_[i].pruned_) {
 
       int downNodeId = superArcList_[i].downNodeId_;
-      if(!nodeList_[downNodeId].downSuperArcList_.size()) {
+      if(nodeList_[downNodeId].downSuperArcList_.empty()) {
         pair<bool, pair<double, pair<int, int>>> n;
         n.first = (minimumList_ ? true : false);
         n.second.first = (*vertexScalars_)[nodeList_[downNodeId].vertexId_];
@@ -1574,7 +1574,7 @@ bool SubLevelSetTree::buildPlanarLayout(const double &scaleX,
   for(int i = 0; i < (int)superArcList_.size(); i++) {
     if(!superArcList_[i].pruned_) {
       int upNodeId = superArcList_[i].upNodeId_;
-      if(!nodeList_[upNodeId].upSuperArcList_.size()) {
+      if(nodeList_[upNodeId].upSuperArcList_.empty()) {
         // that's it
         rootId = upNodeId;
         break;
@@ -1602,7 +1602,7 @@ bool SubLevelSetTree::buildPlanarLayout(const double &scaleX,
     // get the number of leaves of the first child
     double ratio = 0.5;
 
-    if((nodeList_[nodeId].downSuperArcList_.size()) && (nodeId != subRootId)
+    if((!nodeList_[nodeId].downSuperArcList_.empty()) && (nodeId != subRootId)
        && (nodeId != rootId)) {
 
       int arcId = nodeList_[nodeId].downSuperArcList_[0];
@@ -1907,10 +1907,10 @@ int SubLevelSetTree::simplify(const double &simplificationThreshold,
   //   double unNormalizedThreshold = simplificationThreshold
   //     * (maxScalar_ - minScalar_);
 
-  if(!nodeList_.size())
+  if(nodeList_.empty())
     return -2;
 
-  if(!superArcList_.size())
+  if(superArcList_.empty())
     return -3;
 
   if((minimumList_) && (maximumList_)) {
@@ -1922,7 +1922,7 @@ int SubLevelSetTree::simplify(const double &simplificationThreshold,
   int simplifiedArcNumber = 0;
   double maximumMetricScore = 0;
 
-  if(!originalNodeList_.size()) {
+  if(originalNodeList_.empty()) {
     // first time we simplify
     originalNodeList_ = nodeList_;
     originalSuperArcList_ = superArcList_;
@@ -1955,7 +1955,7 @@ int SubLevelSetTree::simplify(const double &simplificationThreshold,
         int downNodeId = superArcList_[i].downNodeId_;
         int upNodeId = superArcList_[i].upNodeId_;
 
-        if(!nodeList_[downNodeId].downSuperArcList_.size()) {
+        if(nodeList_[downNodeId].downSuperArcList_.empty()) {
 
           currentScore = metric->computeSuperArcMetric(
             nodeList_[downNodeId].vertexId_, nodeList_[upNodeId].vertexId_,
@@ -1989,7 +1989,7 @@ int SubLevelSetTree::simplify(const double &simplificationThreshold,
     int pivotId = upNodeId;
     int leafId = downNodeId;
 
-    if(!nodeList_[downNodeId].downSuperArcList_.size()) {
+    if(nodeList_[downNodeId].downSuperArcList_.empty()) {
       // remove an extremum
       pivotId = upNodeId;
       leafId = downNodeId;
@@ -2128,7 +2128,7 @@ int SubLevelSetTree::computeBarycenters() {
           for(unsigned int l = 0; l < 3; ++l)
             barycenter[l] += (*vertexPositions_)[vertexId][l];
         }
-        if(sample.size()) {
+        if(!sample.empty()) {
           for(unsigned int k = 0; k < 3; ++k)
             barycenter[k] /= sample.size();
 
@@ -2193,7 +2193,7 @@ int SubLevelSetTree::getSkeletonScalars(
           vertexId = getNode(nodeId)->getVertexId();
           f += scalars[vertexId];
         }
-        if(sample.size()) {
+        if(!sample.empty()) {
           f /= sample.size();
 
           f1 = f;
@@ -2554,7 +2554,7 @@ int ContourTree::combineTrees() {
           nodeQueue.push(n0);
         }
       }
-    } while(nodeQueue.size());
+    } while(!nodeQueue.empty());
 
     if((int)nodeList_.size() == vertexNumber_)
       break;
@@ -2586,7 +2586,7 @@ int ContourTree::finalize() {
     }
   }
 
-  while(nodeIdQueue.size()) {
+  while(!nodeIdQueue.empty()) {
 
     int nodeId = nodeIdQueue.front();
     nodeIdQueue.pop();
@@ -2765,7 +2765,7 @@ int ContourTree::getPersistencePairs(
   vector<pair<pair<int, int>, double>> &pairs,
   vector<pair<pair<int, int>, double>> *mergePairs,
   vector<pair<pair<int, int>, double>> *splitPairs) const {
-  if(pairs.size())
+  if(!pairs.empty())
     return 0;
 
   vector<pair<pair<int, int>, double>> defaultMergePairs{};
@@ -2777,7 +2777,7 @@ int ContourTree::getPersistencePairs(
     splitPairs = &defaultSplitPairs;
   }
 
-  if(!mergePairs->size() || !splitPairs->size()) {
+  if(mergePairs->empty() || splitPairs->empty()) {
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel sections
 #endif
@@ -2787,7 +2787,7 @@ int ContourTree::getPersistencePairs(
 #pragma omp section
 #endif
       {
-        if(!mergePairs->size())
+        if(mergePairs->empty())
           mergeTree_.getPersistencePairs(*mergePairs);
       }
 
@@ -2795,7 +2795,7 @@ int ContourTree::getPersistencePairs(
 #pragma omp section
 #endif
       {
-        if(!splitPairs->size())
+        if(splitPairs->empty())
           splitTree_.getPersistencePairs(*splitPairs);
       }
     }
@@ -2826,7 +2826,7 @@ int ContourTree::getPersistencePlot(
     pairs = &defaultPairs;
   }
 
-  if(!pairs->size())
+  if(pairs->empty())
     getPersistencePairs(*pairs, mergePairs, splitPairs);
 
   plot.resize(pairs->size());
@@ -2853,7 +2853,7 @@ int ContourTree::getPersistenceDiagram(
     pairs = &defaultPairs;
   }
 
-  if(!pairs->size())
+  if(pairs->empty())
     getPersistencePairs(*pairs, mergePairs, splitPairs);
 
   // fast fix :(

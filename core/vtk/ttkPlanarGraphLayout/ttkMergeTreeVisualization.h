@@ -351,15 +351,15 @@ public:
         array = stringArray;
       else
         continue;
-      auto vecSize = (nodeCorrT.size() == 0 ? array->GetNumberOfValues()
-                                            : nodeCorrT.size());
+      auto vecSize
+        = (nodeCorrT.empty() ? array->GetNumberOfValues() : nodeCorrT.size());
       std::vector<double> vec(vecSize);
       std::vector<std::string> vecString(vecSize);
       for(unsigned int j = 0; j < vec.size(); ++j) {
-        int toGet = (nodeCorrT.size() == 0 ? j : nodeCorrT[j]);
+        int toGet = (nodeCorrT.empty() ? j : nodeCorrT[j]);
         if(treeNodeIdArray)
-          toGet = (nodeCorrT.size() == 0 ? treeNodeIdRev[j]
-                                         : treeNodeIdRev[nodeCorrT[j]]);
+          toGet = (nodeCorrT.empty() ? treeNodeIdRev[j]
+                                     : treeNodeIdRev[nodeCorrT[j]]);
         auto value = array->GetVariantValue(toGet);
         if(dataArray)
           vec[j] = value.ToDouble();
@@ -479,7 +479,7 @@ public:
           // Add arc matching percentage
           printMsg(
             "// Add arc matching percentage", ttk::debug::Priority::VERBOSE);
-          if(allBaryPercentMatch.size() != 0)
+          if(!allBaryPercentMatch.empty())
             matchingPercentMatch->InsertNextTuple1(
               allBaryPercentMatch[c][tree1NodeId]);
 
@@ -536,7 +536,7 @@ public:
     vtkMatching->GetCellData()->AddArray(costArray);
     vtkMatching->GetCellData()->AddArray(tree1NodeIdField);
     vtkMatching->GetCellData()->AddArray(tree2NodeIdField);
-    if(allBaryPercentMatch.size() != 0)
+    if(!allBaryPercentMatch.empty())
       vtkMatching->GetCellData()->AddArray(matchingPercentMatch);
     vtkOutputMatching->ShallowCopy(vtkMatching);
   }
@@ -601,7 +601,7 @@ public:
         double *tBounds = treesSegmentation[i]->GetBounds();
         allBounds[i] = std::make_tuple(tBounds[0], tBounds[1], tBounds[2],
                                        tBounds[3], tBounds[4], tBounds[5]);
-      } else if(treesNodes.size() != 0 and treesNodes[i] != nullptr) {
+      } else if(!treesNodes.empty() and treesNodes[i] != nullptr) {
         if(not isPersistenceDiagram)
           allBounds[i]
             = getRealBounds(treesNodes[i], trees[i], treesNodeCorrMesh[i]);
@@ -856,7 +856,7 @@ public:
 
         // Get is interpolated tree (temporal subsampling)
         bool isInterpolatedTree = false;
-        if(interpolatedTrees.size() != 0)
+        if(!interpolatedTrees.empty())
           isInterpolatedTree = interpolatedTrees[i];
         foundOneInterpolatedTree |= isInterpolatedTree;
 
@@ -1014,7 +1014,7 @@ public:
             }
             for(int k = 0; k < 3; ++k)
               point[k] /= noMatched;
-          } else if(not isInterpolatedTree and treesNodes.size() != 0
+          } else if(not isInterpolatedTree and !treesNodes.empty()
                     and treesNodes[i] != nullptr) {
             nodeMesh = treesNodeCorrMesh[i][node];
             getPoint(treesNodes[i], nodeMesh, point);
@@ -1282,7 +1282,7 @@ public:
                         "CriticalType");
                     criticalTypeT = array->GetTuple1(nodeMesh);
                   }
-                } else if(treesNodes.size() != 0 and treesNodes[i] != nullptr) {
+                } else if(!treesNodes.empty() and treesNodes[i] != nullptr) {
                   auto array
                     = treesNodes[i]->GetPointData()->GetArray("CriticalType");
                   criticalTypeT = array->GetTuple1(nodeMesh);

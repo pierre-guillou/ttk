@@ -181,7 +181,7 @@ namespace ttk {
     } else {
       struct dirent *dirEntry;
       while((dirEntry = readdir(d)) != nullptr) {
-        if(extension.size()) {
+        if(!extension.empty()) {
           std::string entryExtension(dirEntry->d_name);
           entryExtension
             = entryExtension.substr(entryExtension.find_last_of('.') + 1);

@@ -63,7 +63,7 @@ namespace ttk {
     }
 
     dataType getRangeMax() const {
-      if(upperBound_.size()) {
+      if(!upperBound_.empty()) {
         dataType maxValue = upperBound_[0];
         for(size_t i = 1; i < upperBound_.size(); i++) {
           if(upperBound_[i] > maxValue) {
@@ -77,7 +77,7 @@ namespace ttk {
     }
 
     dataType getRangeMin() const {
-      if(lowerBound_.size()) {
+      if(!lowerBound_.empty()) {
         dataType minValue = lowerBound_[0];
         for(size_t i = 1; i < lowerBound_.size(); i++) {
           if(lowerBound_[i] < minValue) {

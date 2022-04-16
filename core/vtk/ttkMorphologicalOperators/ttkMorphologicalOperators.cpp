@@ -77,7 +77,7 @@ int ttkMorphologicalOperators::RequestData(vtkInformation *ttkNotUsed(request),
     std::vector<double> values;
     ttkUtils::stringListToDoubleVector(temp, values);
 
-    if(values.size() < 1) {
+    if(values.empty()) {
       this->printErr("Unable to parse pivot label as double.");
       return 0;
     }

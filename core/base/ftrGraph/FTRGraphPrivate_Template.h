@@ -114,7 +114,7 @@ void ttk::ftr::FTRGraph<ScalarType, triangulationType>::growthFromSeed(
     if(valences_.lower[curVert] < 2 && valences_.upper[curVert] < 2) {
 
       // not a local min (for local min, currentArc is already set)
-      if(star.lower.size()) {
+      if(!star.lower.empty()) {
         // not a min nor a saddle: 1 CC below
         currentArc = dynGraph(localProp).getSubtreeArc(star.lower[0]);
         if(currentArc == nullSuperArc) {
@@ -157,7 +157,7 @@ void ttk::ftr::FTRGraph<ScalarType, triangulationType>::growthFromSeed(
         isJoinLast = checkLast(localProp, star.lower);
         break;
       } else {
-        if(comp.lower.size()) {
+        if(!comp.lower.empty()) {
           currentArc = (*comp.lower.begin())->getCorArc();
           if(currentArc == nullSuperArc) {
             PRINT("n--" << curVert);
@@ -172,7 +172,7 @@ void ttk::ftr::FTRGraph<ScalarType, triangulationType>::growthFromSeed(
         isSplit = true;
       }
 
-      if(!isJoin && !isSplit && comp.upper.size()) {
+      if(!isJoin && !isSplit && !comp.upper.empty()) {
         // this arc is not empty (not saddle not max)
         graph_.getArc(currentArc).visit(curVert);
       }
@@ -190,7 +190,7 @@ void ttk::ftr::FTRGraph<ScalarType, triangulationType>::growthFromSeed(
     }
 
     // stop on leaves
-    if(!star.upper.size()) {
+    if(star.upper.empty()) {
       // We have reached a local extrema (max from this propagation)
       const idNode leafNode = graph_.makeNode(curVert);
       graph_.closeArc(currentArc, leafNode);
@@ -421,7 +421,7 @@ void ttk::ftr::FTRGraph<ScalarType, triangulationType>::growthSequential(
           graph_.getArc(currentArc).visit(curVert);
         }
       }
-      if(star.upper.size()) {
+      if(!star.upper.empty()) {
         for(const idEdge dgNode : star.upper) {
           dynGraph(localProp).setCorArc(dgNode, currentArc);
         }
@@ -467,7 +467,7 @@ void ttk::ftr::FTRGraph<ScalarType, triangulationType>::growthSequential(
       updatePreimage(localProp, currentArc);
 
       comp.upper = upperComps(star.upper, localProp);
-      if(!comp.upper.size()) { // max
+      if(comp.upper.empty()) { // max
         const idNode maxNode = graph_.makeNode(curVert);
         graph_.closeArc(currentArc, maxNode);
       } else if(comp.upper.size() < 2) {

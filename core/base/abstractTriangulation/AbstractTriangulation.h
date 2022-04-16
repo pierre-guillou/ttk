@@ -3704,7 +3704,7 @@ namespace ttk {
                           std::ostream &stream = std::cout) const {
 
       std::stringstream msg;
-      if((table.size()) && (tableName.length())) {
+      if((!table.empty()) && (tableName.length())) {
         msg << tableName << ": " << table.size() * sizeof(itemType) << " bytes";
         printMsg(
           msg.str(), debug::Priority::INFO, debug::LineMode::NEW, stream);

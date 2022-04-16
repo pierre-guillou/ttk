@@ -52,7 +52,7 @@ ContourTree::ContourTree(float *scalars,
   }
 
   for(const std::shared_ptr<ttk::cta::CTNode> &node : nodes) {
-    if(node->edgeList.size() == 0)
+    if(node->edgeList.empty())
       std::cout << "wtf?\n" << std::flush;
     if(node->edgeList.size() > 1)
       node->type = saddleNode;
@@ -201,7 +201,7 @@ std::shared_ptr<ttk::cta::BinaryTree> ContourTree::computeRootedTree_binary(
   }
 
   // children from vector to binary tree
-  t->child1 = children.size() > 0 ? children[0] : nullptr;
+  t->child1 = !children.empty() ? children[0] : nullptr;
   t->child2 = children.size() > 1 ? children[1] : nullptr;
 
   t->freq = 1;

@@ -105,7 +105,7 @@ int ttkSphereFromPoint::RequestData(vtkInformation *ttkNotUsed(request),
     }
   }
 
-  if(dataArrayList_.size()) {
+  if(!dataArrayList_.empty()) {
     for(SimplexId i = 0; i < (SimplexId)dataArrayList_.size(); i++) {
       for(SimplexId j = 0; j < (SimplexId)dataArrayList_[i].size(); j++) {
         dataArrayList_[i][j]->Delete();

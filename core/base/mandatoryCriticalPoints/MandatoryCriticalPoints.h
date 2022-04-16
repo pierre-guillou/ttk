@@ -300,7 +300,7 @@ namespace ttk {
 
     template <typename triangulationType>
     inline int computeAllJoinSaddle(const triangulationType &triangulation) {
-      if(mandatoryJoinSaddleVertex_.size() > 0) {
+      if(!mandatoryJoinSaddleVertex_.empty()) {
         computeJoinSaddle(0, triangulation, true);
         for(int i = 1; i < (int)mandatoryJoinSaddleVertex_.size(); i++)
           computeJoinSaddle(i, triangulation, false);
@@ -314,7 +314,7 @@ namespace ttk {
     }
 
     int computeAllMaxima() {
-      if(mandatoryMaximumVertex_.size() > 0) {
+      if(!mandatoryMaximumVertex_.empty()) {
         computeMaximum(0, true, false);
         for(int i = 0; i < (int)mandatoryMaximumVertex_.size(); i++)
           computeMaximum(i, false, false);
@@ -328,7 +328,7 @@ namespace ttk {
     }
 
     int computeAllMinima() {
-      if(mandatoryMinimumVertex_.size() > 0) {
+      if(!mandatoryMinimumVertex_.empty()) {
         computeMinimum(0, true, false);
         for(int i = 0; i < (int)mandatoryMinimumVertex_.size(); i++)
           computeMinimum(i, false, false);
@@ -343,7 +343,7 @@ namespace ttk {
 
     template <typename triangulationType>
     inline int computeAllSplitSaddle(const triangulationType &triangulation) {
-      if(mandatorySplitSaddleVertex_.size() > 0) {
+      if(!mandatorySplitSaddleVertex_.empty()) {
         computeSplitSaddle(0, triangulation, true);
         for(int i = 1; i < (int)mandatorySplitSaddleVertex_.size(); i++)
           computeSplitSaddle(i, triangulation, false);
@@ -859,7 +859,7 @@ int ttk::MandatoryCriticalPoints::execute(
     return -6;
   if(!vertexNumber_)
     return -7;
-  if(!vertexPositions_.size())
+  if(vertexPositions_.empty())
     return -8;
 #endif
 

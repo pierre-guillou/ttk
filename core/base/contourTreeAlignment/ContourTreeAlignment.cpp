@@ -1299,7 +1299,7 @@ std::shared_ptr<ttk::cta::AlignmentTree>
     std::vector<std::shared_ptr<ttk::cta::AlignmentTree>> resChildren
       = traceAlignmentForest(t1, t2, memT, memF);
 
-    if(resChildren.size() > 0)
+    if(!resChildren.empty())
       resNode->child1 = resChildren[0];
     if(resChildren.size() > 1)
       resNode->child2 = resChildren[1];
@@ -1502,7 +1502,7 @@ std::vector<std::shared_ptr<ttk::cta::AlignmentTree>>
 
       std::vector<std::shared_ptr<ttk::cta::AlignmentTree>> resChildren
         = traceAlignmentForest(t1->child1, t2, memT, memF);
-      if(resChildren.size() > 0)
+      if(!resChildren.empty())
         t->child1 = resChildren[0];
       if(resChildren.size() > 1)
         t->child2 = resChildren[1];
@@ -1542,7 +1542,7 @@ std::vector<std::shared_ptr<ttk::cta::AlignmentTree>>
 
       std::vector<std::shared_ptr<ttk::cta::AlignmentTree>> resChildren
         = traceAlignmentForest(t1->child2, t2, memT, memF);
-      if(resChildren.size() > 0)
+      if(!resChildren.empty())
         t->child1 = resChildren[0];
       if(resChildren.size() > 1)
         t->child2 = resChildren[1];
@@ -1582,7 +1582,7 @@ std::vector<std::shared_ptr<ttk::cta::AlignmentTree>>
 
       std::vector<std::shared_ptr<ttk::cta::AlignmentTree>> resChildren
         = traceAlignmentForest(t1, t2->child1, memT, memF);
-      if(resChildren.size() > 0)
+      if(!resChildren.empty())
         t->child1 = resChildren[0];
       if(resChildren.size() > 1)
         t->child2 = resChildren[1];
@@ -1622,7 +1622,7 @@ std::vector<std::shared_ptr<ttk::cta::AlignmentTree>>
 
       std::vector<std::shared_ptr<ttk::cta::AlignmentTree>> resChildren
         = traceAlignmentForest(t1, t2->child2, memT, memF);
-      if(resChildren.size() > 0)
+      if(!resChildren.empty())
         t->child1 = resChildren[0];
       if(resChildren.size() > 1)
         t->child2 = resChildren[1];
@@ -1743,7 +1743,7 @@ std::shared_ptr<ttk::cta::BinaryTree>
     }
   }
 
-  if(children.size() > 0)
+  if(!children.empty())
     t->child1 = children[0];
   if(children.size() > 1)
     t->child2 = children[1];
@@ -1798,7 +1798,7 @@ std::shared_ptr<ttk::cta::BinaryTree>
     }
   }
 
-  if(children.size() > 0)
+  if(!children.empty())
     t->child1 = children[0];
   if(children.size() > 1)
     t->child2 = children[1];

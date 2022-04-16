@@ -77,7 +77,7 @@ namespace ttk {
         }
       }
 
-      if(!mapArcs.size())
+      if(mapArcs.empty())
         return;
 
 #ifdef TTK_ENABLE_OPENMP

@@ -376,7 +376,7 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
           rowsToDelete.emplace_back(i);
       }
 
-      if(rowsToDelete.size() > 0) {
+      if(!rowsToDelete.empty()) {
         ttk::Timer t;
         this->printMsg("Deleting products with same keys", 0,
                        ttk::debug::LineMode::REPLACE,

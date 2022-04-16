@@ -407,7 +407,7 @@ int ExplicitTriangulation::preconditionCellTrianglesInternal() {
     TwoSkeleton twoSkeleton;
     twoSkeleton.setWrapper(this);
 
-    if(triangleList_.size()) {
+    if(!triangleList_.empty()) {
       // we already computed this guy, let's just get the cell triangles
       if(!triangleStarData_.empty()) {
         return twoSkeleton.buildTriangleList(

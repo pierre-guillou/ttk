@@ -150,7 +150,7 @@ int ttk::WebSocketIO::stopServer() {
 }
 
 int ttk::WebSocketIO::sendString(const std::string &msg) const {
-  if(this->connections.size() > 0) {
+  if(!this->connections.empty()) {
     this->server.send(
       *this->connections.begin(), msg, websocketpp::frame::opcode::text);
     return 1;
@@ -160,7 +160,7 @@ int ttk::WebSocketIO::sendString(const std::string &msg) const {
 
 int ttk::WebSocketIO::sendBinary(const size_t &sizeInBytes,
                                  const void *data) const {
-  if(this->connections.size() > 0) {
+  if(!this->connections.empty()) {
     this->server.send(*this->connections.begin(), data, sizeInBytes,
                       websocketpp::frame::opcode::binary);
     return 1;

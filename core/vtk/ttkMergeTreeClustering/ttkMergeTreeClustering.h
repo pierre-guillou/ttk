@@ -183,7 +183,7 @@ private:
   }
 
   bool isDataVisualizationFilled() {
-    return trees1NodeCorrMesh.size() != 0 and finalDistances.size() != 0;
+    return !trees1NodeCorrMesh.empty() and !finalDistances.empty();
   }
 
 public:

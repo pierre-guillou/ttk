@@ -113,7 +113,7 @@ int ttkManifoldCheck::RequestData(vtkInformation *ttkNotUsed(request),
     edgeCellArray->SetTuple1(i, 0);
   }
 
-  if(edgeLinkComponentNumber_.size()) {
+  if(!edgeLinkComponentNumber_.empty()) {
 
     for(SimplexId i = 0; i < (SimplexId)edgeLinkComponentNumber_.size(); i++) {
 
@@ -192,7 +192,7 @@ int ttkManifoldCheck::RequestData(vtkInformation *ttkNotUsed(request),
     triangleCellArray->SetTuple1(i, 0);
   }
 
-  if(triangleLinkComponentNumber_.size()) {
+  if(!triangleLinkComponentNumber_.empty()) {
 
     for(SimplexId i = 0; i < (SimplexId)triangleLinkComponentNumber_.size();
         i++) {

@@ -108,7 +108,7 @@ int ttkMergeTreeTemporalReductionEncoding::RequestData(
   printMsg("Load blocks done.", debug::Priority::VERBOSE);
 
   // If we have already computed once but the input has changed
-  if(treesNodes.size() != 0 and inputTrees[0]->GetBlock(0) != treesNodes[0])
+  if(!treesNodes.empty() and inputTrees[0]->GetBlock(0) != treesNodes[0])
     resetDataVisualization();
 
   // Run

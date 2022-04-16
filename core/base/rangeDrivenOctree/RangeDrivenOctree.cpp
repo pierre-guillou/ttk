@@ -82,7 +82,7 @@ int RangeDrivenOctree::rangeSegmentQuery(
   q1.second = q0.second;
 
   if(segmentIntersection(p0, p1, q0, q1)) {
-    if(nodeList_[nodeId].childList_.size()) {
+    if(!nodeList_[nodeId].childList_.empty()) {
       for(size_t i = 0; i < nodeList_[nodeId].childList_.size(); i++) {
         rangeSegmentQuery(p0, p1, nodeList_[nodeId].childList_[i], cellList);
       }
@@ -112,7 +112,7 @@ int RangeDrivenOctree::rangeSegmentQuery(
   q1.second = nodeList_[nodeId].rangeBox_.second.second;
 
   if(segmentIntersection(p0, p1, q0, q1)) {
-    if(nodeList_[nodeId].childList_.size()) {
+    if(!nodeList_[nodeId].childList_.empty()) {
       for(size_t i = 0; i < nodeList_[nodeId].childList_.size(); i++) {
         rangeSegmentQuery(p0, p1, nodeList_[nodeId].childList_[i], cellList);
       }
@@ -142,7 +142,7 @@ int RangeDrivenOctree::rangeSegmentQuery(
   q1.second = nodeList_[nodeId].rangeBox_.second.second;
 
   if(segmentIntersection(p0, p1, q0, q1)) {
-    if(nodeList_[nodeId].childList_.size()) {
+    if(!nodeList_[nodeId].childList_.empty()) {
       for(size_t i = 0; i < nodeList_[nodeId].childList_.size(); i++) {
         rangeSegmentQuery(p0, p1, nodeList_[nodeId].childList_[i], cellList);
       }
@@ -172,7 +172,7 @@ int RangeDrivenOctree::rangeSegmentQuery(
   q1.second = nodeList_[nodeId].rangeBox_.second.second;
 
   if(segmentIntersection(p0, p1, q0, q1)) {
-    if(nodeList_[nodeId].childList_.size()) {
+    if(!nodeList_[nodeId].childList_.empty()) {
       for(size_t i = 0; i < nodeList_[nodeId].childList_.size(); i++) {
         rangeSegmentQuery(p0, p1, nodeList_[nodeId].childList_[i], cellList);
       }
@@ -201,7 +201,7 @@ int RangeDrivenOctree::rangeSegmentQuery(
      && (p0.second < nodeList_[nodeId].rangeBox_.second.second)) {
 
     // p0 is in there
-    if(nodeList_[nodeId].childList_.size()) {
+    if(!nodeList_[nodeId].childList_.empty()) {
       for(size_t i = 0; i < nodeList_[nodeId].childList_.size(); i++) {
         rangeSegmentQuery(p0, p1, nodeList_[nodeId].childList_[i], cellList);
       }
@@ -228,7 +228,7 @@ int RangeDrivenOctree::rangeSegmentQuery(
      && (p1.second < nodeList_[nodeId].rangeBox_.second.second)) {
 
     // p1 is in there
-    if(nodeList_[nodeId].childList_.size()) {
+    if(!nodeList_[nodeId].childList_.empty()) {
       for(size_t i = 0; i < nodeList_[nodeId].childList_.size(); i++) {
         rangeSegmentQuery(p0, p1, nodeList_[nodeId].childList_[i], cellList);
       }
@@ -299,10 +299,10 @@ int RangeDrivenOctree::stats(std::ostream &stream) {
   SimplexId maxCellId = 0;
 
   for(size_t i = 0; i < nodeList_.size(); i++) {
-    if(!nodeList_[i].childList_.size()) {
+    if(nodeList_[i].childList_.empty()) {
       // leaf
       leafNumber++;
-      if(nodeList_[i].cellList_.size()) {
+      if(!nodeList_[i].cellList_.empty()) {
         nonEmptyLeafNumber++;
         storedCellNumber += nodeList_[i].cellList_.size();
 
@@ -340,7 +340,7 @@ int RangeDrivenOctree::stats(std::ostream &stream) {
 
   if(debugLevel_ > 5) {
     for(size_t i = 0; i < nodeList_.size(); i++) {
-      if(nodeList_[i].cellList_.size())
+      if(!nodeList_[i].cellList_.empty())
         statNode(i, stream);
     }
   }

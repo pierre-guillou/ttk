@@ -59,7 +59,7 @@ namespace ttk {
     static inline UnionFind *makeUnion(std::vector<UnionFind *> &sets) {
       UnionFind *n = nullptr;
 
-      if(!sets.size())
+      if(sets.empty())
         return nullptr;
 
       if(sets.size() == 1)

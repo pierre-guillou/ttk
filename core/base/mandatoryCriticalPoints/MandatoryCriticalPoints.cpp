@@ -1242,7 +1242,7 @@ int MandatoryCriticalPoints::enumerateMandatorySaddles(
 #pragma omp section
 #endif
     {
-      if(upperMaximumList_.size()) {
+      if(!upperMaximumList_.empty()) {
         globalMaximumValue_ = upperVertexScalars_[upperMaximumList_[0]];
         for(size_t i = 0; i < upperMaximumList_.size(); i++) {
           if(upperVertexScalars_[upperMaximumList_[i]] > globalMaximumValue_) {
@@ -1255,7 +1255,7 @@ int MandatoryCriticalPoints::enumerateMandatorySaddles(
 #pragma omp section
 #endif
     {
-      if(lowerMinimumList_.size()) {
+      if(!lowerMinimumList_.empty()) {
         globalMinimumValue_ = lowerVertexScalars_[lowerMinimumList_[0]];
         for(size_t i = 0; i < lowerMinimumList_.size(); i++) {
           if(lowerVertexScalars_[lowerMinimumList_[i]] < globalMinimumValue_) {

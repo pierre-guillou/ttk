@@ -109,7 +109,7 @@ int ttkPointMerger::RequestData(vtkInformation *ttkNotUsed(request),
   std::vector<SimplexId> mergeMap(vertexNumber, -1);
 
   for(SimplexId i = 0; i < vertexNumber; i++) {
-    if(closePoints[i].size()) {
+    if(!closePoints[i].empty()) {
 
       SimplexId targetVertexId = i;
       do {

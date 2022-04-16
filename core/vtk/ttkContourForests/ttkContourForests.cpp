@@ -256,7 +256,7 @@ void ttkContourForests::getSkeletonArcs() {
       regionId = currentZone++;
 
       // Line //
-      if(barycenters_[static_cast<int>(treeType_)][i].size()) {
+      if(!barycenters_[static_cast<int>(treeType_)][i].empty()) {
         // init: min
         SimplexId downNodeVId;
         if(treeType_ == TreeType::Split)
@@ -522,7 +522,7 @@ int ttkContourForests::getSkeletonScalars(
           vertexId = nodeId;
           f += scalars[vertexId];
         }
-        if(sample.size()) {
+        if(!sample.empty()) {
           f /= sample.size();
 
           f1 = f;
@@ -785,7 +785,7 @@ int ttkContourForests::computeBarycenters() {
           barycenter[1] += pt[1];
           barycenter[2] += pt[2];
         }
-        if(sample.size()) {
+        if(!sample.empty()) {
           for(unsigned int k = 0; k < 3; ++k)
             barycenter[k] /= sample.size();
 

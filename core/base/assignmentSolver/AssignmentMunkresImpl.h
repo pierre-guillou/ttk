@@ -327,7 +327,7 @@ int ttk::AssignmentMunkres<dataType>::findZero(int &row, int &col) {
   row = -1;
   col = -1;
 
-  while(createdZeros.size() > 0) {
+  while(!createdZeros.empty()) {
     std::pair<int, int> zero = createdZeros.back();
     int f = zero.first;
     int s = zero.second;

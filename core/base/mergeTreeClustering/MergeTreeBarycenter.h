@@ -213,11 +213,11 @@ namespace ttk {
                              double sizeLimitPercent,
                              bool distMinimizer = true) {
       std::vector<std::vector<double>> distanceMatrix, distanceMatrix2;
-      bool useDoubleInput = (trees2.size() != 0);
+      bool useDoubleInput = (!trees2.empty());
       getParametrizedDistanceMatrix<dataType>(trees, distanceMatrix,
                                               barycenterMaximumNumberOfPairs,
                                               sizeLimitPercent, useDoubleInput);
-      if(trees2.size() != 0)
+      if(!trees2.empty())
         getParametrizedDistanceMatrix<dataType>(
           trees2, distanceMatrix2, barycenterMaximumNumberOfPairs,
           sizeLimitPercent, useDoubleInput, false);
@@ -450,12 +450,12 @@ namespace ttk {
           for(auto node : nodesToAdd[i]) {
             ftm::idNode parent
               = matrixMatchings[i][trees[i]->getParentSafe(node)];
-            if(matchings[i].size() == 0)
+            if(matchings[i].empty())
               parent = baryTreeRoot;
 
             if((baryTree->isNodeIdInconsistent(parent)
                 or baryTree->isNodeAlone(parent))
-               and matchings[i].size() != 0) {
+               and !matchings[i].empty()) {
               std::stringstream ss;
               ss << trees[i]->getParentSafe(node) << " _ " << node;
               printMsg(ss.str());
@@ -869,7 +869,7 @@ namespace ttk {
             = ftm::copyMergeTree<dataType>(oriTrees[i]);
           persistenceThresholding<dataType>(
             &(mt.tree), persistenceThreshold, deletedNodes[i]);
-          if(mergeTrees.size() == 0)
+          if(mergeTrees.empty())
             mergeTrees.resize(oriTrees.size());
           mergeTrees[i] = mt;
           trees[i] = &(mt.tree);

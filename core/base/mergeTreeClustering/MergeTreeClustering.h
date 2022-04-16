@@ -113,7 +113,7 @@ namespace ttk {
       if(doSizeLimit) {
         getSizeLimitedTrees<dataType>(
           trees, barycenterMaximumNumberOfPairs_, limitPercent, mTreesLimited);
-        if(trees2.size() != 0)
+        if(!trees2.empty())
           getSizeLimitedTrees<dataType>(trees2, barycenterMaximumNumberOfPairs_,
                                         limitPercent, mTrees2Limited);
       }
@@ -154,7 +154,7 @@ namespace ttk {
           = ftm::copyMergeTree<dataType>(trees[bestIndex], true);
         limitSizeBarycenter(allCentroids[0][i], trees, limitPercent);
         ftm::cleanMergeTree<dataType>(allCentroids[0][i]);
-        if(trees2.size() != 0) {
+        if(!trees2.empty()) {
           allCentroids[1][i]
             = ftm::copyMergeTree<dataType>(trees2[bestIndex], true);
           limitSizeBarycenter(allCentroids[1][i], trees2, limitPercent);
@@ -175,7 +175,7 @@ namespace ttk {
             = (doSizeLimit ? &(mTreesLimited[j].tree) : trees[j]);
           computeOneDistance<dataType>(treeToUse, allCentroids[0][i], matching,
                                        distanceT, useDoubleInput_);
-          if(trees2.size() != 0) {
+          if(!trees2.empty()) {
             ftm::FTMTree_MT *tree2ToUse
               = (doSizeLimit ? &(mTrees2Limited[j].tree) : trees2[j]);
             computeOneDistance<dataType>(tree2ToUse, allCentroids[1][i],
@@ -278,7 +278,7 @@ namespace ttk {
             matching2;
           computeOneDistance<dataType>(centroids[i], oldCentroids_[i], matching,
                                        distanceShift[i], useDoubleInput_);
-          if(trees2.size() != 0) {
+          if(!trees2.empty()) {
             computeOneDistance<dataType>(centroids2[i], oldCentroids2_[i],
                                          matching2, distanceShift2[i],
                                          useDoubleInput_, false);
@@ -304,7 +304,7 @@ namespace ttk {
       std::vector<std::vector<double>> centroidsDistance, centroidsDistance2;
       getCentroidsDistanceMatrix<dataType>(
         centroids, centroidsDistance, useDoubleInput_);
-      if(trees2.size() != 0) {
+      if(!trees2.empty()) {
         getCentroidsDistanceMatrix<dataType>(
           centroids2, centroidsDistance2, useDoubleInput_, false);
         mixDistancesMatrix(centroidsDistance, centroidsDistance2);
@@ -343,7 +343,7 @@ namespace ttk {
               computeOneDistance<dataType>(trees[i],
                                            centroids[bestCentroid_[i]],
                                            matching, distance, useDoubleInput_);
-              if(trees2.size() != 0) {
+              if(!trees2.empty()) {
                 computeOneDistance<dataType>(
                   trees2[i], centroids2[bestCentroid_[i]], matching2, distance2,
                   useDoubleInput_, false);
@@ -365,7 +365,7 @@ namespace ttk {
               dataType distance, distance2;
               computeOneDistance<dataType>(
                 trees[i], centroids[c], matching, distance, useDoubleInput_);
-              if(trees2.size() != 0) {
+              if(!trees2.empty()) {
                 computeOneDistance<dataType>(trees2[i], centroids2[c],
                                              matching2, distance2,
                                              useDoubleInput_, false);
@@ -383,7 +383,7 @@ namespace ttk {
 
       // Copy centroids for next step
       copyCentroids<dataType>(centroids, oldCentroids_);
-      if(trees2.size() != 0)
+      if(!trees2.empty())
         copyCentroids<dataType>(centroids2, oldCentroids2_);
 
       // Manage output
@@ -424,7 +424,7 @@ namespace ttk {
       for(auto asgn : assignmentC) {
         assignedTreesIndex[std::get<0>(asgn)].push_back(std::get<1>(asgn));
         assignedTrees[std::get<0>(asgn)].push_back(trees[std::get<1>(asgn)]);
-        if(trees2.size() != 0)
+        if(!trees2.empty())
           assignedTrees2[std::get<0>(asgn)].push_back(
             trees2[std::get<1>(asgn)]);
       }
@@ -440,7 +440,7 @@ namespace ttk {
         assignment<dataType>(
           assignedTrees[i], centroids[i], matching, distances, useDoubleInput_);
         matchingsC[i] = matching;
-        if(trees2.size() != 0) {
+        if(!trees2.empty()) {
           assignment<dataType>(assignedTrees2[i], centroids2[i], matching2,
                                distances2, useDoubleInput_, false);
           matchingsC2[i] = matching2;
@@ -475,7 +475,7 @@ namespace ttk {
           dataType distance, distance2;
           computeOneDistance<dataType>(
             trees[i], centroids[j], matching, distance, useDoubleInput_);
-          if(trees2.size() != 0) {
+          if(!trees2.empty()) {
             computeOneDistance<dataType>(trees2[i], centroids2[j], matching2,
                                          distance2, useDoubleInput_, false);
             distance = mixDistances<dataType>(distance, distance2);
@@ -550,7 +550,7 @@ namespace ttk {
       int cpt = 0;
       std::vector<int> noNewCentroid(centroids.size(), -1);
       for(unsigned int i = 0; i < centroids.size(); ++i)
-        if(assignedTrees[i].size() == 0) {
+        if(assignedTrees[i].empty()) {
           noNewCentroid[i] = cpt;
           ++cpt;
         }
@@ -567,7 +567,7 @@ namespace ttk {
 #pragma omp task firstprivate(i) shared(centroids)
             {
 #endif
-              if(assignedTrees[i].size() == 0) {
+              if(assignedTrees[i].empty()) {
                 // Init new centroid if no trees are assigned to it
                 initNewCentroid<dataType>(
                   trees, centroids[i], noNewCentroid[i]);
@@ -682,7 +682,7 @@ namespace ttk {
         bool trees1Updated = true, trees2Updated = true;
         trees1Updated
           = updateCentroids<dataType>(trees, centroids, alphas, assignmentC);
-        if(trees2.size() != 0)
+        if(!trees2.empty())
           trees2Updated = updateCentroids<dataType>(
             trees2, centroids2, alphas, assignmentC);
         auto t_update_time = t_update.getElapsedTime();
@@ -744,7 +744,7 @@ namespace ttk {
         clusteringAssignment[tree] = centroid;
         outputMatching[centroid][tree]
           = matchingsC[centroid][cptCentroid[centroid]];
-        if(trees2.size() != 0)
+        if(!trees2.empty())
           outputMatching2[centroid][tree]
             = matchingsC2[centroid][cptCentroid[centroid]];
         ++cptCentroid[centroid];

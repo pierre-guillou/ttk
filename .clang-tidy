@@ -24,5 +24,6 @@ Checks: >-
   -openmp-use-default-none,
   performance-*,
   portability-*,
+  readability-container-size-empty,
 FormatStyle: file
 HeaderFilterRegex: 'core/(base|vtk)|standalone'

@@ -116,7 +116,7 @@ Segment &Segments::operator[](const size_t &idx) {
 
 void Segments::resize(const vector<SimplexId> &sizes) {
 #ifndef TTK_ENABLE_KAMIKAZE
-  if(segments_.size()) {
+  if(!segments_.empty()) {
     cerr << "Call reserve on an already reserved Segments! " << endl;
   }
 #endif
@@ -172,7 +172,7 @@ void ArcRegion::concat(const ArcRegion &r) {
 
 void ArcRegion::createSegmentation(const Scalars *s) {
 #ifndef TTK_ENABLE_KAMIKAZE
-  if(segmentation_.size()) {
+  if(!segmentation_.empty()) {
     cout << "createSegmentation called on an already segmented region" << endl;
   }
 #endif
@@ -231,7 +231,7 @@ SimplexId ArcRegion::findBelow(SimplexId v,
 
   auto comp = [s](SimplexId a, SimplexId b) { return s->isLower(a, b); };
   SimplexId splitVert = nullVertex;
-  const bool chkOther = vert2treeOther.size() > 0;
+  const bool chkOther = !vert2treeOther.empty();
 
   for(const auto &reg : segmentsIn_) {
     if(s->isEqLower(*reg.segmentBegin, v)

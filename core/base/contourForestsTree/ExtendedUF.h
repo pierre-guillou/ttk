@@ -119,7 +119,7 @@ namespace ttk {
         makeUnion(std::vector<ExtendedUnionFind *> &sets) {
         ExtendedUnionFind *n = nullptr;
 
-        if(!sets.size())
+        if(sets.empty())
           return nullptr;
 
         if(sets.size() == 1)

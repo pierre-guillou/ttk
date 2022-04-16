@@ -124,7 +124,7 @@ namespace ttk {
           std::cerr << std::endl;
         }
 #endif
-        if(vect_upSuperArcList_.size() == 0) {
+        if(vect_upSuperArcList_.empty()) {
           return nullSuperArc;
         }
         return vect_upSuperArcList_[neighborId];

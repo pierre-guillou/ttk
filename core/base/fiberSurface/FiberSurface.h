@@ -1528,7 +1528,7 @@ inline int ttk::FiberSurface::computeContour(
       visitedTets[tetId] = true;
     }
 
-  } while(tetQueue.size());
+  } while(!tetQueue.empty());
 
   return 0;
 }
@@ -1611,7 +1611,7 @@ int ttk::FiberSurface::computeContour(
       }
     }
 
-  } while(tetQueue.size());
+  } while(!tetQueue.empty());
 
   return 0;
 }

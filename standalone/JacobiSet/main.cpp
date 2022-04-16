@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
   // ---------------------------------------------------------------------------
   // Specify which arrays of the input vtkDataObjects will be processed
   // ---------------------------------------------------------------------------
-  if(!inputArrayNames.size()) {
+  if(inputArrayNames.empty()) {
     if(defaultArray)
       inputArrayNames.emplace_back(defaultArray->GetName());
   }

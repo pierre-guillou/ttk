@@ -63,7 +63,7 @@ private:
 
     std::string toString() const {
       std::string result = "";
-      if(this->values.size() == 0) {
+      if(this->values.empty()) {
         return "";
       }
 

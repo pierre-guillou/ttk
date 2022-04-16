@@ -830,7 +830,7 @@ ttk::SimplexId ttk::ApproximateTopology::propagateFromSaddles(
   if(this->threadNumber_ > 1) {
     vertLock[vertexId].lock();
   }
-  if(saddleCC[vertexId].size()
+  if(!saddleCC[vertexId].empty()
      and !toProp) { // tis a saddle point, should have to propagate on it
     printErr("ERRRROR");
   }

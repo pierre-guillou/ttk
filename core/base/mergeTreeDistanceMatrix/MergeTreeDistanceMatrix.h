@@ -68,7 +68,7 @@ namespace ttk {
                  std::vector<ftm::MergeTree<dataType>> &trees2,
                  std::vector<std::vector<double>> &distanceMatrix) {
       executePara<dataType>(trees, distanceMatrix);
-      if(trees2.size() != 0) {
+      if(!trees2.empty()) {
         useDoubleInput_ = true;
         std::vector<std::vector<double>> distanceMatrix2(
           trees2.size(), std::vector<double>(trees2.size()));

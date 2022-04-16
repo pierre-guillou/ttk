@@ -686,7 +686,7 @@ namespace ttk {
     inline SimplexId getNumberOfEdgesInternal() const override {
 
 #ifndef TTK_ENABLE_KAMIKAZE
-      if(!edgeIntervals_.size())
+      if(edgeIntervals_.empty())
         return -1;
 #endif
 
@@ -696,7 +696,7 @@ namespace ttk {
     inline SimplexId getNumberOfTrianglesInternal() const override {
 
 #ifndef TTK_ENABLE_KAMIKAZE
-      if(!triangleIntervals_.size())
+      if(triangleIntervals_.empty())
         return -1;
 #endif
 
@@ -859,7 +859,7 @@ namespace ttk {
       SimplexId &starId) const override {
 
 #ifndef TTK_ENABLE_KAMIKAZE
-      if((triangleId < 0) || !triangleIntervals_.size()
+      if((triangleId < 0) || triangleIntervals_.empty()
          || (triangleId > triangleIntervals_.back())) {
         starId = -1;
         return 0;
@@ -889,7 +889,7 @@ namespace ttk {
       const SimplexId &triangleId) const override {
 
 #ifndef TTK_ENABLE_KAMIKAZE
-      if((triangleId < 0) || !triangleIntervals_.size()
+      if((triangleId < 0) || triangleIntervals_.empty()
          || (triangleId > triangleIntervals_.back()))
         return -1;
 #endif

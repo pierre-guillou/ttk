@@ -242,7 +242,7 @@ namespace ttk {
         &forestBackTable,
       std::vector<ftm::idNode> &children1,
       std::vector<ftm::idNode> &children2) {
-      if(children1.size() != 0 && children2.size() != 0) {
+      if(!children1.empty() && !children2.empty()) {
         dataType forestTerm3;
 
         // Term 3
@@ -290,7 +290,7 @@ namespace ttk {
       } else {
         // If one of the forest is empty we get back to equation 8 or 10
         forestTable[i][j]
-          = (children1.size() == 0) ? forestTable[0][j] : forestTable[i][0];
+          = (children1.empty()) ? forestTable[0][j] : forestTable[i][0];
       }
     }
 
@@ -352,7 +352,7 @@ namespace ttk {
                      int ind,
                      std::vector<std::vector<dataType>> &table,
                      bool computeTerm1) {
-      dataType tempMin = (childrens.size() == 0)
+      dataType tempMin = (childrens.empty())
                            ? ((computeTerm1) ? table[ind][0] : table[0][ind])
                            : std::numeric_limits<dataType>::max();
       ftm::idNode bestIdNode = 0;

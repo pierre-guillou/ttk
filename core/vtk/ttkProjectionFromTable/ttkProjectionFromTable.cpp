@@ -267,7 +267,7 @@ int ttkProjectionFromTable::RequestData(vtkInformation *ttkNotUsed(request),
       toGet.insert(name);
   }
   vtkNew<vtkTable> tableCopy{};
-  if(toGet.size() != 0)
+  if(!toGet.empty())
     tableCopy->DeepCopy(coefficients);
   for(auto &name : toGet) {
     auto inputArray = tableCopy->GetColumnByName(name.c_str());

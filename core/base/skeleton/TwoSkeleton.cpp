@@ -432,7 +432,7 @@ int TwoSkeleton::buildTriangleEdgeList(
   if(!localTriangleList) {
     localTriangleList = &defaultTriangleList;
   }
-  if(!localTriangleList->size()) {
+  if(localTriangleList->empty()) {
 
     buildTriangleList(vertexNumber, cellArray, localTriangleList,
                       triangleStarList, cellTriangleList);

@@ -126,8 +126,8 @@ private:
   }
 
   bool isDataVisualizationFilled() {
-    return treesNodeCorrMesh.size() != 0 and intermediateSTrees.size() != 0
-           and allMatching.size() != 0;
+    return !treesNodeCorrMesh.empty() and !intermediateSTrees.empty()
+           and !allMatching.empty();
   }
 
 public:

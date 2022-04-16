@@ -452,7 +452,7 @@ namespace ttk {
             queue.push(child);
         }
       }
-      if(allRoots.size() == 0)
+      if(allRoots.empty())
         for(unsigned int i = 0; i < this->getNumberOfNodes(); ++i)
           // if(not tree->isNodeAlone(i))
           printNodeSS(i, ss);
@@ -479,7 +479,7 @@ namespace ttk {
       std::vector<std::vector<idNode>> vec;
       this->getMultiPersOriginsVectorFromTree(vec);
       for(unsigned int i = 0; i < vec.size(); ++i)
-        if(vec[i].size() != 0) {
+        if(!vec[i].empty()) {
           ss << i << " : ";
           for(auto t : vec[i])
             ss << t << " ";

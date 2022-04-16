@@ -96,7 +96,7 @@ namespace ttk {
           Geometry::computeTriangleAngleFromSides(
             dist_i_i0, dist_i_i1, dist_i0_i1, angleSurface);
           sumAngleSurface += angleSurface;
-          if(distanceMatrix.size() != 0) {
+          if(!distanceMatrix.empty()) {
             double angleMetric;
             double distMat_i_i0 = distanceMatrix[i][i0];
             double distMat_i_i1 = distanceMatrix[i][i1];
@@ -114,7 +114,7 @@ namespace ttk {
         surfaceCurvature[i] = coef * M_PI - sumAngleSurface;
         // surfaceCurvature[i] *= std::pow(coef, -1);
 
-        if(distanceMatrix.size() != 0) {
+        if(!distanceMatrix.empty()) {
           metricCurvature[i] = coef * M_PI - sumAngleMetric;
           // metricCurvature[i] *= std::pow(coef, -1);
           diffCurvature[i] = metricCurvature[i] - surfaceCurvature[i];
@@ -166,7 +166,7 @@ namespace ttk {
 
         surfaceDistance[i] = Geometry::distance(&p0[0], &p1[0]);
 
-        if(distanceMatrix.size() != 0) {
+        if(!distanceMatrix.empty()) {
           metricDistance[i] = distanceMatrix[i0][i1];
           ratioDistance[i] = metricDistance[i] / surfaceDistance[i];
         }
@@ -198,7 +198,7 @@ namespace ttk {
           updateIndicators(
             minDistanceS, maxDistanceS, avgDistanceS, distance, neighborNum);
 
-          if(distanceMatrix.size() != 0) {
+          if(!distanceMatrix.empty()) {
             double distanceM = distanceMatrix[i][neighbor];
             updateIndicators(
               minDistanceM, maxDistanceM, avgDistanceM, distanceM, neighborNum);
@@ -207,7 +207,7 @@ namespace ttk {
         surfacePointDistance[i][0] = minDistanceS;
         surfacePointDistance[i][1] = maxDistanceS;
         surfacePointDistance[i][2] = avgDistanceS;
-        if(distanceMatrix.size() != 0) {
+        if(!distanceMatrix.empty()) {
           metricPointDistance[i][0] = minDistanceM;
           metricPointDistance[i][1] = maxDistanceM;
           metricPointDistance[i][2] = avgDistanceM;
@@ -250,7 +250,7 @@ namespace ttk {
         Geometry::computeTriangleArea(&p0[0], &p1[0], &p2[0], area);
         surfaceArea[i] = area;
 
-        if(distanceMatrix.size() != 0) {
+        if(!distanceMatrix.empty()) {
           double areaMetric;
           double distMat_i0_i1 = distanceMatrix[i0][i1];
           double distMat_i1_i2 = distanceMatrix[i1][i2];
@@ -270,7 +270,7 @@ namespace ttk {
           Geometry::computeTriangleArea(&p1[0], &p2[0], &p3[0], areaSurface);
           surfaceArea[i] += areaSurface;
 
-          if(distanceMatrix.size() != 0) {
+          if(!distanceMatrix.empty()) {
             double areaMetric;
             double distMat_i1_i2 = distanceMatrix[i1][i2];
             double distMat_i2_i3 = distanceMatrix[i2][i3];
@@ -281,7 +281,7 @@ namespace ttk {
           }
         }
 
-        if(distanceMatrix.size() != 0)
+        if(!distanceMatrix.empty())
           ratioArea[i] = metricArea[i] / surfaceArea[i];
       }
     }

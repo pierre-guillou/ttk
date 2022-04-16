@@ -97,13 +97,13 @@ int Octree::verifyTree(SimplexId &vertexNum) {
   int vertexCount = 0;
   unordered_map<uint32_t, OctreeNode>::iterator it;
   for(it = allNodes_.begin(); it != allNodes_.end(); it++) {
-    if(it->second.childExists_ && it->second.vertexIds_.size() > 0) {
+    if(it->second.childExists_ && !it->second.vertexIds_.empty()) {
       this->printErr("[Octree] WRONG! The internal node "
                      + to_string(it->second.locCode_)
                      + " should not contain any vertices!");
       return -1;
     }
-    if(it->second.vertexIds_.size() > 0) {
+    if(!it->second.vertexIds_.empty()) {
       vertexCount += it->second.vertexIds_.size();
     }
   }
@@ -231,7 +231,7 @@ void Octree::reindex(vector<SimplexId> &vertices,
       nodes.insert(nodes.end(), tmp.begin(), tmp.end());
       leafCount++;
 
-      if(topNode->cellIds_.size() > 0) {
+      if(!topNode->cellIds_.empty()) {
         for(auto it = topNode->cellIds_.begin(); it != topNode->cellIds_.end();
             it++) {
           if(cellMap[*it] == -1) {

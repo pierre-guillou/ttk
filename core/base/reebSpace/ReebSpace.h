@@ -94,7 +94,7 @@ namespace ttk {
     ReebSpace();
 
     inline bool empty() const {
-      return (currentData_.vertex2sheet0_.size() == 0);
+      return (currentData_.vertex2sheet0_.empty());
     }
 
     template <class dataTypeU, class dataTypeV, typename triangulationType>
@@ -991,7 +991,7 @@ int ttk::ReebSpace::compute1sheetsOnly(
 
         visitedEdges[edgeId] = true;
 
-      } while(edgeQueue.size());
+      } while(!edgeQueue.empty());
     }
   }
 
@@ -1191,7 +1191,7 @@ int ttk::ReebSpace::compute1sheets(
           visitedEdges[edgeId] = true;
         }
 
-      } while(edgeQueue.size());
+      } while(!edgeQueue.empty());
     }
   }
 
@@ -1271,7 +1271,7 @@ int ttk::ReebSpace::compute3sheet(
                 for(int p = 0; p < 3; p++) {
                   std::pair<SimplexId, SimplexId> meshEdge;
 
-                  if(fiberSurfaceVertexList_.size()) {
+                  if(!fiberSurfaceVertexList_.empty()) {
                     // the fiber surfaces have been merged
                     meshEdge
                       = fiberSurfaceVertexList_[originalData_.sheet2List_[l]
@@ -1310,7 +1310,7 @@ int ttk::ReebSpace::compute3sheet(
       }
     }
 
-  } while(vertexQueue.size());
+  } while(!vertexQueue.empty());
 
   return 0;
 }
@@ -1663,7 +1663,7 @@ int ttk::ReebSpace::disconnect3sheetFrom1sheet(
   for(size_t i = 0; i < data.sheet1List_[sheet1Id].sheet3List_.size(); i++) {
     SimplexId other3SheetId = data.sheet1List_[sheet1Id].sheet3List_[i];
     if((other3SheetId != sheet3Id) && (!data.sheet3List_[other3SheetId].pruned_)
-       && (data.sheet3List_[other3SheetId].tetList_.size())) {
+       && (!data.sheet3List_[other3SheetId].tetList_.empty())) {
       newList.push_back(data.sheet1List_[sheet1Id].sheet3List_[i]);
     }
   }
@@ -1970,7 +1970,7 @@ int ttk::ReebSpace::simplifySheets(
 
   Timer t;
 
-  if(!currentData_.sheet3List_.size())
+  if(currentData_.sheet3List_.empty())
     return -1;
 
   SimplexId simplifiedSheets = 0;
@@ -2032,7 +2032,7 @@ int ttk::ReebSpace::simplifySheets(
   for(size_t i = 0; i < currentData_.sheet3List_.size(); i++) {
     if(currentData_.sheet3List_[i].pruned_) {
       // find where it merged
-      if(currentData_.sheet3List_[i].vertexList_.size()) {
+      if(!currentData_.sheet3List_[i].vertexList_.empty()) {
         SimplexId vertexId = currentData_.sheet3List_[i].vertexList_[0];
         SimplexId sheetId = currentData_.vertex2sheet3_[vertexId];
         if(sheetId != static_cast<SimplexId>(i)) {

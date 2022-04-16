@@ -962,7 +962,7 @@ SimplexId FTMTree_MT::trunkCTSegmentation(const vector<SimplexId> &trunkVerts,
               // accumulated to have only one atomic update when needed
               const idSuperArc oldArc
                 = upArcFromVert(trunkVerts[oldVertInRange]);
-              if(regularList.size()) {
+              if(!regularList.empty()) {
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp critical
 #endif
@@ -981,7 +981,7 @@ SimplexId FTMTree_MT::trunkCTSegmentation(const vector<SimplexId> &trunkVerts,
       const idNode baseNode
         = getCorrespondingNodeId(trunkVerts[lastVertInRange]);
       const idSuperArc upArc = getNode(baseNode)->getUpSuperArcId(0);
-      if(regularList.size()) {
+      if(!regularList.empty()) {
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp critical
 #endif

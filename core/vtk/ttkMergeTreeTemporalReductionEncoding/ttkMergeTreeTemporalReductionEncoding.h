@@ -90,8 +90,8 @@ private:
   }
 
   bool isDataVisualizationFilled() {
-    return treesNodeCorrMesh.size() != 0 and keyFrames.size() != 0
-           and emptyTreeDistances.size() != 0 and removed.size() != 0;
+    return !treesNodeCorrMesh.empty() and !keyFrames.empty()
+           and !emptyTreeDistances.empty() and !removed.empty();
   }
 
 public:

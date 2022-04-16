@@ -119,7 +119,7 @@ int ttkMergeTreeTemporalReductionDecoding::RequestData(
     assignmentSolverID_ = assignmentSolverArray->GetTuple1(0);
 
   // If we have already computed once but the input has changed
-  if(treesNodes.size() != 0 and inputTrees[0]->GetBlock(0) != treesNodes[0])
+  if(!treesNodes.empty() and inputTrees[0]->GetBlock(0) != treesNodes[0])
     resetDataVisualization();
 
   std::vector<std::tuple<double, int, int, int, int>> coefs;

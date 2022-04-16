@@ -290,7 +290,7 @@ namespace ttk {
         return false;
       }
       stack.push(node);
-      while(stack.size() != 0) {
+      while(!stack.empty()) {
         node = stack.top();
         stack.pop();
         if(wasNodeHit(r, node)) {
