@@ -1,7 +1,7 @@
 option(TTK_ENABLE_FIBER_SURFACE_WITH_RANGE_OCTREE "Use Range Driven Octree in Fiber Surface" ON)
 mark_as_advanced(TTK_ENABLE_FIBER_SURFACE_WITH_RANGE_OCTREE)
 
-set(DEPS geometry triangulation)
+set(DEPS geometry triangulation Boost::boost)
 
 if (TTK_ENABLE_FIBER_SURFACE_WITH_RANGE_OCTREE)
   set(DEPS ${DEPS} rangeDrivenOctree)
