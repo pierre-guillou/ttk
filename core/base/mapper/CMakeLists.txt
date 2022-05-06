@@ -5,4 +5,5 @@ ttk_add_base_library(mapper
     Mapper.h
   DEPENDS
     triangulation
-    )
+    unionFind
+  )

@@ -1,9 +1,4 @@
-
 <ServerManagerConfiguration>
-  <!-- This is the server manager configuration XML. It defines the interface to
-  our new filter. As a rule of thumb, try to locate the configuration for
-  a filter already in ParaView (in Servers/ServerManager/Resources/*.xml)
-  that matches your filter and then model your xml on it -->
   <ProxyGroup name="filters">
     <SourceProxy
       name="ttkMapper"
@@ -12,14 +7,11 @@
       <Documentation
         long_help="TTK plugin for scalar field smoothing."
         short_help="TTK plugin for scalar field smoothing.">
-        This class is a dummy example for the development of TTK filters. It
-        smooths an input scalar field by averaging the scalar values on the link
-        of each vertex.
 
-        See also GeometrySmoother.
-        Online examples:
-
-        - https://topology-tool-kit.github.io/examples/morsePersistence/   
+        This class generates a mapper from a data-set with a given
+        number of buckets. Data-set vertices and edges are placed into
+        buckets from their input scalar field value then connected
+        components are detected per bucket.
 
       </Documentation>
       <InputProperty
@@ -40,11 +32,11 @@
         </Documentation>
       </InputProperty>
 
-      <StringVectorProperty 
-        name="ScalarFieldNew" 
-        label="Scalar Field" 
-        command="SetInputArrayToProcess" 
-        element_types="0 0 0 0 2" 
+      <StringVectorProperty
+        name="ScalarFieldNew"
+        label="Scalar Field"
+        command="SetInputArrayToProcess"
+        element_types="0 0 0 0 2"
         number_of_elements="5" default_values="0">
         <ArrayListDomain
           name="array_list"
@@ -59,67 +51,118 @@
       </StringVectorProperty>
 
       <IntVectorProperty
-        name="NumberOfIterations"
-        label="Iteration Number"
-        command="SetNumberOfIterations"
+        name="NumberOfBuckets"
+        label="Number of Buckets"
+        command="SetNumberOfBuckets"
         number_of_elements="1"
-        default_values="1" >
-        <IntRangeDomain name="range" min="0" max="100" />
+        default_values="10" >
+        <IntRangeDomain name="range" min="1" max="100" />
         <Documentation>
-          Number of iterations for the smoothing filter.
+          Number of buckets.
         </Documentation>
       </IntVectorProperty>
 
       <IntVectorProperty
-        name="ForceInputMaskScalarField"
-        command="SetForceInputMaskScalarField"
-        label="Force Input Mask Scalar Field"
+        name="ComputeHighDimBarycenters"
+        label="Compute High Dimension Barycenters"
+        command="SetComputeHighDimBarycenters"
         number_of_elements="1"
-        panel_visibility="advanced"
         default_values="0">
         <BooleanDomain name="bool"/>
         <Documentation>
-          Check this box if an input scalar field should be considered as
-          vertex mask (used to mark vertices to smooth).
+          Also compute barycenters coordinates in high dimension space
+          from coordinates scalar fields as point data.
         </Documentation>
       </IntVectorProperty>
 
-      <StringVectorProperty 
-          name="InputMaskNew" 
-          label="Mask Field" 
-          command="SetInputArrayToProcess" 
-          element_types="0 0 0 0 2" 
-          number_of_elements="5" default_values="1">
-        <ArrayListDomain
-          name="array_list"
-          default_values="0"
-          >
+      <IntVectorProperty
+        name="SelectFieldsWithRegexp"
+        label="Select Fields with a Regexp"
+        command="SetSelectFieldsWithRegexp"
+        number_of_elements="1"
+        default_values="0">
+        <BooleanDomain name="bool"/>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="ComputeHighDimBarycenters"
+                                   value="1" />
+        </Hints>
+        <Documentation>
+          Select input scalar fields matching a regular expression.
+        </Documentation>
+      </IntVectorProperty>
+
+      <StringVectorProperty command="SetHighDimCoords"
+        clean_command="ClearHighDimCoords"
+        label="Input High Dimension Coordinates"
+        name="HighDimCoords"
+        number_of_elements="0"
+        default_values="1"
+        number_of_elements_per_command="1"
+        repeat_command="1">
+        <ArrayListDomain name="array_list"
+          default_values="1">
           <RequiredProperties>
-            <Property name="Input" function="Input" />
+            <Property name="Input"
+              function="Input" />
           </RequiredProperties>
         </ArrayListDomain>
         <Hints>
-          <PropertyWidgetDecorator type="GenericDecorator"
-            mode="visibility"
-            property="ForceInputMaskScalarField"
-            value="1" />
+          <NoDefault />
+          <PropertyWidgetDecorator type="CompositeDecorator">
+            <Expression type="and">
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="SelectFieldsWithRegexp"
+                                       value="0" />
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="ComputeHighDimBarycenters"
+                                       value="1" />
+            </Expression>
+          </PropertyWidgetDecorator>
         </Hints>
         <Documentation>
-          Input mask field (used to mark vertices to smooth).
+          Select the high dimension coordinates scalar fields.
         </Documentation>
+      </StringVectorProperty>
+
+      <StringVectorProperty
+         name="Regexp"
+         command="SetRegexpString"
+         number_of_elements="1"
+         default_values=".*"
+         panel_visibility="advanced">
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="SelectFieldsWithRegexp"
+                                   value="1" />
+        </Hints>
+         <Documentation>
+            This regexp will be used to filter the chosen fields. Only
+            matching ones will be selected.
+         </Documentation>
       </StringVectorProperty>
 
       <PropertyGroup panel_widget="Line" label="Input options">
         <Property name="ScalarFieldNew" />
-        <Property name="NumberOfIterations" />
-        <Property name="ForceInputMaskScalarField" />
-        <Property name="InputMaskNew" />
+        <Property name="NumberOfBuckets" />
+        <Property name="ComputeHighDimBarycenters" />
+        <Property name="SelectFieldsWithRegexp" />
+        <Property name="HighDimCoords" />
+        <Property name="Regexp" />
       </PropertyGroup>
 
       ${DEBUG_WIDGETS}
 
+      <OutputPort name="Skeleton Nodes" index="0" id="port0" />
+      <OutputPort name="Skeleton Arcs" index="1" id="port1" />
+      <OutputPort name="Segmentation" index="2" id="port2" />
+
       <Hints>
-        <ShowInMenu category="TTK - Scalar Data" />
+        <ShowInMenu category="TTK - High Dimension / Point Cloud Data" />
       </Hints>
 
     </SourceProxy>
