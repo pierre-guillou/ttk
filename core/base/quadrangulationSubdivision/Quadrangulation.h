@@ -60,6 +60,12 @@ namespace ttk {
       return this->nCells_;
     }
 
+    void computeStatistics(std::vector<SimplexId> &vertsValence,
+                           std::vector<float> &quadArea,
+                           std::vector<float> &quadDiagsRatio,
+                           std::vector<float> &quadEdgesRatio,
+                           std::vector<float> &quadAnglesRatio) const;
+
   private:
     /**
      * @brief Ad-hoc quad data structure (4 vertex ids)
