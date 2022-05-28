@@ -272,7 +272,12 @@ namespace ttk {
      * - ratio between the smallest and the biggest angles
      */
     template <typename triangulationType>
-    void quadStatistics(const triangulationType &triangulation);
+    void computeStatistics(std::vector<float> &quadArea,
+                           std::vector<float> &quadDiagsRatio,
+                           std::vector<float> &quadEdgesRatio,
+                           std::vector<float> &quadAnglesRatio,
+                           std::vector<float> &hausdorff,
+                           const triangulationType &triangulation) const;
 
     /**
      * @brief Clear buffers
@@ -828,20 +833,26 @@ int ttk::QuadrangulationSubdivision::subdivise(
 }
 
 template <typename triangulationType>
-void ttk::QuadrangulationSubdivision::quadStatistics(
-  const triangulationType &triangulation) {
+void ttk::QuadrangulationSubdivision::computeStatistics(
+  std::vector<float> &quadArea,
+  std::vector<float> &quadDiagsRatio,
+  std::vector<float> &quadEdgesRatio,
+  std::vector<float> &quadAnglesRatio,
+  std::vector<float> &hausdorff,
+  const triangulationType &triangulation) const {
+
   Timer tm;
 
-  quadArea_.clear();
-  quadArea_.resize(outputQuads_.size());
-  quadDiagsRatio_.clear();
-  quadDiagsRatio_.resize(outputQuads_.size());
-  quadEdgesRatio_.clear();
-  quadEdgesRatio_.resize(outputQuads_.size());
-  quadAnglesRatio_.clear();
-  quadAnglesRatio_.resize(outputQuads_.size());
-  hausdorff_.clear();
-  hausdorff_.resize(outputPoints_.size());
+  quadArea.clear();
+  quadArea.resize(outputQuads_.size());
+  quadDiagsRatio.clear();
+  quadDiagsRatio.resize(outputQuads_.size());
+  quadEdgesRatio.clear();
+  quadEdgesRatio.resize(outputQuads_.size());
+  quadAnglesRatio.clear();
+  quadAnglesRatio.resize(outputQuads_.size());
+  hausdorff.clear();
+  hausdorff.resize(outputPoints_.size());
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_)
@@ -857,12 +868,12 @@ void ttk::QuadrangulationSubdivision::quadStatistics(
     float area0{}, area1{};
     Geometry::computeTriangleArea(&pi.x, &pj.x, &pk.x, area0);
     Geometry::computeTriangleArea(&pi.x, &pk.x, &pl.x, area1);
-    quadArea_[i] = area0 + area1;
+    quadArea[i] = area0 + area1;
 
     // diagonals ratio
     auto diag0 = Geometry::distance(&pi.x, &pk.x);
     auto diag1 = Geometry::distance(&pj.x, &pl.x);
-    quadDiagsRatio_[i] = std::min(diag0, diag1) / std::max(diag0, diag1);
+    quadDiagsRatio[i] = std::min(diag0, diag1) / std::max(diag0, diag1);
 
     // edges ratio
     std::array<float, 4> edges{
@@ -871,8 +882,8 @@ void ttk::QuadrangulationSubdivision::quadStatistics(
       Geometry::distance(&pk.x, &pl.x), // kl
       Geometry::distance(&pl.x, &pi.x), // li
     };
-    quadEdgesRatio_[i] = *std::min_element(edges.begin(), edges.end())
-                         / *std::max_element(edges.begin(), edges.end());
+    quadEdgesRatio[i] = *std::min_element(edges.begin(), edges.end())
+                        / *std::max_element(edges.begin(), edges.end());
 
     // angles ratio
     std::array<float, 4> angles{
@@ -881,19 +892,19 @@ void ttk::QuadrangulationSubdivision::quadStatistics(
       Geometry::angle(&pk.x, &pj.x, &pk.x, &pl.x), // jkl
       Geometry::angle(&pl.x, &pk.x, &pl.x, &pi.x), // kli
     };
-    quadAnglesRatio_[i] = *std::min_element(angles.begin(), angles.end())
-                          / *std::max_element(angles.begin(), angles.end());
+    quadAnglesRatio[i] = *std::min_element(angles.begin(), angles.end())
+                         / *std::max_element(angles.begin(), angles.end());
   }
 
   // compute ratio between quad area and mean quad area
 
   // global surface area
   float sumArea{};
-  for(const auto a : quadArea_) {
+  for(const auto a : quadArea) {
     sumArea += a;
   }
-  for(auto &a : quadArea_) {
-    a *= quadArea_.size() / sumArea;
+  for(auto &a : quadArea) {
+    a *= quadArea.size() / sumArea;
   }
 
   // compute the minimal distance from every triangulation point to
@@ -955,7 +966,7 @@ void ttk::QuadrangulationSubdivision::quadStatistics(
         }
       }
     }
-    hausdorff_[i] = maxDist / bboxDiag / vertexNumber_ * 1e8;
+    hausdorff[i] = maxDist / bboxDiag / vertexNumber_ * 1e8;
   }
 
   this->printMsg("Computed quad statistics", 1.0, tm.getElapsedTime(),
@@ -1055,7 +1066,9 @@ int ttk::QuadrangulationSubdivision::execute(
     quadNeighbors_.begin(), quadNeighbors_.end(), outputValences_.begin(),
     [&](const std::set<size_t> &neighbors) { return neighbors.size(); });
 
-  quadStatistics(triangulation);
+  this->computeStatistics(this->quadArea_, this->quadDiagsRatio_,
+                          this->quadEdgesRatio_, this->quadAnglesRatio_,
+                          this->hausdorff_, triangulation);
 
   bool criterion = false;
   for(size_t i = 0; i < outputPoints_.size(); ++i) {
