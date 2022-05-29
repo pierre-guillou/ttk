@@ -100,7 +100,6 @@ namespace ttk {
                            std::vector<float> &quadEdgesRatio,
                            std::vector<float> &quadAnglesRatio) const;
 
-  private:
     /**
      * @brief Ad-hoc quad data structure (4 vertex ids)
      */
@@ -110,6 +109,7 @@ namespace ttk {
      */
     using Point = ttk::SurfaceGeometrySmoother::Point;
 
+  private:
     const Point *vertCoords_{};
     const Quad *cells_{};
     SimplexId nVerts_{};

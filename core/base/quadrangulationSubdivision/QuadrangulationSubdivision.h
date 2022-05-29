@@ -97,41 +97,8 @@ namespace ttk {
     }
 
   private:
-    // vtkPoint instance with interleaved coordinates (AoS)
-    struct Point {
-      float x;
-      float y;
-      float z;
-      Point operator+(const Point other) const {
-        Point res{};
-        res.x = x + other.x;
-        res.y = y + other.y;
-        res.z = z + other.z;
-        return res;
-      }
-      Point operator*(const float scalar) const {
-        Point res{};
-        res.x = x * scalar;
-        res.y = y * scalar;
-        res.z = z * scalar;
-        return res;
-      }
-      Point operator-(Point other) const {
-        return *this + other * (-1);
-      }
-      Point operator/(const float scalar) const {
-        return (*this * (1.0F / scalar));
-      }
-      friend std::ostream &operator<<(std::ostream &stream, const Point &pt) {
-        stream << pt.x << " " << pt.y << " " << pt.z;
-        return stream;
-      }
-    };
-
-    /**
-     * @brief Ad-hoc quad data structure (4 vertex ids)
-     */
-    using Quad = std::array<LongSimplexId, 4>;
+    using Point = Quadrangulation::Point;
+    using Quad = Quadrangulation::Quad;
 
     /**
      * @brief Subdivise a quadrangular mesh
@@ -310,9 +277,9 @@ ttk::SimplexId ttk::QuadrangulationSubdivision::findEdgeMiddle(
 
     // get the euclidian distance to AB
     Point curr{};
-    triangulation.getVertexPoint(i, curr.x, curr.y, curr.z);
+    triangulation.getVertexPoint(i, curr[0], curr[1], curr[2]);
     // try to minimize the euclidian distance to AB too
-    sum += Geometry::distance(&curr.x, &edgeEuclBary.x);
+    sum += Geometry::distance(curr.data(), edgeEuclBary.data());
 
     // search for the minimizing index
     if(sum < minValue[tid]) {
@@ -390,20 +357,20 @@ int ttk::QuadrangulationSubdivision::subdivise(
     auto liid = findEdgeMiddle(l, i, triangulation);
 
     Point midij{};
-    triangulation.getVertexPoint(ijid, midij.x, midij.y, midij.z);
+    triangulation.getVertexPoint(ijid, midij[0], midij[1], midij[2]);
     Point midjk{};
-    triangulation.getVertexPoint(jkid, midjk.x, midjk.y, midjk.z);
+    triangulation.getVertexPoint(jkid, midjk[0], midjk[1], midjk[2]);
     Point midkl{};
-    triangulation.getVertexPoint(klid, midkl.x, midkl.y, midkl.z);
+    triangulation.getVertexPoint(klid, midkl[0], midkl[1], midkl[2]);
     Point midli{};
-    triangulation.getVertexPoint(liid, midli.x, midli.y, midli.z);
+    triangulation.getVertexPoint(liid, midli[0], midli[1], midli[2]);
 
     std::vector<size_t> quadVertices{i, j, k, l};
     // barycenter TTK identifier
     auto baryid = findQuadBary(quadVertices);
     // barycenter 3D coordinates
     Point bary{};
-    triangulation.getVertexPoint(baryid, bary.x, bary.y, bary.z);
+    triangulation.getVertexPoint(baryid, bary[0], bary[1], bary[2]);
 
     // order edges to avoid duplicates (ij vs. ji)
     auto ij = std::make_pair(std::min(q[0], q[1]), std::max(q[0], q[1]));

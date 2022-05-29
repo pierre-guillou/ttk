@@ -110,7 +110,7 @@ int ttkQuadrangulationSubdivision::RequestData(
 
   vtkNew<vtkPoints> points{};
   for(size_t i = 0; i < outputPoints_.size(); ++i) {
-    points->InsertNextPoint(&outputPoints_[i].x);
+    points->InsertNextPoint(outputPoints_[i].data());
   }
 
   // update output: get quadrangle vertices
