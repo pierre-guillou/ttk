@@ -21,6 +21,7 @@
 // base code includes
 #include <Dijkstra.h>
 #include <Geometry.h>
+#include <Quadrangulation.h>
 #include <Triangulation.h>
 #include <VisitedMask.h>
 
@@ -1007,20 +1008,6 @@ int ttk::QuadrangulationSubdivision::execute(
   outputSubdivision_.resize(outputPoints_.size());
   std::fill(outputSubdivision_.begin(), outputSubdivision_.end(), 0);
 
-  // vertices to filter from relaxation, projection
-  std::set<size_t> filtered{};
-  if(!LockAllInputVertices) {
-    if(LockInputExtrema) {
-      // get extraordinary vertices
-      findExtraordinaryVertices(filtered);
-    }
-  } else {
-    // fill vector with all input points indices from 0 to inputVertexNumber_
-    for(size_t i = 0; i < inputVertexNumber_; ++i) {
-      filtered.insert(i);
-    }
-  }
-
   // main loop
   for(size_t i = 0; i < SubdivisionLevel; i++) {
     // subdivise each quadrangle by creating five new points, at the
@@ -1029,46 +1016,48 @@ int ttk::QuadrangulationSubdivision::execute(
     subdivise(triangulation);
   }
 
-  // retrieve mapping between every vertex and its neighbors
-  quadNeighbors_.clear();
-  quadNeighbors_.resize(outputPoints_.size());
-  getQuadNeighbors(outputQuads_, quadNeighbors_);
+  Quadrangulation qd{};
+  qd.setThreadNumber(this->threadNumber_);
+  qd.setDebugLevel(this->debugLevel_);
+  qd.setInputPoints(this->outputPoints_.size(), this->outputPoints_.data());
+  qd.setInputCells(this->outputQuads_.size(), this->outputQuads_.data());
 
-  Timer tmproj{};
+  qd.preconditionVertexNeighbors();
 
-  // temp storage for projected points
-  std::vector<Point> tmp(outputPoints_.size());
-  // list of triangle IDs already tested
-  // (takes more memory to reduce computation time)
-  std::vector<bool> trianglesTested(
-    triangulation.getNumberOfTriangles(), false);
-  std::vector<SimplexId> visitedIds{};
+  if(this->RelaxationIterations > 0) {
+    // smoother mask
+    std::vector<char> mask(this->outputPoints_.size(), 1);
+    if(!LockAllInputVertices) {
+      if(LockInputExtrema) {
+        // extraordinary vertices (valence != 4)
+        for(SimplexId i = 0; i < qd.getNumberOfVertices(); ++i) {
+          if(qd.isVertexExtraordinary(i)) {
+            mask[i] = 0;
+          }
+        }
+      }
+    } else {
+      // all input vertices (before subdivision)
+      for(size_t i = 0; i < inputVertexNumber_; ++i) {
+        mask[i] = 0;
+      }
+    }
 
-  // "relax" the new points, i.e. replace it by the barycenter of its
-  // four neighbors
-  for(size_t i = 0; i < RelaxationIterations; i++) {
-    relax(filtered);
+    Timer tmproj{};
 
-    // project all points on the nearest triangle (except MSC critical
-    // points)
-    project(filtered, tmp, trianglesTested, visitedIds, triangulation,
-            (i == RelaxationIterations - 1));
+    SurfaceGeometrySmoother worker{};
+    worker.setDebugLevel(this->debugLevel_);
+    worker.setThreadNumber(this->threadNumber_);
+    worker.execute(reinterpret_cast<float *>(this->outputPoints_.data()),
+                   reinterpret_cast<float *>(this->outputPoints_.data()),
+                   mask.data(), nullptr, this->RelaxationIterations, qd,
+                   triangulation);
   }
 
-  this->printMsg("Relaxed/Projected " + std::to_string(outputPoints_.size())
-                   + " points in " + std::to_string(RelaxationIterations)
-                   + " iterations.",
-                 1.0, tmproj.getElapsedTime(), this->threadNumber_);
-
-  // compute valence of every quadrangle vertex
-  outputValences_.resize(outputPoints_.size());
-  std::transform(
-    quadNeighbors_.begin(), quadNeighbors_.end(), outputValences_.begin(),
-    [&](const std::set<size_t> &neighbors) { return neighbors.size(); });
-
-  this->computeStatistics(this->quadArea_, this->quadDiagsRatio_,
-                          this->quadEdgesRatio_, this->quadAnglesRatio_,
-                          this->hausdorff_, triangulation);
+  qd.computeStatistics(this->outputValences_, this->quadArea_,
+                       this->quadDiagsRatio_, this->quadEdgesRatio_,
+                       this->quadAnglesRatio_);
+  ttk::computeHausdorff(this->hausdorff_, qd, triangulation, *this);
 
   bool criterion = false;
   for(size_t i = 0; i < outputPoints_.size(); ++i) {
