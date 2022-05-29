@@ -200,6 +200,14 @@ namespace ttk {
      */
     void clearData();
 
+    template <typename triangulationType>
+    float getBoundingBoxDiagonal(const triangulationType &triangulation) const;
+
+    template <typename triangulationType>
+    void computeHausdorff(std::vector<float> &hausdorff,
+                          const Quadrangulation &qd,
+                          const triangulationType &triangulation) const;
+
   protected:
     // number of vertices in the mesh
     SimplexId vertexNumber_{};
@@ -458,6 +466,98 @@ int ttk::QuadrangulationSubdivision::subdivise(
   return 0;
 }
 
+template <typename triangulationType>
+float ttk::QuadrangulationSubdivision::getBoundingBoxDiagonal(
+  const triangulationType &triangulation) const {
+
+  std::array<float, 3> pmin{std::numeric_limits<float>::max(),
+                            std::numeric_limits<float>::max(),
+                            std::numeric_limits<float>::max()};
+  std::array<float, 3> pmax{std::numeric_limits<float>::min(),
+                            std::numeric_limits<float>::min(),
+                            std::numeric_limits<float>::min()};
+
+  for(SimplexId i = 0; i < triangulation.getNumberOfVertices(); ++i) {
+    std::array<float, 3> p{};
+    triangulation.getVertexPoint(i, p[0], p[1], p[2]);
+    pmax[0] = std::max(pmax[0], p[0]);
+    pmax[1] = std::max(pmax[1], p[1]);
+    pmax[2] = std::max(pmax[2], p[2]);
+    pmin[0] = std::min(pmin[0], p[0]);
+    pmin[1] = std::min(pmin[1], p[1]);
+    pmin[2] = std::min(pmin[2], p[2]);
+  }
+
+  return Geometry::distance(pmin.data(), pmax.data());
+}
+
+template <typename triangulationType>
+void ttk::QuadrangulationSubdivision::computeHausdorff(
+  std::vector<float> &hausdorff,
+  const Quadrangulation &qd,
+  const triangulationType &triangulation) const {
+
+  Timer tm{};
+
+  hausdorff.resize(qd.getNumberOfVertices());
+
+  // compute the minimal distance from every triangulation point to
+  // every quadrangulation point
+
+  // compute triangulation bounding box diagonal
+  const auto bboxDiag = getBoundingBoxDiagonal(triangulation);
+
+  // closest quadrangulation vertex for every triangulation vertex
+  std::vector<SimplexId> nearestQuadVert(triangulation.getNumberOfVertices());
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(this->getThreadNumber())
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < nearestQuadVert.size(); ++i) {
+    float minDist{std::numeric_limits<float>::infinity()};
+    std::array<float, 3> p{};
+    triangulation.getVertexPoint(i, p[0], p[1], p[2]);
+
+    for(SimplexId j = 0; j < qd.getNumberOfVertices(); ++j) {
+      std::array<float, 3> q{};
+      qd.getVertexPoint(j, q[0], q[1], q[2]);
+      auto dist = Geometry::distance(p.data(), q.data());
+      if(dist < minDist) {
+        minDist = dist;
+        nearestQuadVert[i] = j;
+      }
+    }
+  }
+
+  // nearest triangulation vertices for each quadrangulation vertex
+  std::vector<std::vector<SimplexId>> nearestTriVerts(qd.getNumberOfVertices());
+  for(SimplexId i = 0; i < triangulation.getNumberOfVertices(); ++i) {
+    nearestTriVerts[nearestQuadVert[i]].emplace_back(i);
+  }
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(this->getThreadNumber())
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < nearestTriVerts.size(); ++i) {
+    std::array<float, 3> q{};
+    qd.getVertexPoint(i, q[0], q[1], q[2]);
+    float maxDist{};
+    for(const auto v : nearestTriVerts[i]) {
+      std::array<float, 3> p{};
+      triangulation.getVertexPoint(v, p[0], p[1], p[2]);
+      const auto dist = Geometry::distance(p.data(), q.data());
+      if(dist > maxDist) {
+        maxDist = dist;
+      }
+    }
+    hausdorff[i] = maxDist / bboxDiag / nearestQuadVert.size() * 1e8;
+  }
+
+  this->printMsg("Computed Hausdorff distance", 1.0, tm.getElapsedTime(),
+                 this->threadNumber_, debug::LineMode::NEW,
+                 debug::Priority::DETAIL);
+}
+
 // main routine
 template <typename triangulationType>
 int ttk::QuadrangulationSubdivision::execute(
@@ -541,7 +641,7 @@ int ttk::QuadrangulationSubdivision::execute(
   qd.computeStatistics(this->outputValences_, this->quadArea_,
                        this->quadDiagsRatio_, this->quadEdgesRatio_,
                        this->quadAnglesRatio_);
-  ttk::computeHausdorff(this->hausdorff_, qd, triangulation, *this);
+  this->computeHausdorff(this->hausdorff_, qd, triangulation);
 
   bool criterion = false;
   for(size_t i = 0; i < outputPoints_.size(); ++i) {
