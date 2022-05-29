@@ -1,5 +1,9 @@
 #include <Quadrangulation.h>
 
+ttk::Quadrangulation::Quadrangulation() {
+  this->setDebugMsgPrefix("Quadrangulation");
+}
+
 int ttk::Quadrangulation::preconditionVertexNeighbors() {
 
   Timer tm;
@@ -119,19 +123,4 @@ void ttk::Quadrangulation::computeStatistics(
   this->printMsg("Computed statistics", 1.0, tm.getElapsedTime(),
                  this->threadNumber_, debug::LineMode::NEW,
                  debug::Priority::DETAIL);
-}
-
-int test() {
-  ttk::SurfaceGeometrySmoother surfgeom{};
-  ttk::Quadrangulation quad{};
-  ttk::Triangulation triangulation{};
-
-  surfgeom.preconditionTriangulationToSmooth(&quad);
-  surfgeom.preconditionTriangulationSurface(&triangulation);
-  std::vector<float> outputCoords(9);
-  std::vector<float> inputCoords(9);
-
-  surfgeom.execute(outputCoords.data(), inputCoords.data(), nullptr, nullptr,
-                   10, quad, triangulation);
-  return 0;
 }

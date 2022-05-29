@@ -7,6 +7,9 @@ namespace ttk {
 
   class Quadrangulation : virtual public Debug {
   public:
+    Quadrangulation();
+    ~Quadrangulation() override = default;
+
     int preconditionVertexNeighbors();
 
     inline void setInputCells(const SimplexId cellNumber,
@@ -53,10 +56,10 @@ namespace ttk {
     inline int getDimensionality() const {
       return 2;
     }
-    inline SimplexId getNumberOfVertices() const {
+    inline const SimplexId &getNumberOfVertices() const {
       return this->nVerts_;
     }
-    inline SimplexId getNumberOfCells() const {
+    inline const SimplexId &getNumberOfCells() const {
       return this->nCells_;
     }
 
