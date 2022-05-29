@@ -136,23 +136,6 @@ int ttkQuadrangulationSubdivision::RequestData(
     subd, outputSubdivision_.data(), outputSubdivision_.size(), 1);
   output->GetPointData()->AddArray(subd);
 
-  if(RelaxationIterations > 0) {
-
-    // add data array of number of triangles checked
-    vtkNew<ttkSimplexIdTypeArray> trChecked{};
-    trChecked->SetName("Triangles checked");
-    ttkUtils::SetVoidArray(
-      trChecked, trianglesChecked_.data(), trianglesChecked_.size(), 1);
-    output->GetPointData()->AddArray(trChecked);
-
-    // add data array of projection success
-    vtkNew<ttkSimplexIdTypeArray> projSucc{};
-    projSucc->SetName("Projection");
-    ttkUtils::SetVoidArray(
-      projSucc, projSucceeded_.data(), projSucceeded_.size(), 1);
-    output->GetPointData()->AddArray(projSucc);
-  }
-
   if(QuadStatistics) {
     vtkNew<vtkFloatArray> quadArea{};
     quadArea->SetName("Quad Area");
