@@ -601,8 +601,8 @@ int ttk::QuadrangulationSubdivision::execute(
     worker.setThreadNumber(this->threadNumber_);
     worker.execute(reinterpret_cast<float *>(this->outputPoints_.data()),
                    reinterpret_cast<float *>(this->outputPoints_.data()),
-                   mask.data(), nullptr, this->RelaxationIterations, qd,
-                   triangulation);
+                   mask.data(), this->nearestVertexIdentifier_.data(),
+                   this->RelaxationIterations, qd, triangulation);
   }
 
   qd.computeStatistics(this->outputValences_, this->quadArea_,
