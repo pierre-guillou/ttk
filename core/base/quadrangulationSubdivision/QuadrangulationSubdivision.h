@@ -48,9 +48,6 @@ namespace ttk {
     inline void setLockAllInputVertices(const bool value) {
       LockAllInputVertices = value;
     }
-    inline void setReverseProjection(const bool value) {
-      ReverseProjection = value;
-    }
     inline void setShowResError(const bool value) {
       ShowResError = value;
     }
@@ -78,19 +75,11 @@ namespace ttk {
       if(triangl != nullptr) {
         vertexNumber_ = triangl->getNumberOfVertices();
         triangl->preconditionVertexNeighbors();
-        triangl->preconditionVertexTriangles();
       }
     }
 
     template <typename triangulationType = AbstractTriangulation>
     int execute(const triangulationType &triangulation);
-
-    inline float *getPointsBuf() {
-      return reinterpret_cast<float *>(outputPoints_.data());
-    }
-    inline size_t getPointsNumber() const {
-      return outputPoints_.size();
-    }
 
   private:
     using Point = Quadrangulation::Point;
@@ -181,8 +170,6 @@ namespace ttk {
     bool LockInputExtrema{false};
     // lock all input vertices
     bool LockAllInputVertices{false};
-    // projection method
-    bool ReverseProjection{false};
     // display result despite error
     bool ShowResError{false};
     // Hausdorff warning level
@@ -565,28 +552,26 @@ int ttk::QuadrangulationSubdivision::execute(
   qd.setInputPoints(this->outputPoints_.size(), this->outputPoints_.data());
   qd.setInputCells(this->outputQuads_.size(), this->outputQuads_.data());
 
+  // also needed by computeStatistics
   qd.preconditionVertexNeighbors();
 
   if(this->RelaxationIterations > 0) {
+
     // smoother mask
     std::vector<char> mask(this->outputPoints_.size(), 1);
-    if(!LockAllInputVertices) {
-      if(LockInputExtrema) {
-        // extraordinary vertices (valence != 4)
-        for(SimplexId i = 0; i < qd.getNumberOfVertices(); ++i) {
-          if(qd.isVertexExtraordinary(i)) {
-            mask[i] = 0;
-          }
-        }
-      }
-    } else {
+    if(this->LockAllInputVertices) {
       // all input vertices (before subdivision)
-      for(size_t i = 0; i < inputVertexNumber_; ++i) {
+      for(size_t i = 0; i < this->inputVertexNumber_; ++i) {
         mask[i] = 0;
       }
+    } else if(this->LockInputExtrema) {
+      // extraordinary vertices only (valence != 4)
+      for(SimplexId i = 0; i < qd.getNumberOfVertices(); ++i) {
+        if(qd.isVertexExtraordinary(i)) {
+          mask[i] = 0;
+        }
+      }
     }
-
-    Timer tmproj{};
 
     SurfaceGeometrySmoother worker{};
     worker.setDebugLevel(this->debugLevel_);
