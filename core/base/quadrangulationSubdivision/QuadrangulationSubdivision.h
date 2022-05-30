@@ -23,13 +23,9 @@
 #include <Geometry.h>
 #include <Quadrangulation.h>
 #include <Triangulation.h>
-#include <VisitedMask.h>
 
-#include <array>
-#include <cmath>
 #include <map>
 #include <numeric>
-#include <set>
 
 namespace ttk {
 
@@ -121,18 +117,16 @@ namespace ttk {
     /**
      * @brief Store for every quad vertex its neighbors
      *
-     * Each quad vertex should be linked to four other vertices. This
-     * functions stores into the quadNeighbors_ member this relation.
+     * For each vertex, store the id of every other vertex in
+     * surrounding quads.
      *
+     * @param[out] extNeighbors The extended neighbors for each input vertex
      * @param[in] quads Quadrangular mesh to find neighbors in
-     * @param[in] secondNeighbors Also store secondary neighbors (quad third
-     * vertex)
      *
      * @return 0 in case of success
      */
-    int getQuadNeighbors(const std::vector<Quad> &quads,
-                         std::vector<std::set<size_t>> &neighbors,
-                         bool secondNeighbors = false) const;
+    int getQuadExtNeighbors(FlatJaggedArray &extNeighbors,
+                            const std::vector<Quad> &quads) const;
 
     /**
      * @brief Find the middle of a quad edge using Dijkstra
@@ -209,7 +203,7 @@ namespace ttk {
     // array of output quadrangle vertices
     std::vector<Point> outputPoints_{};
     // array mapping quadrangle neighbors
-    std::vector<std::set<size_t>> quadNeighbors_{};
+    FlatJaggedArray quadNeighbors_{};
     // array of nearest input vertex TTK identifier
     std::vector<SimplexId> nearestVertexIdentifier_{};
     // holds geodesic distance to every other quad vertex sharing a quad
@@ -319,9 +313,7 @@ int ttk::QuadrangulationSubdivision::subdivise(
   vertexDistance_.resize(outputPoints_.size());
 
   // get all other vertices sharing a quad
-  quadNeighbors_.clear();
-  quadNeighbors_.resize(outputPoints_.size());
-  getQuadNeighbors(outputQuads_, quadNeighbors_, true);
+  getQuadExtNeighbors(quadNeighbors_, outputQuads_);
 
   // compute shortest distance from every vertex to all other that share a quad
 #ifdef TTK_ENABLE_OPENMP
