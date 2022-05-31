@@ -69,7 +69,7 @@ int ttk::PersistentSimplexPairs::pairCells(
       }
     }
 
-    if(i % (filtration.size() / 10) == 0) {
+    if(filtration.size() > 10 && i % (filtration.size() / 10) == 0) {
       this->printMsg(
         "Computing pairs",
         std::round(10 * i / static_cast<float>(filtration.size())) / 10.0f,
@@ -633,7 +633,7 @@ int ttk::PersistentSimplexPairs::pairCellsV2(
       onBoundary[e] = false;
     }
 
-    if(i % (critFilt.size() / 10) == 0) {
+    if(critFilt.size() > 10 && i % (critFilt.size() / 10) == 0) {
       this->printMsg(
         "Computing pairs",
         std::round(10 * i / static_cast<float>(critFilt.size())) / 10.0f,
@@ -757,7 +757,7 @@ int ttk::PersistentSimplexPairs::pairCellsV1(
       }
     }
 
-    if(i % (critFilt.size() / 10) == 0) {
+    if(critFilt.size() > 10 && i % (critFilt.size() / 10) == 0) {
       this->printMsg(
         "Computing pairs",
         std::round(10 * i / static_cast<float>(critFilt.size())) / 10.0f,
