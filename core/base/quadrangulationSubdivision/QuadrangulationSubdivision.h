@@ -74,7 +74,7 @@ namespace ttk {
       preconditionTriangulation(AbstractTriangulation *const triangl) {
       if(triangl != nullptr) {
         vertexNumber_ = triangl->getNumberOfVertices();
-        triangl->preconditionVertexNeighbors();
+        SurfaceGeometrySmoother{}.preconditionTriangulationSurface(triangl);
       }
     }
 
