@@ -129,8 +129,7 @@ namespace ttk {
      * @return TTK identifier of potential edge middle
      */
     template <typename triangulationType>
-    SimplexId findEdgeMiddle(const SimplexId a,
-                             const SimplexId b,
+    SimplexId findEdgeMiddle(const std::array<SimplexId, 2> &e,
                              const triangulationType &triangulation) const;
 
     /**
@@ -220,8 +219,7 @@ namespace ttk {
 
 template <typename triangulationType>
 ttk::SimplexId ttk::QuadrangulationSubdivision::findEdgeMiddle(
-  const SimplexId a,
-  const SimplexId b,
+  const std::array<SimplexId, 2> &e,
   const triangulationType &triangulation) const {
 
   std::vector<SimplexId> midId(this->threadNumber_);
@@ -229,19 +227,19 @@ ttk::SimplexId ttk::QuadrangulationSubdivision::findEdgeMiddle(
     this->threadNumber_, std::numeric_limits<float>::infinity());
 
   // euclidian barycenter of a and b
-  Point edgeEuclBary = (outputPoints_[a] + outputPoints_[b]) * 0.5F;
+  Point edgeEuclBary = (outputPoints_[e[0]] + outputPoints_[e[1]]) * 0.5F;
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_)
 #endif // TTK_ENABLE_OPENMP
-  for(size_t i = 0; i < vertexDistance_[a].size(); ++i) {
+  for(size_t i = 0; i < vertexDistance_[e[0]].size(); ++i) {
 #ifdef TTK_ENABLE_OPENMP
     const auto tid = omp_get_thread_num();
 #else
     const auto tid = 0;
 #endif // TTK_ENABLE_OPENMP
-    float m = vertexDistance_[a][i];
-    float n = vertexDistance_[b][i];
+    float m = vertexDistance_[e[0]][i];
+    float n = vertexDistance_[e[1]][i];
     // stay on the shortest path between a and b
     float sum = m + n;
 
@@ -327,7 +325,7 @@ int ttk::QuadrangulationSubdivision::subdivise(
     quadBaryId[i] = this->findQuadBary(this->outputQuads_[i]);
   }
 
-  using edgeType = std::pair<SimplexId, SimplexId>;
+  using edgeType = std::array<SimplexId, 2>;
   std::map<edgeType, LongSimplexId> processedEdges{};
 
   for(size_t a = 0; a < this->outputQuads_.size(); ++a) {
@@ -344,7 +342,7 @@ int ttk::QuadrangulationSubdivision::subdivise(
       }
       const auto it = processedEdges.find(edgeType{m, n});
       if(it == processedEdges.end()) {
-        const auto midab{this->findEdgeMiddle(m, n, triangulation)};
+        const auto midab{this->findEdgeMiddle(edgeType{m, n}, triangulation)};
         Point pt{};
         triangulation.getVertexPoint(midab, pt[0], pt[1], pt[2]);
         /* add new point 3d coordinates to vector of output points */
