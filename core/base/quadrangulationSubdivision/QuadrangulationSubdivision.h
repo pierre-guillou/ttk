@@ -295,10 +295,6 @@ template <typename triangulationType>
 int ttk::QuadrangulationSubdivision::subdivise(
   const triangulationType &triangulation) {
 
-  using edgeType = std::pair<SimplexId, SimplexId>;
-  using vertexType = std::pair<LongSimplexId, Point>;
-  std::map<edgeType, vertexType> processedEdges;
-
   // temp storage for quad subdivision
   std::vector<Quad> tmp{};
 
@@ -343,6 +339,9 @@ int ttk::QuadrangulationSubdivision::subdivise(
     quadBaryId[i] = this->findQuadBary(this->outputQuads_[i]);
   }
 
+  using edgeType = std::pair<SimplexId, SimplexId>;
+  std::map<edgeType, LongSimplexId> processedEdges{};
+
   for(size_t a = 0; a < this->outputQuads_.size(); ++a) {
     const auto &q{this->outputQuads_[a]};
 
@@ -351,51 +350,39 @@ int ttk::QuadrangulationSubdivision::subdivise(
     const SimplexId k = q[2];
     const SimplexId l = q[3];
 
-    // middles of edges
-    const auto ijid = findEdgeMiddle(i, j, triangulation);
-    const auto jkid = findEdgeMiddle(j, k, triangulation);
-    const auto klid = findEdgeMiddle(k, l, triangulation);
-    const auto liid = findEdgeMiddle(l, i, triangulation);
+    const auto processEdge = [&](SimplexId m, SimplexId n) -> LongSimplexId {
+      if(m > n) {
+        std::swap(m, n);
+      }
+      const auto it = processedEdges.find(edgeType{m, n});
+      if(it == processedEdges.end()) {
+        const auto midab{this->findEdgeMiddle(m, n, triangulation)};
+        Point pt{};
+        triangulation.getVertexPoint(midab, pt[0], pt[1], pt[2]);
+        /* add new point 3d coordinates to vector of output points */
+        this->outputPoints_.emplace_back(pt);
+        /* new point is an edge middle */
+        this->outputVertType_.emplace_back(1);
+        /* store also TTK identifier of triangular mesh vertex */
+        this->nearestVertexIdentifier_.emplace_back(midab);
+        // store in map
+        const LongSimplexId id = this->outputPoints_.size() - 1;
+        processedEdges[{m, n}] = id;
+        return id;
+      }
+      return it->second;
+    };
 
-    Point midij{};
-    triangulation.getVertexPoint(ijid, midij[0], midij[1], midij[2]);
-    Point midjk{};
-    triangulation.getVertexPoint(jkid, midjk[0], midjk[1], midjk[2]);
-    Point midkl{};
-    triangulation.getVertexPoint(klid, midkl[0], midkl[1], midkl[2]);
-    Point midli{};
-    triangulation.getVertexPoint(liid, midli[0], midli[1], midli[2]);
+    const auto ij{processEdge(i, j)};
+    const auto jk{processEdge(j, k)};
+    const auto kl{processEdge(k, l)};
+    const auto li{processEdge(l, i)};
 
     // barycenter TTK identifier
     const auto baryid = quadBaryId[a];
     // barycenter 3D coordinates
     Point bary{};
     triangulation.getVertexPoint(baryid, bary[0], bary[1], bary[2]);
-
-    // order edges to avoid duplicates (ij vs. ji)
-    const auto ij = std::make_pair(std::min(i, j), std::max(i, j));
-    const auto jk = std::make_pair(std::min(j, k), std::max(j, k));
-    const auto kl = std::make_pair(std::min(k, l), std::max(k, l));
-    const auto li = std::make_pair(std::min(l, i), std::max(l, i));
-
-    const auto process_edge_middle
-      = [&](const edgeType &pair, const Point &pt, const SimplexId id) {
-          /* check if edge already processed by a neighbor quad */
-          if(processedEdges.find(pair) == processedEdges.end()) {
-            processedEdges[pair] = std::make_pair(outputPoints_.size(), pt);
-            /* add new point 3d coordinates to vector of output points */
-            outputPoints_.emplace_back(pt);
-            /* new point is an edge middle */
-            outputVertType_.emplace_back(1);
-            /* store also TTK identifier of triangular mesh vertex */
-            nearestVertexIdentifier_.emplace_back(id);
-          }
-        };
-
-    process_edge_middle(ij, midij, ijid);
-    process_edge_middle(jk, midjk, jkid);
-    process_edge_middle(kl, midkl, klid);
-    process_edge_middle(li, midli, liid);
 
     // barycenter index in outputPoints_
     const LongSimplexId baryIdx = outputPoints_.size();
@@ -404,14 +391,10 @@ int ttk::QuadrangulationSubdivision::subdivise(
     nearestVertexIdentifier_.emplace_back(baryid);
 
     // add the four new quads
-    tmp.emplace_back(
-      Quad{q[0], processedEdges[ij].first, baryIdx, processedEdges[li].first});
-    tmp.emplace_back(
-      Quad{q[1], processedEdges[jk].first, baryIdx, processedEdges[ij].first});
-    tmp.emplace_back(
-      Quad{q[2], processedEdges[kl].first, baryIdx, processedEdges[jk].first});
-    tmp.emplace_back(
-      Quad{q[3], processedEdges[li].first, baryIdx, processedEdges[kl].first});
+    tmp.emplace_back(Quad{q[0], ij, baryIdx, li});
+    tmp.emplace_back(Quad{q[1], jk, baryIdx, ij});
+    tmp.emplace_back(Quad{q[2], kl, baryIdx, jk});
+    tmp.emplace_back(Quad{q[3], li, baryIdx, kl});
   }
 
   // output subdivision level
