@@ -6,9 +6,6 @@ ttk::SimplexId
   std::vector<float> sum(
     vertexDistance_[quad[0]].size(), std::numeric_limits<float>::infinity());
 
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
-#endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < sum.size(); ++i) {
 
     // skip following computation if too far from any parent quad vertex
@@ -25,10 +22,10 @@ ttk::SimplexId
       continue;
     }
 
-    float m = vertexDistance_[quad[0]][i];
-    float n = vertexDistance_[quad[1]][i];
-    float o = vertexDistance_[quad[2]][i];
-    float p = vertexDistance_[quad[3]][i];
+    const auto &m{vertexDistance_[quad[0]][i]};
+    const auto &n{vertexDistance_[quad[1]][i]};
+    const auto &o{vertexDistance_[quad[2]][i]};
+    const auto &p{vertexDistance_[quad[3]][i]};
 
     // try to be "near" the four parent vertices
     sum[i] = m + n + o + p;
