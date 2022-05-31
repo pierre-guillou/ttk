@@ -117,12 +117,6 @@ namespace ttk {
     int getQuadExtNeighbors(FlatJaggedArray &extNeighbors,
                             const std::vector<Quad> &quads) const;
 
-    int buildEdgeList(std::vector<std::array<SimplexId, 2>> &edgeList,
-                      FlatJaggedArray &edgeStars,
-                      std::vector<std::array<SimplexId, 4>> &quadEdgeList,
-                      const std::vector<Quad> &quads,
-                      const std::vector<Point> &points) const;
-
     /**
      * @brief Find the middle of a quad edge using Dijkstra
      *
@@ -197,10 +191,6 @@ namespace ttk {
     std::vector<Point> outputPoints_{};
     // array mapping quadrangle neighbors
     FlatJaggedArray quadNeighbors_{};
-    // edges mapping
-    std::vector<std::array<SimplexId, 2>> edges_{};
-    FlatJaggedArray edgeStars_{};
-    std::vector<std::array<SimplexId, 4>> quadEdges_{};
     // array of nearest input vertex TTK identifier
     std::vector<SimplexId> nearestVertexIdentifier_{};
     // holds geodesic distance to every other quad vertex sharing a quad
@@ -307,8 +297,6 @@ int ttk::QuadrangulationSubdivision::subdivise(
 
   // get all other vertices sharing a quad
   getQuadExtNeighbors(quadNeighbors_, outputQuads_);
-  this->buildEdgeList(this->edges_, this->edgeStars_, this->quadEdges_,
-                      this->outputQuads_, this->outputPoints_);
 
   // compute shortest distance from every vertex to all other that share a quad
 #ifdef TTK_ENABLE_OPENMP

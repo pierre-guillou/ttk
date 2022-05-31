@@ -1,7 +1,5 @@
 #include <QuadrangulationSubdivision.h>
 
-#include <OneSkeleton.h>
-
 ttk::SimplexId
   ttk::QuadrangulationSubdivision::findQuadBary(const Quad &quad) const {
 
@@ -86,28 +84,6 @@ int ttk::QuadrangulationSubdivision::getQuadExtNeighbors(
                  debug::Priority::DETAIL);
 
   return 0;
-}
-
-int ttk::QuadrangulationSubdivision::buildEdgeList(
-  std::vector<std::array<SimplexId, 2>> &edgeList,
-  FlatJaggedArray &edgeStars,
-  std::vector<std::array<SimplexId, 4>> &quadEdgeList,
-  const std::vector<Quad> &quads,
-  const std::vector<Point> &points) const {
-
-  std::vector<LongSimplexId> offsets(quads.size() + 1);
-  offsets[0] = 0;
-  for(size_t i = 0; i < quads.size(); ++i) {
-    offsets[i + 1] = quads[i].size() * (i + 1);
-  }
-  CellArray ca{
-    quads[0].data(), offsets.data(), static_cast<LongSimplexId>(quads.size())};
-  OneSkeleton osk{};
-  osk.setDebugLevel(this->debugLevel_);
-  osk.setThreadNumber(this->threadNumber_);
-
-  return osk.buildEdgeList(
-    points.size(), ca, edgeList, edgeStars, quadEdgeList);
 }
 
 void ttk::QuadrangulationSubdivision::clearData() {

@@ -138,8 +138,7 @@ int OneSkeleton::buildEdgeList(
   // check parameters consistency (we need n to be consistent with the
   // dimensionality of the mesh)
   const size_t dim = cellArray.getCellVertexNumber(0) - 1;
-  // n == 4 -> non simplicial mesh (quadrangulation), skip check
-  if(n != dim * (dim + 1) / 2 && n != 4) {
+  if(n != dim * (dim + 1) / 2) {
     this->printErr("Wrong template parameter (" + std::to_string(n)
                    + " edges per " + std::to_string(dim) + "D cell)");
     this->printErr("Cannot build edge list");
@@ -275,14 +274,6 @@ template int OneSkeleton::buildEdgeList<3>(
   std::vector<std::array<SimplexId, 2>> &edgeList,
   FlatJaggedArray &edgeStars,
   std::vector<std::array<SimplexId, 3>> &cellEdgeList) const;
-
-// explicit template instantiation for 2D cells (quads)
-template int OneSkeleton::buildEdgeList<4>(
-  const SimplexId &vertexNumber,
-  const CellArray &cellArray,
-  std::vector<std::array<SimplexId, 2>> &edgeList,
-  FlatJaggedArray &edgeStars,
-  std::vector<std::array<SimplexId, 4>> &cellEdgeList) const;
 
 // explicit template instantiation for 3D cells (tetrathedron)
 template int OneSkeleton::buildEdgeList<6>(
