@@ -295,7 +295,7 @@ template <typename triangulationType>
 int ttk::QuadrangulationSubdivision::subdivise(
   const triangulationType &triangulation) {
 
-  using edgeType = std::pair<LongSimplexId, LongSimplexId>;
+  using edgeType = std::pair<SimplexId, SimplexId>;
   using vertexType = std::pair<LongSimplexId, Point>;
   std::map<edgeType, vertexType> processedEdges;
 
@@ -336,16 +336,16 @@ int ttk::QuadrangulationSubdivision::subdivise(
 
   for(auto &q : outputQuads_) {
 
-    auto i = static_cast<size_t>(q[0]);
-    auto j = static_cast<size_t>(q[1]);
-    auto k = static_cast<size_t>(q[2]);
-    auto l = static_cast<size_t>(q[3]);
+    const SimplexId i = q[0];
+    const SimplexId j = q[1];
+    const SimplexId k = q[2];
+    const SimplexId l = q[3];
 
     // middles of edges
-    auto ijid = findEdgeMiddle(i, j, triangulation);
-    auto jkid = findEdgeMiddle(j, k, triangulation);
-    auto klid = findEdgeMiddle(k, l, triangulation);
-    auto liid = findEdgeMiddle(l, i, triangulation);
+    const auto ijid = findEdgeMiddle(i, j, triangulation);
+    const auto jkid = findEdgeMiddle(j, k, triangulation);
+    const auto klid = findEdgeMiddle(k, l, triangulation);
+    const auto liid = findEdgeMiddle(l, i, triangulation);
 
     Point midij{};
     triangulation.getVertexPoint(ijid, midij[0], midij[1], midij[2]);
@@ -363,14 +363,13 @@ int ttk::QuadrangulationSubdivision::subdivise(
     triangulation.getVertexPoint(baryid, bary[0], bary[1], bary[2]);
 
     // order edges to avoid duplicates (ij vs. ji)
-    auto ij = std::make_pair(std::min(q[0], q[1]), std::max(q[0], q[1]));
-    auto jk = std::make_pair(std::min(q[1], q[2]), std::max(q[1], q[2]));
-    auto kl = std::make_pair(std::min(q[2], q[3]), std::max(q[2], q[3]));
-    auto li = std::make_pair(std::min(q[3], q[0]), std::max(q[3], q[0]));
+    const auto ij = std::make_pair(std::min(i, j), std::max(i, j));
+    const auto jk = std::make_pair(std::min(j, k), std::max(j, k));
+    const auto kl = std::make_pair(std::min(k, l), std::max(k, l));
+    const auto li = std::make_pair(std::min(l, i), std::max(l, i));
 
-    auto process_edge_middle
-      = [&](const std::pair<LongSimplexId, LongSimplexId> &pair,
-            const Point &pt, const SimplexId id) {
+    const auto process_edge_middle
+      = [&](const edgeType &pair, const Point &pt, const SimplexId id) {
           /* check if edge already processed by a neighbor quad */
           if(processedEdges.find(pair) == processedEdges.end()) {
             processedEdges[pair] = std::make_pair(outputPoints_.size(), pt);
@@ -389,7 +388,7 @@ int ttk::QuadrangulationSubdivision::subdivise(
     process_edge_middle(li, midli, liid);
 
     // barycenter index in outputPoints_
-    auto baryIdx = static_cast<LongSimplexId>(outputPoints_.size());
+    const LongSimplexId baryIdx = outputPoints_.size();
     outputPoints_.emplace_back(bary);
     outputVertType_.emplace_back(2);
     nearestVertexIdentifier_.emplace_back(baryid);
