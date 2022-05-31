@@ -135,8 +135,8 @@ namespace ttk {
      * @return TTK identifier of potential edge middle
      */
     template <typename triangulationType>
-    SimplexId findEdgeMiddle(size_t a,
-                             size_t b,
+    SimplexId findEdgeMiddle(const SimplexId a,
+                             const SimplexId b,
                              const triangulationType &triangulation) const;
 
     /**
@@ -144,12 +144,12 @@ namespace ttk {
      *
      * Minimize the sum of the distance to every vertex of the current quad.
      *
-     * @param[in] quadVertices Vector of quad vertices point ids in which to
+     * @param[in] quad Vector of quad vertices point ids in which to
      * find a barycenter
      *
      * @return TTK identifier of potential barycenter
      */
-    SimplexId findQuadBary(const std::vector<size_t> &quadVertices) const;
+    SimplexId findQuadBary(const Quad &quad) const;
 
     /**
      * @brief Clear buffers
@@ -230,8 +230,8 @@ namespace ttk {
 
 template <typename triangulationType>
 ttk::SimplexId ttk::QuadrangulationSubdivision::findEdgeMiddle(
-  const size_t a,
-  const size_t b,
+  const SimplexId a,
+  const SimplexId b,
   const triangulationType &triangulation) const {
 
   std::vector<SimplexId> midId(this->threadNumber_);
@@ -356,9 +356,8 @@ int ttk::QuadrangulationSubdivision::subdivise(
     Point midli{};
     triangulation.getVertexPoint(liid, midli[0], midli[1], midli[2]);
 
-    std::vector<size_t> quadVertices{i, j, k, l};
     // barycenter TTK identifier
-    auto baryid = findQuadBary(quadVertices);
+    const auto baryid = this->findQuadBary(q);
     // barycenter 3D coordinates
     Point bary{};
     triangulation.getVertexPoint(baryid, bary[0], bary[1], bary[2]);

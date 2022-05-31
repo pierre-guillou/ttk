@@ -2,11 +2,11 @@
 
 #include <OneSkeleton.h>
 
-ttk::SimplexId ttk::QuadrangulationSubdivision::findQuadBary(
-  const std::vector<size_t> &quadVertices) const {
+ttk::SimplexId
+  ttk::QuadrangulationSubdivision::findQuadBary(const Quad &quad) const {
 
-  std::vector<float> sum(vertexDistance_[*quadVertices.begin()].size(),
-                         std::numeric_limits<float>::infinity());
+  std::vector<float> sum(
+    vertexDistance_[quad[0]].size(), std::numeric_limits<float>::infinity());
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_)
@@ -16,7 +16,7 @@ ttk::SimplexId ttk::QuadrangulationSubdivision::findQuadBary(
     // skip following computation if too far from any parent quad vertex
     bool skip = false;
 
-    for(const auto vert : quadVertices) {
+    for(const auto vert : quad) {
       if(vertexDistance_[vert][i] == std::numeric_limits<float>::infinity()) {
         skip = true;
         break;
@@ -27,10 +27,10 @@ ttk::SimplexId ttk::QuadrangulationSubdivision::findQuadBary(
       continue;
     }
 
-    float m = vertexDistance_[quadVertices[0]][i];
-    float n = vertexDistance_[quadVertices[1]][i];
-    float o = vertexDistance_[quadVertices[2]][i];
-    float p = vertexDistance_[quadVertices[3]][i];
+    float m = vertexDistance_[quad[0]][i];
+    float n = vertexDistance_[quad[1]][i];
+    float o = vertexDistance_[quad[2]][i];
+    float p = vertexDistance_[quad[3]][i];
 
     // try to be "near" the four parent vertices
     sum[i] = m + n + o + p;
