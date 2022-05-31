@@ -334,7 +334,17 @@ int ttk::QuadrangulationSubdivision::subdivise(
     }
   }
 
-  for(auto &q : outputQuads_) {
+  std::vector<SimplexId> quadBaryId(this->outputQuads_.size());
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < this->outputQuads_.size(); ++i) {
+    quadBaryId[i] = this->findQuadBary(this->outputQuads_[i]);
+  }
+
+  for(size_t a = 0; a < this->outputQuads_.size(); ++a) {
+    const auto &q{this->outputQuads_[a]};
 
     const SimplexId i = q[0];
     const SimplexId j = q[1];
@@ -357,7 +367,7 @@ int ttk::QuadrangulationSubdivision::subdivise(
     triangulation.getVertexPoint(liid, midli[0], midli[1], midli[2]);
 
     // barycenter TTK identifier
-    const auto baryid = this->findQuadBary(q);
+    const auto baryid = quadBaryId[a];
     // barycenter 3D coordinates
     Point bary{};
     triangulation.getVertexPoint(baryid, bary[0], bary[1], bary[2]);
