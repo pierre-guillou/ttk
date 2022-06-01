@@ -1,10 +1,11 @@
 #include <QuadrangulationSubdivision.h>
 
 ttk::SimplexId
-  ttk::QuadrangulationSubdivision::findQuadBary(const Quad &quad) const {
+  ttk::QuadrangulationSubdivision::findQuadBary(std::vector<float> &sum,
+                                                const Quad &quad) const {
 
-  std::vector<float> sum(
-    vertexDistance_[quad[0]].size(), std::numeric_limits<float>::infinity());
+  sum.resize(vertexDistance_[quad[0]].size());
+  std::fill(sum.begin(), sum.end(), std::numeric_limits<float>::infinity());
 
   for(size_t i = 0; i < sum.size(); ++i) {
 

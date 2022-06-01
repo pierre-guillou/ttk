@@ -142,7 +142,7 @@ namespace ttk {
      *
      * @return TTK identifier of potential barycenter
      */
-    SimplexId findQuadBary(const Quad &quad) const;
+    SimplexId findQuadBary(std::vector<float> &sum, const Quad &quad) const;
 
     /**
      * @brief Clear buffers
@@ -317,12 +317,13 @@ int ttk::QuadrangulationSubdivision::subdivise(
   }
 
   std::vector<SimplexId> quadBaryId(this->outputQuads_.size());
+  std::vector<float> sum{};
 
 #ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
+#pragma omp parallel for num_threads(threadNumber_) firstprivate(sum)
 #endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < this->outputQuads_.size(); ++i) {
-    quadBaryId[i] = this->findQuadBary(this->outputQuads_[i]);
+    quadBaryId[i] = this->findQuadBary(sum, this->outputQuads_[i]);
   }
 
   using edgeType = std::array<SimplexId, 2>;
