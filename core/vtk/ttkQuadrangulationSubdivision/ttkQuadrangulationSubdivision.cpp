@@ -136,6 +136,12 @@ int ttkQuadrangulationSubdivision::RequestData(
     subd, outputSubdivision_.data(), outputSubdivision_.size(), 1);
   output->GetPointData()->AddArray(subd);
 
+  vtkNew<ttkSimplexIdTypeArray> nearestVert{};
+  nearestVert->SetName(ttk::VertexScalarFieldName);
+  ttkUtils::SetVoidArray(nearestVert, nearestVertexIdentifier_.data(),
+                         nearestVertexIdentifier_.size(), 1);
+  output->GetPointData()->AddArray(nearestVert);
+
   if(QuadStatistics) {
     vtkNew<vtkFloatArray> quadArea{};
     quadArea->SetName("Quad Area");
