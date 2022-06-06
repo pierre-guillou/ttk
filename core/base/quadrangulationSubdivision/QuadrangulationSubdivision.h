@@ -101,7 +101,7 @@ namespace ttk {
      * @return 0 in case of success
      */
     template <typename triangulationType>
-    int subdivise(const triangulationType &triangulation);
+    int subdivise(Quadrangulation &qd, const triangulationType &triangulation);
 
     /**
      * @brief Store for every quad vertex its neighbors
@@ -281,7 +281,7 @@ ttk::SimplexId ttk::QuadrangulationSubdivision::findEdgeMiddle(
 
 template <typename triangulationType>
 int ttk::QuadrangulationSubdivision::subdivise(
-  const triangulationType &triangulation) {
+  Quadrangulation &qd, const triangulationType &triangulation) {
 
   // temp storage for quad subdivision
   std::vector<Quad> tmp{};
@@ -293,8 +293,11 @@ int ttk::QuadrangulationSubdivision::subdivise(
 
   vertexDistance_.resize(outputPoints_.size());
 
-  // get all other vertices sharing a quad
-  getQuadExtNeighbors(quadNeighbors_, outputQuads_);
+  // set & precondition quadrangulation object
+  qd.setInputPoints(this->outputPoints_.size(), this->outputPoints_.data());
+  qd.setInputCells(this->outputQuads_.size(), this->outputQuads_.data());
+  qd.preconditionEdges();
+  qd.preconditionVertexStars();
 
   // compute shortest distance from every vertex to all other that share a quad
 #ifdef TTK_ENABLE_OPENMP
@@ -306,13 +309,21 @@ int ttk::QuadrangulationSubdivision::subdivise(
     if(vertexDistance_[i].empty()) {
 
       // do not propagate on the whole mesh
-      std::vector<SimplexId> bounds;
-      for(auto &p : quadNeighbors_[i]) {
-        bounds.emplace_back(nearestVertexIdentifier_[p]);
+      std::set<SimplexId> bounds{};
+      const auto ns{qd.getVertexStarNumber(i)};
+      for(SimplexId j = 0; j < ns; ++j) {
+        const auto cid{qd.getVertexStar(i, j)};
+        for(const auto v : this->outputQuads_[cid]) {
+          if(v == static_cast<LongSimplexId>(i)) {
+            continue;
+          }
+          bounds.emplace(nearestVertexIdentifier_[v]);
+        }
       }
 
-      Dijkstra::shortestPath(
-        nearestVertexIdentifier_[i], triangulation, vertexDistance_[i], bounds);
+      Dijkstra::shortestPath(nearestVertexIdentifier_[i], triangulation,
+                             vertexDistance_[i],
+                             {bounds.begin(), bounds.end()});
     }
   }
 
@@ -326,24 +337,19 @@ int ttk::QuadrangulationSubdivision::subdivise(
     quadBaryId[i] = this->findQuadBary(sum, this->outputQuads_[i]);
   }
 
-  using edgeType = std::array<SimplexId, 2>;
-  std::map<edgeType, LongSimplexId> processedEdges{};
+  std::vector<SimplexId> edgeMidId(qd.getNumberOfEdges());
+  for(SimplexId i = 0; i < qd.getNumberOfEdges(); ++i) {
+    edgeMidId[i] = this->findEdgeMiddle(qd.getEdge(i), triangulation);
+  }
+
+  std::vector<SimplexId> processedEdges(qd.getNumberOfEdges(), -1);
 
   for(size_t a = 0; a < this->outputQuads_.size(); ++a) {
     const auto &q{this->outputQuads_[a]};
 
-    const SimplexId i = q[0];
-    const SimplexId j = q[1];
-    const SimplexId k = q[2];
-    const SimplexId l = q[3];
-
-    const auto processEdge = [&](SimplexId m, SimplexId n) -> LongSimplexId {
-      if(m > n) {
-        std::swap(m, n);
-      }
-      const auto it = processedEdges.find(edgeType{m, n});
-      if(it == processedEdges.end()) {
-        const auto midab{this->findEdgeMiddle(edgeType{m, n}, triangulation)};
+    const auto processEdge = [&](const SimplexId e) -> SimplexId {
+      if(processedEdges[e] == -1) {
+        const auto midab{edgeMidId[e]};
         Point pt{};
         triangulation.getVertexPoint(midab, pt[0], pt[1], pt[2]);
         /* add new point 3d coordinates to vector of output points */
@@ -353,17 +359,15 @@ int ttk::QuadrangulationSubdivision::subdivise(
         /* store also TTK identifier of triangular mesh vertex */
         this->nearestVertexIdentifier_.emplace_back(midab);
         // store in map
-        const LongSimplexId id = this->outputPoints_.size() - 1;
-        processedEdges[{m, n}] = id;
-        return id;
+        processedEdges[e] = this->outputPoints_.size() - 1;
       }
-      return it->second;
+      return processedEdges[e];
     };
 
-    const auto ij{processEdge(i, j)};
-    const auto jk{processEdge(j, k)};
-    const auto kl{processEdge(k, l)};
-    const auto li{processEdge(l, i)};
+    const auto ij{processEdge(qd.getCellEdge(a, 0))};
+    const auto jk{processEdge(qd.getCellEdge(a, 1))};
+    const auto kl{processEdge(qd.getCellEdge(a, 2))};
+    const auto li{processEdge(qd.getCellEdge(a, 3))};
 
     // barycenter TTK identifier
     const auto baryid = quadBaryId[a];
@@ -528,17 +532,18 @@ int ttk::QuadrangulationSubdivision::execute(
   outputSubdivision_.resize(outputPoints_.size());
   std::fill(outputSubdivision_.begin(), outputSubdivision_.end(), 0);
 
+  Quadrangulation qd{};
+  qd.setThreadNumber(this->threadNumber_);
+  qd.setDebugLevel(this->debugLevel_);
+
   // main loop
   for(size_t i = 0; i < SubdivisionLevel; i++) {
     // subdivise each quadrangle by creating five new points, at the
     // center of each edge (4) and at the barycenter of the four
     // vertices (1).
-    subdivise(triangulation);
+    subdivise(qd, triangulation);
   }
 
-  Quadrangulation qd{};
-  qd.setThreadNumber(this->threadNumber_);
-  qd.setDebugLevel(this->debugLevel_);
   qd.setInputPoints(this->outputPoints_.size(), this->outputPoints_.data());
   qd.setInputCells(this->outputQuads_.size(), this->outputQuads_.data());
 
