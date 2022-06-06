@@ -222,29 +222,20 @@ ttk::SimplexId ttk::QuadrangulationSubdivision::findEdgeMiddle(
   const std::array<SimplexId, 2> &e,
   const triangulationType &triangulation) const {
 
-  std::vector<SimplexId> midId(this->threadNumber_);
-  std::vector<float> minValue(
-    this->threadNumber_, std::numeric_limits<float>::infinity());
+  SimplexId midId{};
+  float minValue{std::numeric_limits<float>::infinity()};
 
   // euclidian barycenter of a and b
   Point edgeEuclBary = (outputPoints_[e[0]] + outputPoints_[e[1]]) * 0.5F;
 
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
-#endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < vertexDistance_[e[0]].size(); ++i) {
-#ifdef TTK_ENABLE_OPENMP
-    const auto tid = omp_get_thread_num();
-#else
-    const auto tid = 0;
-#endif // TTK_ENABLE_OPENMP
     float m = vertexDistance_[e[0]][i];
     float n = vertexDistance_[e[1]][i];
     // stay on the shortest path between a and b
     float sum = m + n;
 
     // skip further computation
-    if(sum > minValue[tid]) {
+    if(sum > minValue) {
       continue;
     }
 
@@ -261,22 +252,13 @@ ttk::SimplexId ttk::QuadrangulationSubdivision::findEdgeMiddle(
     sum += Geometry::distance(curr.data(), edgeEuclBary.data());
 
     // search for the minimizing index
-    if(sum < minValue[tid]) {
-      minValue[tid] = sum;
-      midId[tid] = i;
+    if(sum < minValue) {
+      minValue = sum;
+      midId = i;
     }
   }
 
-#ifdef TTK_ENABLE_OPENMP
-  for(int i = 1; i < this->threadNumber_; ++i) {
-    if(minValue[i] < minValue[0]) {
-      minValue[0] = minValue[i];
-      midId[0] = midId[i];
-    }
-  }
-#endif // TTK_ENABLE_OPENMP
-
-  return midId[0];
+  return midId;
 }
 
 template <typename triangulationType>
@@ -338,6 +320,10 @@ int ttk::QuadrangulationSubdivision::subdivise(
   }
 
   std::vector<SimplexId> edgeMidId(qd.getNumberOfEdges());
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
   for(SimplexId i = 0; i < qd.getNumberOfEdges(); ++i) {
     edgeMidId[i] = this->findEdgeMiddle(qd.getEdge(i), triangulation);
   }
