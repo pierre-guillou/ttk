@@ -104,20 +104,6 @@ namespace ttk {
     int subdivise(Quadrangulation &qd, const triangulationType &triangulation);
 
     /**
-     * @brief Store for every quad vertex its neighbors
-     *
-     * For each vertex, store the id of every other vertex in
-     * surrounding quads.
-     *
-     * @param[out] extNeighbors The extended neighbors for each input vertex
-     * @param[in] quads Quadrangular mesh to find neighbors in
-     *
-     * @return 0 in case of success
-     */
-    int getQuadExtNeighbors(FlatJaggedArray &extNeighbors,
-                            const std::vector<Quad> &quads) const;
-
-    /**
      * @brief Find the middle of a quad edge using Dijkstra
      *
      * Minimize the sum of the distance to the two edge vertices, and the
