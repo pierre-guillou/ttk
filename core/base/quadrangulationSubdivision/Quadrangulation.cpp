@@ -1,5 +1,7 @@
 #include <Quadrangulation.h>
 
+#include <boost/container/small_vector.hpp>
+
 ttk::Quadrangulation::Quadrangulation() {
   this->setDebugMsgPrefix("Quadrangulation");
 }
@@ -8,37 +10,196 @@ int ttk::Quadrangulation::preconditionVertexNeighbors() {
 
   Timer tm;
 
+  this->preconditionEdges();
+
   this->printMsg(
     "Building vertex neighbors", 0, 0, 1, ttk::debug::LineMode::REPLACE);
 
-  std::vector<std::vector<SimplexId>> vertNeighs(this->nVerts_);
+  std::vector<SimplexId> offsets(this->nVerts_ + 1);
+  // number of neighbors processed per vertex
+  std::vector<SimplexId> neighborsId(this->nVerts_);
 
+  // store number of neighbors per vertex
+  for(const auto &e : this->edges_) {
+    offsets[e[0] + 1]++;
+    offsets[e[1] + 1]++;
+  }
+
+  // compute partial sum of number of neighbors per vertex
+  for(size_t i = 1; i < offsets.size(); ++i) {
+    offsets[i] += offsets[i - 1];
+  }
+
+  // allocate flat neighbors vector
+  std::vector<SimplexId> neighbors(offsets.back());
+
+  // fill flat neighbors vector using offsets and neighbors count vectors
+  for(const auto &e : this->edges_) {
+    neighbors[offsets[e[0]] + neighborsId[e[0]]] = e[1];
+    neighborsId[e[0]]++;
+    neighbors[offsets[e[1]] + neighborsId[e[1]]] = e[0];
+    neighborsId[e[1]]++;
+  }
+
+  // fill FlatJaggedArray struct
+  this->vertexNeighbors_.setData(std::move(neighbors), std::move(offsets));
+
+  printMsg("Built " + std::to_string(this->nVerts_) + " vertex neighbors", 1,
+           tm.getElapsedTime(), 1);
+
+  return 0;
+}
+
+int ttk::Quadrangulation::preconditionVertexStars() {
+  Timer tm{};
+
+  printMsg("Building vertex stars", 0, 0, 1, ttk::debug::LineMode::REPLACE);
+
+  std::vector<SimplexId> offsets(this->nVerts_ + 1);
+  // number of cells processed per vertex
+  std::vector<SimplexId> cellIds(this->nVerts_);
+
+  const auto cellNumber{this->nCells_};
+
+  // store number of stars per vertex
   for(SimplexId i = 0; i < this->nCells_; ++i) {
     const auto &q{this->cells_[i]};
-    vertNeighs[q[0]].emplace_back(q[1]);
-    vertNeighs[q[0]].emplace_back(q[3]);
-    vertNeighs[q[1]].emplace_back(q[0]);
-    vertNeighs[q[1]].emplace_back(q[2]);
-    vertNeighs[q[2]].emplace_back(q[1]);
-    vertNeighs[q[2]].emplace_back(q[3]);
-    vertNeighs[q[3]].emplace_back(q[2]);
-    vertNeighs[q[3]].emplace_back(q[0]);
+    for(const auto &v : q) {
+      offsets[v + 1]++;
+    }
   }
+
+  // compute partial sum of number of stars per vertex
+  for(size_t i = 1; i < offsets.size(); ++i) {
+    offsets[i] += offsets[i - 1];
+  }
+
+  // allocate flat data vector
+  std::vector<SimplexId> data(offsets.back());
+
+  // fill flat data vector using offsets and edges count vectors
+  for(SimplexId i = 0; i < cellNumber; ++i) {
+    const auto &q{this->cells_[i]};
+    for(const auto v : q) {
+      data[offsets[v] + cellIds[v]] = i;
+      cellIds[v]++;
+    }
+  }
+
+  // fill FlatJaggedArray struct
+  this->vertexStars_.setData(std::move(data), std::move(offsets));
+
+  this->printMsg("Built " + std::to_string(this->nVerts_) + " vertex stars", 1,
+                 tm.getElapsedTime(), 1);
+
+  return 0;
+}
+
+int ttk::Quadrangulation::preconditionEdges() {
+
+  Timer tm{};
+
+  this->quadEdges_.resize(this->nCells_);
+
+  struct EdgeData {
+    // the id of the edge higher vertex
+    SimplexId highVert{};
+    // the edge id
+    SimplexId id{};
+    EdgeData(SimplexId hv, SimplexId i) : highVert{hv}, id{i} {
+    }
+  };
+
+  using boost::container::small_vector;
+  // for each vertex, a vector of EdgeData
+  std::vector<small_vector<EdgeData, 8>> edgeTable(this->nVerts_);
+
+  SimplexId edgeCount{};
+
+  for(SimplexId cid = 0; cid < this->nCells_; cid++) {
+
+    const auto &q{this->cells_[cid]};
+    const SimplexId i = q[0];
+    const SimplexId j = q[1];
+    const SimplexId k = q[2];
+    const SimplexId l = q[3];
+
+    // quad edges
+    using edgeType = std::array<SimplexId, 2>;
+    const std::array<edgeType, 4> localEdges{
+      edgeType{i, j}, edgeType{j, k}, edgeType{k, l}, edgeType{l, i}};
+
+    for(size_t ecid = 0; ecid < localEdges.size(); ++ecid) {
+      const auto &le{localEdges[ecid]};
+      SimplexId a = le[0];
+      SimplexId b = le[1];
+      if(a > b) {
+        std::swap(a, b);
+      }
+
+      auto &vec = edgeTable[a];
+      const auto pos
+        = std::find_if(vec.begin(), vec.end(),
+                       [&](const EdgeData &ed) { return ed.highVert == b; });
+      if(pos == vec.end()) {
+        // not found in edgeTable: new edge
+        vec.emplace_back(EdgeData{b, edgeCount});
+        this->quadEdges_[cid][ecid] = edgeCount;
+        edgeCount++;
+      } else {
+        // found an existing edge
+        this->quadEdges_[cid][ecid] = pos->id;
+      }
+    }
+  }
+
+  // allocate & fill edgeList in parallel
+  this->edges_.resize(edgeCount);
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
 #endif // TTK_ENABLE_OPENMP
-  for(size_t i = 0; i < vertNeighs.size(); ++i) {
-    auto &vec{vertNeighs[i]};
-    std::sort(vec.begin(), vec.end());
-    const auto last{std::unique(vec.begin(), vec.end())};
-    vec.erase(last, vec.end());
+  for(SimplexId i = 0; i < this->nVerts_; ++i) {
+    const auto &etable = edgeTable[i];
+    for(const auto &data : etable) {
+      this->edges_[data.id] = {i, data.highVert};
+    }
   }
 
-  this->vertexNeighbors_.fillFrom(vertNeighs, this->threadNumber_);
+  // return cellEdgeList to get edgeStars
+  std::vector<SimplexId> offsets(edgeCount + 1);
+  // number of cells processed per edge
+  std::vector<SimplexId> starIds(edgeCount);
 
-  printMsg("Built " + std::to_string(this->nVerts_) + " vertex neighbors", 1,
-           tm.getElapsedTime(), 1);
+  // store number of cells per edge
+  for(const auto &ce : this->quadEdges_) {
+    for(const auto eid : ce) {
+      offsets[eid + 1]++;
+    }
+  }
+
+  // compute partial sum of number of cells per edge
+  for(size_t i = 1; i < offsets.size(); ++i) {
+    offsets[i] += offsets[i - 1];
+  }
+
+  // allocate flat edge stars vector
+  std::vector<SimplexId> edgeSt(offsets.back());
+
+  // fill flat neighbors vector using offsets and neighbors count vectors
+  for(size_t i = 0; i < this->quadEdges_.size(); ++i) {
+    const auto &ce{this->quadEdges_[i]};
+    for(const auto eid : ce) {
+      edgeSt[offsets[eid] + starIds[eid]] = i;
+      starIds[eid]++;
+    }
+  }
+
+  // fill FlatJaggedArray struct
+  this->edgeStars_.setData(std::move(edgeSt), std::move(offsets));
+
+  this->printMsg(
+    "Built " + std::to_string(edgeCount) + " edges", 1, tm.getElapsedTime(), 1);
 
   return 0;
 }

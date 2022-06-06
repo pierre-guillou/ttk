@@ -11,6 +11,8 @@ namespace ttk {
     ~Quadrangulation() override = default;
 
     int preconditionVertexNeighbors();
+    int preconditionVertexStars();
+    int preconditionEdges();
 
     inline void setInputCells(const SimplexId cellNumber,
                               void *const quadCells) {
@@ -50,6 +52,32 @@ namespace ttk {
       n = this->vertexNeighbors_[v][l];
     }
 
+    inline SimplexId getVertexStarNumber(const SimplexId v) const {
+      return this->vertexStars_[v].size();
+    }
+    inline SimplexId getVertexStar(const SimplexId v, const int l) const {
+      return this->vertexStars_[v][l];
+    }
+    inline void
+      getVertexStar(const SimplexId v, const int l, SimplexId &vs) const {
+      vs = this->vertexStars_[v][l];
+    }
+
+    inline SimplexId getEdgeStarNumber(const SimplexId e) const {
+      return this->edgeStars_[e].size();
+    }
+    inline SimplexId getEdgeStar(const SimplexId e, const int l) const {
+      return this->edgeStars_[e][l];
+    }
+
+    inline SimplexId getCellEdge(const SimplexId c, const int l) {
+      return this->quadEdges_[c][l];
+    }
+
+    const std::array<SimplexId, 2> &getEdge(const SimplexId e) const {
+      return this->edges_[e];
+    }
+
     inline SimplexId getCellVertexNumber(const SimplexId ttkNotUsed(c)) const {
       return 4;
     }
@@ -61,6 +89,9 @@ namespace ttk {
     }
     inline const SimplexId &getNumberOfCells() const {
       return this->nCells_;
+    }
+    inline SimplexId getNumberOfEdges() const {
+      return this->edges_.size();
     }
 
     void computeStatistics(std::vector<SimplexId> &vertsValence,
@@ -84,6 +115,10 @@ namespace ttk {
     SimplexId nVerts_{};
     SimplexId nCells_{};
     FlatJaggedArray vertexNeighbors_{};
+    FlatJaggedArray vertexStars_{};
+    std::vector<std::array<SimplexId, 2>> edges_{};
+    FlatJaggedArray edgeStars_{};
+    std::vector<std::array<SimplexId, 4>> quadEdges_{};
   };
 
 } // namespace ttk
