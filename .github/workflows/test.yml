@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PV_TAG: v5.10.1-headless
-  PV_REPO: topology-tool-kit/ttk-paraview
+  PV_TAG: 5.10.1-headless
+  PV_REPO: pierre-guillou/paraview-ttk
 
 
 jobs:
@@ -131,7 +131,7 @@ jobs:
 
     - uses: actions/checkout@v3
       with:
-        repository: "topology-tool-kit/ttk-data"
+        repository: "pierre-guillou/ttk-data"
         ref: "dev"
         path: "ttk-data"
       name: Checkout ttk-data
@@ -320,7 +320,7 @@ jobs:
 
     - uses: actions/checkout@v3
       with:
-        repository: "topology-tool-kit/ttk-data"
+        repository: "pierre-guillou/ttk-data"
         ref: "dev"
         path: "ttk-data"
       name: Checkout ttk-data
@@ -532,7 +532,7 @@ jobs:
 
     - uses: actions/checkout@v3
       with:
-        repository: "topology-tool-kit/ttk-data"
+        repository: "pierre-guillou/ttk-data"
         ref: "dev"
         path: "ttk-data"
       name: Checkout ttk-data

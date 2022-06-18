@@ -8,8 +8,8 @@ on:
       - 'ccache'
 
 env:
-  PV_TAG: v5.10.1-headless
-  PV_REPO: topology-tool-kit/ttk-paraview
+  PV_TAG: 5.10.1-headless
+  PV_REPO: pierre-guillou/paraview-ttk
 
 jobs:
 
