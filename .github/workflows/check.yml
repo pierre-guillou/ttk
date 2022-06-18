@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PV_TAG: v5.11.1-headless
-  PV_REPO: topology-tool-kit/ttk-paraview
+  PV_TAG: 5.11.1-headless
+  PV_REPO: pierre-guillou/paraview-ttk
 
 
 jobs:
