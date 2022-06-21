@@ -8,5 +8,4 @@ ttk_add_base_library(jacobiSet
     scalarFieldCriticalPoints
     triangulation
     unionFind
-    Boost::boost
     )

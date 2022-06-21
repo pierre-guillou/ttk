@@ -2,8 +2,6 @@
 
 #include <JacobiSet.h>
 
-#include <boost/container/small_vector.hpp>
-
 template <class dataTypeU, class dataTypeV, typename triangulationType>
 int ttk::JacobiSet::execute(std::vector<std::pair<SimplexId, char>> &jacobiSet,
                             const dataTypeU *const uField,
@@ -327,8 +325,7 @@ char ttk::JacobiSet::getCriticalType(const SimplexId &edgeId,
   rangeNormal[1] = rangeEdge[0];
 
   SimplexId starNumber = triangulation.getEdgeStarNumber(edgeId);
-  using boost::container::small_vector;
-  small_vector<SimplexId, 16> lowerNeighbors{}, upperNeighbors{};
+  std::vector<SimplexId> lowerNeighbors, upperNeighbors;
 
   SimplexId neighborNumber = 0;
 
@@ -456,10 +453,10 @@ char ttk::JacobiSet::getCriticalType(const SimplexId &edgeId,
   }
 
   // let's check the connectivity now
-  small_vector<UnionFind, 16> lowerSeeds(lowerNeighbors.size());
-  small_vector<UnionFind *, 16> lowerList(lowerNeighbors.size());
-  small_vector<UnionFind, 16> upperSeeds(upperNeighbors.size());
-  small_vector<UnionFind *, 16> upperList(upperNeighbors.size());
+  std::vector<UnionFind> lowerSeeds(lowerNeighbors.size());
+  std::vector<UnionFind *> lowerList(lowerNeighbors.size());
+  std::vector<UnionFind> upperSeeds(upperNeighbors.size());
+  std::vector<UnionFind *> upperList(upperNeighbors.size());
 
   for(size_t i = 0; i < lowerSeeds.size(); i++) {
     lowerList[i] = &(lowerSeeds[i]);
