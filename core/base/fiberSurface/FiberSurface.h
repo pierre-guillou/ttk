@@ -35,8 +35,6 @@
 #include <array>
 #include <queue>
 
-#include <boost/container/small_vector.hpp>
-
 // base code includes
 #ifdef TTK_ENABLE_FIBER_SURFACE_WITH_RANGE_OCTREE
 #include <RangeDrivenOctree.h>
@@ -2143,26 +2141,24 @@ inline int ttk::FiberSurface::processTetrahedron(
       }
     }
 
-    using boost::container::small_vector;
-
     // in case of 2 triangles, remesh locally
     // NOTE: here we just snap vertices together if they are colinear
     // the mergeFiberSurfaces() function will take care of removing any
     // duplicate
     if((triangleEdges[1][0] != -1) && (createdVertices > 3)) {
 
-      small_vector<SimplexId, 18> createdVertexList{};
-      createdVertexList.resize(createdVertices);
+      std::vector<SimplexId> createdVertexList(createdVertices);
       for(SimplexId i = 0; i < (SimplexId)createdVertices; i++) {
         createdVertexList[i]
           = polygonEdgeVertexLists_[polygonEdgeId]->size() - 1 - i;
       }
 
-      small_vector<bool, 18> snappedVertices{};
-      snappedVertices.resize(createdVertices, false);
+      std::vector<bool> snappedVertices(createdVertices, false);
+      std::vector<SimplexId> colinearVertices;
+      colinearVertices.reserve(createdVertices);
 
       for(SimplexId i = 0; i < createdVertices; i++) {
-        small_vector<SimplexId, 8> colinearVertices{};
+        colinearVertices.clear();
 
         if(!snappedVertices[i]) {
           colinearVertices.push_back(i);
