@@ -95,9 +95,9 @@ int ttkEireneWriter::writeUnstructuredGrid(vtkDataObject *input) {
   const auto dim = triangulation->getDimensionality();
   // precondition triangulation
   triangulation->preconditionEdges();
-  triangulation->preconditionTriangles();
-  triangulation->preconditionTriangleEdges();
   if(dim > 2) {
+    triangulation->preconditionTriangles();
+    triangulation->preconditionTriangleEdges();
     triangulation->preconditionCellTriangles();
   }
 

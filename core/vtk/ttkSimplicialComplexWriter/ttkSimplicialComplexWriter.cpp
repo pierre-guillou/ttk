@@ -94,7 +94,9 @@ int ttkSimplicialComplexWriter::writeUnstructuredGrid(vtkDataObject *input) {
   const auto dim = triangulation->getDimensionality();
   // precondition triangulation
   triangulation->preconditionEdges();
-  triangulation->preconditionTriangles();
+  if(dim > 2) {
+    triangulation->preconditionTriangles();
+  }
 
   // magic number
   const char magic[] = "TTKSimplicialComplex";
