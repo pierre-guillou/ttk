@@ -90,6 +90,8 @@ int ttkPersistenceDiagram::RequestData(vtkInformation *ttkNotUsed(request),
                                        vtkInformationVector **inputVector,
                                        vtkInformationVector *outputVector) {
 
+  ttk::Timer tm{};
+
   vtkDataSet *input = vtkDataSet::GetData(inputVector[0]);
   vtkUnstructuredGrid *outputCTPersistenceDiagram
     = vtkUnstructuredGrid::GetData(outputVector, 0);
@@ -102,7 +104,13 @@ int ttkPersistenceDiagram::RequestData(vtkInformation *ttkNotUsed(request),
   }
 #endif
 
+  this->printMsg("Create triangulation", 1.0, tm.getElapsedTime(), 1);
+  tm.reStart();
+
   this->preconditionTriangulation(triangulation);
+
+  this->printMsg("Precondition triangulation", 1.0, tm.getElapsedTime(), 1);
+  tm.reStart();
 
   vtkDataArray *inputScalars = this->GetInputArrayToProcess(0, inputVector);
 #ifndef TTK_ENABLE_KAMIKAZE
@@ -144,6 +152,8 @@ int ttkPersistenceDiagram::RequestData(vtkInformation *ttkNotUsed(request),
   outputScalars->SetNumberOfTuples(inputScalars->GetNumberOfTuples());
   outputScalars->DeepCopy(inputScalars);
   outputScalars->SetName("Cropped");
+
+  this->printMsg("Generate order array", 1.0, tm.getElapsedTime(), 1);
 
   int status{};
   ttkVtkTemplateMacro(
