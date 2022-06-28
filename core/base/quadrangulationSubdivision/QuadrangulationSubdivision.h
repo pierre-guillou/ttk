@@ -26,6 +26,7 @@
 
 #include <map>
 #include <numeric>
+#include <set>
 
 namespace ttk {
 
