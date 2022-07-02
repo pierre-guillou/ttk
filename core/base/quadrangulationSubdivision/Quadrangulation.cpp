@@ -9,46 +9,14 @@ ttk::Quadrangulation::Quadrangulation() {
 
 int ttk::Quadrangulation::preconditionVertexNeighbors() {
 
-  Timer tm;
-
   this->preconditionEdges();
 
-  this->printMsg(
-    "Building vertex neighbors", 0, 0, 1, ttk::debug::LineMode::REPLACE);
+  ZeroSkeleton zsk{};
+  zsk.setDebugLevel(this->debugLevel_);
+  zsk.setThreadNumber(this->threadNumber_);
 
-  std::vector<SimplexId> offsets(this->nVerts_ + 1);
-  // number of neighbors processed per vertex
-  std::vector<SimplexId> neighborsId(this->nVerts_);
-
-  // store number of neighbors per vertex
-  for(const auto &e : this->edges_) {
-    offsets[e[0] + 1]++;
-    offsets[e[1] + 1]++;
-  }
-
-  // compute partial sum of number of neighbors per vertex
-  for(size_t i = 1; i < offsets.size(); ++i) {
-    offsets[i] += offsets[i - 1];
-  }
-
-  // allocate flat neighbors vector
-  std::vector<SimplexId> neighbors(offsets.back());
-
-  // fill flat neighbors vector using offsets and neighbors count vectors
-  for(const auto &e : this->edges_) {
-    neighbors[offsets[e[0]] + neighborsId[e[0]]] = e[1];
-    neighborsId[e[0]]++;
-    neighbors[offsets[e[1]] + neighborsId[e[1]]] = e[0];
-    neighborsId[e[1]]++;
-  }
-
-  // fill FlatJaggedArray struct
-  this->vertexNeighbors_.setData(std::move(neighbors), std::move(offsets));
-
-  printMsg("Built " + std::to_string(this->nVerts_) + " vertex neighbors", 1,
-           tm.getElapsedTime(), 1);
-
-  return 0;
+  return zsk.buildVertexNeighbors(
+    this->nVerts_, this->vertexNeighbors_, this->edges_);
 }
 
 int ttk::Quadrangulation::preconditionVertexStars() {
