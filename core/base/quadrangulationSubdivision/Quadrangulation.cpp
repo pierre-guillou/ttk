@@ -1,6 +1,7 @@
 #include <Quadrangulation.h>
 
 #include <OneSkeleton.h>
+#include <ZeroSkeleton.h>
 
 ttk::Quadrangulation::Quadrangulation() {
   this->setDebugMsgPrefix("Quadrangulation");
@@ -51,48 +52,20 @@ int ttk::Quadrangulation::preconditionVertexNeighbors() {
 }
 
 int ttk::Quadrangulation::preconditionVertexStars() {
-  Timer tm{};
 
-  printMsg("Building vertex stars", 0, 0, 1, ttk::debug::LineMode::REPLACE);
-
-  std::vector<SimplexId> offsets(this->nVerts_ + 1);
-  // number of cells processed per vertex
-  std::vector<SimplexId> cellIds(this->nVerts_);
-
-  const auto cellNumber{this->nCells_};
-
-  // store number of stars per vertex
+  std::vector<LongSimplexId> offsets(this->nCells_ + 1);
+  offsets[0] = 0;
   for(SimplexId i = 0; i < this->nCells_; ++i) {
-    const auto &q{this->cells_[i]};
-    for(const auto &v : q) {
-      offsets[v + 1]++;
-    }
+    offsets[i + 1] = this->cells_[i].size() * (i + 1);
   }
+  CellArray ca{this->cells_[0].data(), offsets.data(),
+               static_cast<LongSimplexId>(this->nCells_)};
 
-  // compute partial sum of number of stars per vertex
-  for(size_t i = 1; i < offsets.size(); ++i) {
-    offsets[i] += offsets[i - 1];
-  }
+  ZeroSkeleton zsk{};
+  zsk.setDebugLevel(this->debugLevel_);
+  zsk.setThreadNumber(this->threadNumber_);
 
-  // allocate flat data vector
-  std::vector<SimplexId> data(offsets.back());
-
-  // fill flat data vector using offsets and edges count vectors
-  for(SimplexId i = 0; i < cellNumber; ++i) {
-    const auto &q{this->cells_[i]};
-    for(const auto v : q) {
-      data[offsets[v] + cellIds[v]] = i;
-      cellIds[v]++;
-    }
-  }
-
-  // fill FlatJaggedArray struct
-  this->vertexStars_.setData(std::move(data), std::move(offsets));
-
-  this->printMsg("Built " + std::to_string(this->nVerts_) + " vertex stars", 1,
-                 tm.getElapsedTime(), 1);
-
-  return 0;
+  return zsk.buildVertexStars(this->nVerts_, ca, this->vertexStars_);
 }
 
 int ttk::Quadrangulation::preconditionEdges() {
