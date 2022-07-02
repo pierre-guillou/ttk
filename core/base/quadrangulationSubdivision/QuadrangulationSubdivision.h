@@ -184,6 +184,12 @@ namespace ttk {
 
     // array of output quadrangle vertex valences
     std::vector<SimplexId> outputValences_{};
+    // density around vertices (exp minus euclidean distance between
+    // vertex and its closest neighbor)
+    std::vector<float> outputDensity_{};
+    // quad mesh difformity around vertices (exp minus ratio between
+    // smallest and largest euclidean distance to neighbors)
+    std::vector<float> outputDifformity_{};
     // array of output quadrangle vertex type
     // 0 - input (critical) point
     // 1 - edge middle
@@ -551,7 +557,8 @@ int ttk::QuadrangulationSubdivision::execute(
                    this->RelaxationIterations, qd, triangulation);
   }
 
-  qd.computeStatistics(this->outputValences_, this->quadArea_,
+  qd.computeStatistics(this->outputValences_, this->outputDensity_,
+                       this->outputDifformity_, this->quadArea_,
                        this->quadDiagsRatio_, this->quadEdgesRatio_,
                        this->quadAnglesRatio_);
   this->computeHausdorff(this->hausdorff_, qd, triangulation);

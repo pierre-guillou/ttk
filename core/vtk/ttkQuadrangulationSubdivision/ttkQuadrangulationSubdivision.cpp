@@ -123,6 +123,18 @@ int ttkQuadrangulationSubdivision::RequestData(
     valences, outputValences_.data(), outputValences_.size(), 1);
   output->GetPointData()->AddArray(valences);
 
+  vtkNew<vtkFloatArray> density{};
+  density->SetName("Density");
+  ttkUtils::SetVoidArray(
+    density, outputDensity_.data(), outputDensity_.size(), 1);
+  output->GetPointData()->AddArray(density);
+
+  vtkNew<vtkFloatArray> deformity{};
+  deformity->SetName("Deformity");
+  ttkUtils::SetVoidArray(
+    deformity, outputDifformity_.data(), outputDifformity_.size(), 1);
+  output->GetPointData()->AddArray(deformity);
+
   // add data array of points infos
   vtkNew<ttkSimplexIdTypeArray> infos{};
   infos->SetName("Type");

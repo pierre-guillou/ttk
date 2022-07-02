@@ -94,7 +94,25 @@ namespace ttk {
       return this->edges_.size();
     }
 
+    inline void computeDensityAndDeformity(const SimplexId v,
+                                           float &density,
+                                           float &deformity) const {
+      auto minDist{std::numeric_limits<float>::max()};
+      auto maxDist{std::numeric_limits<float>::lowest()};
+      const auto &pi{this->vertCoords_[v]};
+      for(const auto j : this->vertexNeighbors_[v]) {
+        const auto &pj{this->vertCoords_[j]};
+        const auto dist{Geometry::distance(pi.data(), pj.data())};
+        minDist = std::min(minDist, dist);
+        maxDist = std::max(maxDist, dist);
+      }
+      density = std::exp(-minDist);
+      deformity = std::exp(-minDist / maxDist);
+    }
+
     void computeStatistics(std::vector<SimplexId> &vertsValence,
+                           std::vector<float> &vertsDensity,
+                           std::vector<float> &vertsDifformity,
                            std::vector<float> &quadArea,
                            std::vector<float> &quadDiagsRatio,
                            std::vector<float> &quadEdgesRatio,

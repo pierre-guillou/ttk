@@ -3,6 +3,8 @@
 #include <OneSkeleton.h>
 #include <ZeroSkeleton.h>
 
+#include <limits>
+
 ttk::Quadrangulation::Quadrangulation() {
   this->setDebugMsgPrefix("Quadrangulation");
 }
@@ -58,6 +60,8 @@ ttk::CellArray ttk::Quadrangulation::buildQuadOffets() {
 
 void ttk::Quadrangulation::computeStatistics(
   std::vector<SimplexId> &vertsValence,
+  std::vector<float> &vertsDensity,
+  std::vector<float> &vertsDeformity,
   std::vector<float> &quadArea,
   std::vector<float> &quadDiagsRatio,
   std::vector<float> &quadEdgesRatio,
@@ -66,12 +70,21 @@ void ttk::Quadrangulation::computeStatistics(
   Timer tm;
 
   vertsValence.resize(this->nVerts_);
+  vertsDensity.resize(this->nVerts_);
+  vertsDeformity.resize(this->nVerts_);
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
 #endif // TTK_ENABLE_OPENMP
   for(SimplexId i = 0; i < this->nVerts_; ++i) {
     vertsValence[i] = this->getVertexNeighborNumber(i);
+  }
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(this->threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+  for(SimplexId i = 0; i < this->nVerts_; ++i) {
+    this->computeDensityAndDeformity(i, vertsDensity[i], vertsDeformity[i]);
   }
 
   quadArea.resize(this->nCells_);
