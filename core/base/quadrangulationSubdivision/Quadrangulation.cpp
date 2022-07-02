@@ -21,36 +21,39 @@ int ttk::Quadrangulation::preconditionVertexNeighbors() {
 
 int ttk::Quadrangulation::preconditionVertexStars() {
 
-  std::vector<LongSimplexId> offsets(this->nCells_ + 1);
-  offsets[0] = 0;
-  for(SimplexId i = 0; i < this->nCells_; ++i) {
-    offsets[i + 1] = this->cells_[i].size() * (i + 1);
-  }
-  CellArray ca{this->cells_[0].data(), offsets.data(),
-               static_cast<LongSimplexId>(this->nCells_)};
-
   ZeroSkeleton zsk{};
   zsk.setDebugLevel(this->debugLevel_);
   zsk.setThreadNumber(this->threadNumber_);
 
-  return zsk.buildVertexStars(this->nVerts_, ca, this->vertexStars_);
+  return zsk.buildVertexStars(
+    this->nVerts_, this->buildQuadOffets(), this->vertexStars_);
 }
 
 int ttk::Quadrangulation::preconditionEdges() {
 
-  std::vector<LongSimplexId> offsets(this->nCells_ + 1);
-  offsets[0] = 0;
-  for(SimplexId i = 0; i < this->nCells_; ++i) {
-    offsets[i + 1] = this->cells_[i].size() * (i + 1);
-  }
-  CellArray ca{this->cells_[0].data(), offsets.data(),
-               static_cast<LongSimplexId>(this->nCells_)};
   OneSkeleton osk{};
   osk.setDebugLevel(this->debugLevel_);
   osk.setThreadNumber(this->threadNumber_);
 
-  return osk.buildEdgeList(
-    this->nVerts_, ca, this->edges_, this->edgeStars_, this->quadEdges_);
+  return osk.buildEdgeList(this->nVerts_, this->buildQuadOffets(), this->edges_,
+                           this->edgeStars_, this->quadEdges_);
+}
+
+ttk::CellArray ttk::Quadrangulation::buildQuadOffets() {
+
+  if(static_cast<SimplexId>(this->quadOffsets_.size()) != this->nCells_ + 1) {
+    this->quadOffsets_.resize(this->nCells_ + 1);
+    this->quadOffsets_[0] = 0;
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(this->threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+    for(SimplexId i = 0; i < this->nCells_; ++i) {
+      this->quadOffsets_[i + 1] = this->cells_[i].size() * (i + 1);
+    }
+  }
+
+  return CellArray{this->cells_[0].data(), this->quadOffsets_.data(),
+                   static_cast<LongSimplexId>(this->nCells_)};
 }
 
 void ttk::Quadrangulation::computeStatistics(

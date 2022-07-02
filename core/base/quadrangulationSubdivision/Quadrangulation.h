@@ -110,6 +110,8 @@ namespace ttk {
     using Point = ttk::SurfaceGeometrySmoother::Point;
 
   private:
+    CellArray buildQuadOffets();
+
     const Point *vertCoords_{};
     const Quad *cells_{};
     SimplexId nVerts_{};
@@ -119,6 +121,7 @@ namespace ttk {
     std::vector<std::array<SimplexId, 2>> edges_{};
     FlatJaggedArray edgeStars_{};
     std::vector<std::array<SimplexId, 4>> quadEdges_{};
+    std::vector<LongSimplexId> quadOffsets_{};
   };
 
 } // namespace ttk
