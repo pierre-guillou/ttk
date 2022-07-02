@@ -1,6 +1,6 @@
 #include <Quadrangulation.h>
 
-#include <boost/container/small_vector.hpp>
+#include <OneSkeleton.h>
 
 ttk::Quadrangulation::Quadrangulation() {
   this->setDebugMsgPrefix("Quadrangulation");
@@ -97,111 +97,19 @@ int ttk::Quadrangulation::preconditionVertexStars() {
 
 int ttk::Quadrangulation::preconditionEdges() {
 
-  Timer tm{};
-
-  this->quadEdges_.resize(this->nCells_);
-
-  struct EdgeData {
-    // the id of the edge higher vertex
-    SimplexId highVert{};
-    // the edge id
-    SimplexId id{};
-    EdgeData(SimplexId hv, SimplexId i) : highVert{hv}, id{i} {
-    }
-  };
-
-  using boost::container::small_vector;
-  // for each vertex, a vector of EdgeData
-  std::vector<small_vector<EdgeData, 8>> edgeTable(this->nVerts_);
-
-  SimplexId edgeCount{};
-
-  for(SimplexId cid = 0; cid < this->nCells_; cid++) {
-
-    const auto &q{this->cells_[cid]};
-    const SimplexId i = q[0];
-    const SimplexId j = q[1];
-    const SimplexId k = q[2];
-    const SimplexId l = q[3];
-
-    // quad edges
-    using edgeType = std::array<SimplexId, 2>;
-    const std::array<edgeType, 4> localEdges{
-      edgeType{i, j}, edgeType{j, k}, edgeType{k, l}, edgeType{l, i}};
-
-    for(size_t ecid = 0; ecid < localEdges.size(); ++ecid) {
-      const auto &le{localEdges[ecid]};
-      SimplexId a = le[0];
-      SimplexId b = le[1];
-      if(a > b) {
-        std::swap(a, b);
-      }
-
-      auto &vec = edgeTable[a];
-      const auto pos
-        = std::find_if(vec.begin(), vec.end(),
-                       [&](const EdgeData &ed) { return ed.highVert == b; });
-      if(pos == vec.end()) {
-        // not found in edgeTable: new edge
-        vec.emplace_back(EdgeData{b, edgeCount});
-        this->quadEdges_[cid][ecid] = edgeCount;
-        edgeCount++;
-      } else {
-        // found an existing edge
-        this->quadEdges_[cid][ecid] = pos->id;
-      }
-    }
+  std::vector<LongSimplexId> offsets(this->nCells_ + 1);
+  offsets[0] = 0;
+  for(SimplexId i = 0; i < this->nCells_; ++i) {
+    offsets[i + 1] = this->cells_[i].size() * (i + 1);
   }
+  CellArray ca{this->cells_[0].data(), offsets.data(),
+               static_cast<LongSimplexId>(this->nCells_)};
+  OneSkeleton osk{};
+  osk.setDebugLevel(this->debugLevel_);
+  osk.setThreadNumber(this->threadNumber_);
 
-  // allocate & fill edgeList in parallel
-  this->edges_.resize(edgeCount);
-
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(this->threadNumber_)
-#endif // TTK_ENABLE_OPENMP
-  for(SimplexId i = 0; i < this->nVerts_; ++i) {
-    const auto &etable = edgeTable[i];
-    for(const auto &data : etable) {
-      this->edges_[data.id] = {i, data.highVert};
-    }
-  }
-
-  // return cellEdgeList to get edgeStars
-  std::vector<SimplexId> offsets(edgeCount + 1);
-  // number of cells processed per edge
-  std::vector<SimplexId> starIds(edgeCount);
-
-  // store number of cells per edge
-  for(const auto &ce : this->quadEdges_) {
-    for(const auto eid : ce) {
-      offsets[eid + 1]++;
-    }
-  }
-
-  // compute partial sum of number of cells per edge
-  for(size_t i = 1; i < offsets.size(); ++i) {
-    offsets[i] += offsets[i - 1];
-  }
-
-  // allocate flat edge stars vector
-  std::vector<SimplexId> edgeSt(offsets.back());
-
-  // fill flat neighbors vector using offsets and neighbors count vectors
-  for(size_t i = 0; i < this->quadEdges_.size(); ++i) {
-    const auto &ce{this->quadEdges_[i]};
-    for(const auto eid : ce) {
-      edgeSt[offsets[eid] + starIds[eid]] = i;
-      starIds[eid]++;
-    }
-  }
-
-  // fill FlatJaggedArray struct
-  this->edgeStars_.setData(std::move(edgeSt), std::move(offsets));
-
-  this->printMsg(
-    "Built " + std::to_string(edgeCount) + " edges", 1, tm.getElapsedTime(), 1);
-
-  return 0;
+  return osk.buildEdgeList(
+    this->nVerts_, ca, this->edges_, this->edgeStars_, this->quadEdges_);
 }
 
 void ttk::Quadrangulation::computeStatistics(

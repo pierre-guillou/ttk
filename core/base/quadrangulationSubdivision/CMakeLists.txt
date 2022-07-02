@@ -10,5 +10,4 @@ ttk_add_base_library(quadrangulationSubdivision
    geometry
    triangulation
    surfaceGeometrySmoother
-   Boost::boost
   )
