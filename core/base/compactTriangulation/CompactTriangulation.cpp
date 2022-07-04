@@ -332,9 +332,7 @@ int CompactTriangulation::buildExternalEdgeMap(
     }
   }
 
-  boost::unordered_map<SimplexId,
-                       std::vector<std::array<SimplexId, 2>>>::iterator iter;
-  for(iter = edgeNodes.begin(); iter != edgeNodes.end(); iter++) {
+  for(auto iter = edgeNodes.begin(); iter != edgeNodes.end(); iter++) {
     ImplicitCluster *exnode = searchCache(iter->first, nodePtr->nid);
     if(exnode) {
       if(exnode->internalEdgeMap_.empty())
@@ -491,9 +489,7 @@ int CompactTriangulation::buildExternalTriangleMap(
     }
   }
 
-  boost::unordered_map<SimplexId,
-                       std::vector<std::array<SimplexId, 3>>>::iterator iter;
-  for(iter = nodeTriangles.begin(); iter != nodeTriangles.end(); iter++) {
+  for(auto iter = nodeTriangles.begin(); iter != nodeTriangles.end(); iter++) {
     ImplicitCluster *exnode = searchCache(iter->first, nodePtr->nid);
     if(exnode) {
       if(exnode->internalTriangleMap_.empty())
@@ -958,10 +954,8 @@ int CompactTriangulation::getClusterEdgeLinks(
       getClusterEdgeStars(nodePtr);
     }
     // set the offsets vector
-    boost::unordered_map<std::array<SimplexId, 2>, SimplexId>::const_iterator
-      iter;
-    for(iter = nodePtr->internalEdgeMap_.begin();
-        iter != nodePtr->internalEdgeMap_.end(); iter++) {
+    for(auto iter = nodePtr->internalEdgeMap_.cbegin();
+        iter != nodePtr->internalEdgeMap_.cend(); iter++) {
       for(SimplexId j = 0; j < nodePtr->edgeStars_.size(iter->second - 1);
           j++) {
         SimplexId cellId = nodePtr->edgeStars_.get(iter->second - 1, j);
@@ -984,8 +978,8 @@ int CompactTriangulation::getClusterEdgeLinks(
     std::vector<SimplexId> edgeLinkData(offsets.back());
 
     // fill the flat vector using offsets and count vectors
-    for(iter = nodePtr->internalEdgeMap_.begin();
-        iter != nodePtr->internalEdgeMap_.end(); iter++) {
+    for(auto iter = nodePtr->internalEdgeMap_.cbegin();
+        iter != nodePtr->internalEdgeMap_.cend(); iter++) {
       for(SimplexId j = 0; j < nodePtr->edgeStars_.size(iter->second - 1);
           j++) {
         SimplexId cellId = nodePtr->edgeStars_.get(iter->second - 1, j);
@@ -1286,8 +1280,7 @@ int CompactTriangulation::getClusterEdgeTriangles(
   }
 
   // set the offsets vector
-  boost::unordered_map<std::array<SimplexId, 3>, SimplexId>::iterator iter;
-  for(iter = nodePtr->internalTriangleMap_.begin();
+  for(auto iter = nodePtr->internalTriangleMap_.begin();
       iter != nodePtr->internalTriangleMap_.end(); iter++) {
     std::array<SimplexId, 2> edge1 = {iter->first[0], iter->first[1]};
     std::array<SimplexId, 2> edge2 = {iter->first[0], iter->first[2]};
@@ -1298,7 +1291,7 @@ int CompactTriangulation::getClusterEdgeTriangles(
       offsets[nodePtr->internalEdgeMap_.at(edge1)]++;
     }
   }
-  for(iter = nodePtr->externalTriangleMap_.begin();
+  for(auto iter = nodePtr->externalTriangleMap_.begin();
       iter != nodePtr->externalTriangleMap_.end(); iter++) {
     std::array<SimplexId, 2> edge = {iter->first.at(1), iter->first.at(2)};
     if(edge[0] > vertexIntervals_[nodePtr->nid - 1]
@@ -1316,7 +1309,7 @@ int CompactTriangulation::getClusterEdgeTriangles(
   std::vector<SimplexId> edgeTriangleData(offsets.back());
 
   // fill the flat vector using offsets and count vectors
-  for(iter = nodePtr->internalTriangleMap_.begin();
+  for(auto iter = nodePtr->internalTriangleMap_.begin();
       iter != nodePtr->internalTriangleMap_.end(); iter++) {
     std::array<SimplexId, 2> edge1 = {iter->first[0], iter->first[1]};
     std::array<SimplexId, 2> edge2 = {iter->first[0], iter->first[2]};
@@ -1339,7 +1332,7 @@ int CompactTriangulation::getClusterEdgeTriangles(
   }
 
   // for external triangles
-  for(iter = nodePtr->externalTriangleMap_.begin();
+  for(auto iter = nodePtr->externalTriangleMap_.begin();
       iter != nodePtr->externalTriangleMap_.end(); iter++) {
     std::array<SimplexId, 2> edge = {iter->first.at(1), iter->first.at(2)};
     if(edge[0] > vertexIntervals_[nodePtr->nid - 1]
@@ -1582,10 +1575,8 @@ int CompactTriangulation::getClusterTriangleLinks(
   }
 
   // set the offsets vector
-  boost::unordered_map<std::array<SimplexId, 3>, SimplexId>::const_iterator
-    iter;
-  for(iter = nodePtr->internalTriangleMap_.begin();
-      iter != nodePtr->internalTriangleMap_.end(); iter++) {
+  for(auto iter = nodePtr->internalTriangleMap_.cbegin();
+      iter != nodePtr->internalTriangleMap_.cend(); iter++) {
     for(SimplexId i = 0; i < nodePtr->triangleStars_.size(iter->second - 1);
         i++) {
       SimplexId cellId = nodePtr->triangleStars_.get(iter->second - 1, i);
@@ -1609,8 +1600,8 @@ int CompactTriangulation::getClusterTriangleLinks(
   std::vector<SimplexId> triangleLinkData(offsets.back());
 
   // fill the flat vector using offsets and count vectors
-  for(iter = nodePtr->internalTriangleMap_.begin();
-      iter != nodePtr->internalTriangleMap_.end(); iter++) {
+  for(auto iter = nodePtr->internalTriangleMap_.cbegin();
+      iter != nodePtr->internalTriangleMap_.cend(); iter++) {
     for(SimplexId i = 0; i < nodePtr->triangleStars_.size(iter->second - 1);
         i++) {
       SimplexId cellId = nodePtr->triangleStars_.get(iter->second - 1, i);
@@ -1776,15 +1767,14 @@ int CompactTriangulation::getClusterVertexEdges(
   }
 
   // set the offsets vector
-  boost::unordered_map<std::array<SimplexId, 2>, SimplexId>::iterator iter;
-  for(iter = nodePtr->internalEdgeMap_.begin();
+  for(auto iter = nodePtr->internalEdgeMap_.begin();
       iter != nodePtr->internalEdgeMap_.end(); iter++) {
     offsets[iter->first[0] - vertexIntervals_[nodePtr->nid - 1]]++;
     if(iter->first[1] <= vertexIntervals_[nodePtr->nid]) {
       offsets[iter->first[1] - vertexIntervals_[nodePtr->nid - 1]]++;
     }
   }
-  for(iter = nodePtr->externalEdgeMap_.begin();
+  for(auto iter = nodePtr->externalEdgeMap_.begin();
       iter != nodePtr->externalEdgeMap_.end(); iter++) {
     offsets[iter->first[1] - vertexIntervals_[nodePtr->nid - 1]]++;
   }
@@ -1797,7 +1787,7 @@ int CompactTriangulation::getClusterVertexEdges(
   std::vector<SimplexId> vertexEdgeData(offsets.back());
 
   // fill the flat vector using offsets and count vectors
-  for(iter = nodePtr->internalEdgeMap_.begin();
+  for(auto iter = nodePtr->internalEdgeMap_.begin();
       iter != nodePtr->internalEdgeMap_.end(); iter++) {
     SimplexId localVertexId
       = iter->first[0] - vertexIntervals_[nodePtr->nid - 1] - 1;
@@ -1811,7 +1801,7 @@ int CompactTriangulation::getClusterVertexEdges(
       edgesCount[localVertexId]++;
     }
   }
-  for(iter = nodePtr->externalEdgeMap_.begin();
+  for(auto iter = nodePtr->externalEdgeMap_.begin();
       iter != nodePtr->externalEdgeMap_.end(); iter++) {
     SimplexId localVertexId
       = iter->first[1] - vertexIntervals_[nodePtr->nid - 1] - 1;
@@ -2264,8 +2254,7 @@ int CompactTriangulation::getClusterVertexTriangles(
   }
 
   // set the offsets vector
-  boost::unordered_map<std::array<SimplexId, 3>, SimplexId>::iterator iter;
-  for(iter = nodePtr->internalTriangleMap_.begin();
+  for(auto iter = nodePtr->internalTriangleMap_.begin();
       iter != nodePtr->internalTriangleMap_.end(); iter++) {
     for(SimplexId j = 0; j < 3; j++) {
       if(iter->first[j] > vertexIntervals_[nodePtr->nid - 1]
@@ -2273,7 +2262,7 @@ int CompactTriangulation::getClusterVertexTriangles(
         offsets[iter->first[j] - vertexIntervals_[nodePtr->nid - 1]]++;
     }
   }
-  for(iter = nodePtr->externalTriangleMap_.begin();
+  for(auto iter = nodePtr->externalTriangleMap_.begin();
       iter != nodePtr->externalTriangleMap_.end(); iter++) {
     for(SimplexId j = 0; j < 3; j++) {
       if(iter->first[j] > vertexIntervals_[nodePtr->nid - 1]
@@ -2291,7 +2280,7 @@ int CompactTriangulation::getClusterVertexTriangles(
   std::vector<SimplexId> vertexTriangleData(offsets.back());
 
   // fill the flat vector using offsets and count vectors
-  for(iter = nodePtr->internalTriangleMap_.begin();
+  for(auto iter = nodePtr->internalTriangleMap_.begin();
       iter != nodePtr->internalTriangleMap_.end(); iter++) {
     for(SimplexId j = 0; j < 3; j++) {
       if(iter->first[j] > vertexIntervals_[nodePtr->nid - 1]
@@ -2305,7 +2294,7 @@ int CompactTriangulation::getClusterVertexTriangles(
       }
     }
   }
-  for(iter = nodePtr->externalTriangleMap_.begin();
+  for(auto iter = nodePtr->externalTriangleMap_.begin();
       iter != nodePtr->externalTriangleMap_.end(); iter++) {
     for(SimplexId j = 0; j < 3; j++) {
       if(iter->first[j] > vertexIntervals_[nodePtr->nid - 1]
