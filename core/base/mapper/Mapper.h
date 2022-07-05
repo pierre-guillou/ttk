@@ -17,16 +17,96 @@
 
 #pragma once
 
+#include <DimensionReduction.h>
+#include <LDistanceMatrix.h>
 #include <Triangulation.h>
 #include <UnionFind.h>
 
 #include <array>
+#include <limits>
+#include <set>
 
 namespace ttk {
 
   class Mapper : virtual public Debug {
   public:
     Mapper();
+
+    enum class LOWER_DIMENSION {
+      LOWER_DIM_2D = 2,
+      LOWER_DIM_3D = 3,
+    };
+    using REDUCTION_ALGO = DimensionReduction::METHOD;
+
+    /**
+     * @brief Utility class to store matrices/2-dimensional arrays
+     * inside a single buffer
+     *
+     * @todo Move it to core/base/common near FlatJaggedArray?
+     */
+    class Matrix {
+    public:
+      inline void
+        alloc(const size_t nRows, const size_t nCols, const double fill = 0.0) {
+        this->nRows_ = nRows;
+        this->nCols_ = nCols;
+        this->matrix_.resize(this->nRows_ * this->nCols_, fill);
+      }
+      inline Matrix() = default;
+      inline Matrix(const size_t nRows, const size_t nCols) {
+        this->alloc(nRows, nCols);
+      }
+      inline Matrix(const size_t nRows, const size_t nCols, const double fill) {
+        this->alloc(nRows, nCols, fill);
+      }
+
+      inline double &get(const size_t r, const size_t c) {
+        return this->matrix_[r * this->nCols_ + c];
+      }
+      inline const double &get(const size_t r, const size_t c) const {
+        return this->matrix_[r * this->nCols_ + c];
+      }
+      inline const std::vector<double> &data() const {
+        return this->matrix_;
+      }
+      inline size_t nRows() const {
+        return this->nRows_;
+      }
+      inline size_t nCols() const {
+        return this->nCols_;
+      }
+      inline void fill(const double val) {
+        std::fill(this->matrix_.begin(), this->matrix_.end(), val);
+      }
+      inline void toCSV(const std::string &fName) const {
+        std::ofstream out(fName);
+        // headers
+        for(size_t i = 0; i < this->nRows(); ++i) {
+          out << "Column" << std::setfill('0') << std::setw(4) << i;
+          if(i == this->nRows() - 1) {
+            out << '\n';
+          } else {
+            out << ',';
+          }
+        }
+        // data
+        for(size_t i = 0; i < this->nRows(); ++i) {
+          for(size_t j = 0; j < this->nCols(); ++j) {
+            out << this->get(i, j);
+            if(j == this->nCols() - 1) {
+              out << '\n';
+            } else {
+              out << ',';
+            }
+          }
+        }
+      }
+
+    private:
+      std::vector<double> matrix_{};
+      size_t nRows_{};
+      size_t nCols_{};
+    };
 
     inline void
       preconditionTriangulation(AbstractTriangulation *const triangulation) {
@@ -40,13 +120,13 @@ namespace ttk {
      * @brief Compute mapper
      *
      * @param[out] outputBucket Bucket id for each vertex
-     * @param[out] outputConnComps Component id for each vertex
+     * @param[out] outputConnComps Component id for each vertex (in
+     * the strict sense i.e. vertices belonging to the corresponding
+     * bucket)
      * @param[out] compBaryCoords 3D barycenters coordinates
      * @param[out] compArcs Arcs between connected components
-     * @param[out] highDimBaryCoords (Optional) High-dimensional barycenters
-     * coordinates
-     * @param[in] inputHighDimCoords (Optional) High-dimensional input points
-     * coordinates
+     * @param[in] distMat High-dimension input distance matrix (for
+     * re-embedding)
      * @param[in] inputSf Input scalar field (on vertices)
      * @param[in] triangulation Triangulation
      *
@@ -57,9 +137,9 @@ namespace ttk {
                 int *const outputConnComp,
                 std::vector<std::array<float, 3>> &compBaryCoords,
                 std::vector<int> &connCompBucket,
-                std::vector<std::vector<SimplexId>> &compArcs,
-                std::vector<std::vector<double>> &highDimBaryCoords,
-                const std::vector<double> &inputHighDimCoords,
+                std::vector<std::set<SimplexId>> &compArcs,
+                float *const outputPointsCoords,
+                const Matrix &distMat,
                 const dataType *const inputSf,
                 const triangulationType &triangulation) const;
 
@@ -112,10 +192,6 @@ namespace ttk {
      * @brief Compute connected component barycenter.
      *
      * @param[out] baryCoords 3D coordinates for current component
-     * @param[out] highDimBaryCoords (Optional) High-dimensional barycenter
-     * coordinates
-     * @param[in] inputHighDimCoords (Optional) High-dimensional input points
-     * coordinates
      * @param[in] connCompEdges List of edges of the current component
      * @param[in] triangulation Triangulation
      *
@@ -123,14 +199,90 @@ namespace ttk {
      */
     template <typename triangulationType>
     int computeCompBarycenter(std::array<float, 3> &baryCoords,
-                              std::vector<double> &highDimBaryCoords,
-                              const std::vector<double> &inputHighDimCoords,
                               const std::vector<SimplexId> &connCompEdges,
                               const triangulationType &triangulation) const;
 
+    template <typename triangulationType>
+    int computeCompHighDimBarycenter(
+      double *const highDimBaryCoords,
+      const Matrix &inputHighDimCoords,
+      const std::vector<SimplexId> &connCompVertices,
+      const size_t nHighDims,
+      const triangulationType &triangulation) const;
+
+    /**
+     * @brief Call DimensionReduction
+     *
+     * @param[out] outputCoords Embedding coordinates (one array per component)
+     * @param[in] mat Distance matrix to be reduced
+     * @param[in] isDistanceMatrix If @p mat is a distance matrix
+     * @param[in] method DimensionReduction method
+     *
+     * @return 0 in case of success
+     */
+    int reduceMatrix(std::vector<std::vector<double>> &outputCoords,
+                     const Matrix &mat,
+                     const bool isDistanceMatrix,
+                     const ttk::DimensionReduction::METHOD method
+                     = ttk::DimensionReduction::METHOD::MDS) const;
+
+    /**
+     * @brief Compute connected components centroid
+     *
+     * The centroid is the connected component vertex that minimizes
+     * the square distance to every other vertices in the component.
+     *
+     * @param[out] centroidId Centroid vertex identifier per connected component
+     * @param[in] distMat Input distance matrix between all vertices
+     * @param[in] connCompVertices Set of vertices per connected
+     * component (in the broad sense i.e. vertices of edges that cross
+     * the connected component)
+     * @param[in] outputConnComp Connected component id per vertex (in
+     * the strict sense i.e. vertices belonging to the corresponding
+     * bucket)
+     */
+    void computeCompCentroid(
+      std::vector<SimplexId> &centroidId,
+      const Matrix &distMat,
+      const std::vector<std::set<SimplexId>> &connCompVertices,
+      const int *const outputConnComp) const;
+
+    /**
+     * @brief Extract sub-matrix from distance matrix
+     *
+     * @param[out] subDistMat Extracted sub-matrix
+     * @param[in] vertsId List of rows/columns identifiers
+     * @param[in] distMat Input distance matrix
+     */
+    void extractSubDistMat(Matrix &subDistMat,
+                           const std::vector<SimplexId> &vertsId,
+                           const Matrix &distMat) const;
+
+    /**
+     * @brief Re-embed by reducing centroids & individual connected components
+     *
+     * @param[out] compBaryCoords Output centroid 3D coordinates
+     * @param[out] outputPointsCoords Output dataset vertices 3D coordinates
+     * @param[in] distMat Input distance matrix between dataset vertices
+     * @param[in] outputConnComp Component id per vertex (computed by execute())
+     * @param[in] compArcs Arcs between components (computed by execute())
+     * @param[in] connCompEdges Edges per component (computed by execute())
+     * @param[in] triangulation Input mesh
+     */
+    template <typename triangulationType>
+    int reEmbedMapper(std::vector<std::array<float, 3>> &compBaryCoords,
+                      float *const outputPointsCoords,
+                      const Matrix &distMat,
+                      const int *const outputConnComp,
+                      const std::vector<std::set<SimplexId>> &compArcs,
+                      const std::vector<std::vector<SimplexId>> &connCompEdges,
+                      const triangulationType &triangulation) const;
+
   protected:
     int NumberOfBuckets{10};
-    bool ComputeHighDimBarycenters{false};
+    LOWER_DIMENSION LowerDimension{LOWER_DIMENSION::LOWER_DIM_2D};
+    REDUCTION_ALGO ReductionAlgo{REDUCTION_ALGO::MDS};
+    bool ReEmbedMapper{false};
   };
 
 } // namespace ttk
@@ -141,9 +293,9 @@ int ttk::Mapper::execute(int *const outputBucket,
                          int *const outputConnComp,
                          std::vector<std::array<float, 3>> &compBaryCoords,
                          std::vector<int> &connCompBucket,
-                         std::vector<std::vector<SimplexId>> &compArcs,
-                         std::vector<std::vector<double>> &highDimBaryCoords,
-                         const std::vector<double> &inputHighDimCoords,
+                         std::vector<std::set<SimplexId>> &compArcs,
+                         float *const outputPointsCoords,
+                         const Matrix &distMat,
                          const dataType *const inputSf,
                          const triangulationType &triangulation) const {
 
@@ -215,14 +367,12 @@ int ttk::Mapper::execute(int *const outputBucket,
 
   // find barycenter coordinates
   compBaryCoords.resize(nConnComps);
-  highDimBaryCoords.resize(nConnComps);
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_)
 #endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < nConnComps; ++i) {
-    this->computeCompBarycenter(compBaryCoords[i], highDimBaryCoords[i],
-                                inputHighDimCoords, connCompEdges[i],
-                                triangulation);
+    this->computeCompBarycenter(
+      compBaryCoords[i], connCompEdges[i], triangulation);
   }
 
   this->printMsg("Found barycenter coordinates", 1.0, tmsec.getElapsedTime(),
@@ -256,30 +406,24 @@ int ttk::Mapper::execute(int *const outputBucket,
       for(size_t k = 0; k < j; ++k) {
         const auto prevCompId{edgeConnComps[i][k]};
         if(connCompBucket[prevCompId] == connCompBucket[currCompId] - 1) {
-          compArcs[currCompId].emplace_back(prevCompId);
+          compArcs[currCompId].emplace(prevCompId);
         }
       }
     }
   }
 
-  // remove duplicate arcs
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
-#endif // TTK_ENABLE_OPENMP
-  for(size_t i = 0; i < compArcs.size(); ++i) {
-    std::sort(compArcs[i].begin(), compArcs[i].end());
-    const auto last = std::unique(compArcs[i].begin(), compArcs[i].end());
-    compArcs[i].erase(last, compArcs[i].end());
-  }
-
   this->printMsg("Detected arcs between connected components", 1.0,
                  tmsec.getElapsedTime(), this->threadNumber_,
                  debug::LineMode::NEW, debug::Priority::DETAIL);
-  tmsec.reStart();
 
   this->printMsg(
     "Found " + std::to_string(nConnComps) + " connected components", 1,
     tm.getElapsedTime(), this->threadNumber_);
+
+  if(this->ReEmbedMapper) {
+    this->reEmbedMapper(compBaryCoords, outputPointsCoords, distMat,
+                        outputConnComp, compArcs, connCompEdges, triangulation);
+  }
 
   return 0;
 }
@@ -291,6 +435,11 @@ int ttk::Mapper::findBuckets(int *const vertsBucket,
                              const triangulationType &triangulation) const {
 
   Timer tm{};
+
+  if(this->NumberOfBuckets < 0) {
+    this->printErr("Number of buckets should not be negative");
+    return -1;
+  }
 
   const auto nVerts{triangulation.getNumberOfVertices()};
   const auto sfRange = std::minmax_element(inputSf, inputSf + nVerts);
@@ -430,15 +579,10 @@ int ttk::Mapper::processBucket(
 template <typename triangulationType>
 int ttk::Mapper::computeCompBarycenter(
   std::array<float, 3> &baryCoords,
-  std::vector<double> &highDimBaryCoords,
-  const std::vector<double> &inputHighDimCoords,
   const std::vector<SimplexId> &connCompEdges,
   const triangulationType &triangulation) const {
 
   size_t nVertsInComp{};
-
-  const auto nVerts{triangulation.getNumberOfVertices()};
-  const auto nHighDims{inputHighDimCoords.size() / nVerts};
 
   for(const auto e : connCompEdges) {
     for(SimplexId j = 0; j < 2; ++j) {
@@ -451,13 +595,6 @@ int ttk::Mapper::computeCompBarycenter(
       baryCoords[1] += pt[1];
       baryCoords[2] += pt[2];
       nVertsInComp++;
-
-      if(this->ComputeHighDimBarycenters) {
-        highDimBaryCoords.resize(nHighDims);
-        for(size_t i = 0; i < nHighDims; ++i) {
-          highDimBaryCoords[i] += inputHighDimCoords[v * nHighDims + i];
-        }
-      }
     }
   }
 
@@ -466,11 +603,181 @@ int ttk::Mapper::computeCompBarycenter(
   baryCoords[1] /= nVertsInComp;
   baryCoords[2] /= nVertsInComp;
 
-  if(this->ComputeHighDimBarycenters) {
+  return 0;
+}
+
+template <typename triangulationType>
+int ttk::Mapper::computeCompHighDimBarycenter(
+  double *const highDimBaryCoords,
+  const Matrix &inputHighDimCoords,
+  const std::vector<SimplexId> &connCompVertices,
+  const size_t nHighDims,
+  const triangulationType &triangulation) const {
+
+  for(const auto v : connCompVertices) {
+    std::array<float, 3> pt{};
+    triangulation.getVertexPoint(v, pt[0], pt[1], pt[2]);
+
     for(size_t i = 0; i < nHighDims; ++i) {
-      highDimBaryCoords[i] /= nVertsInComp;
+      highDimBaryCoords[i] += inputHighDimCoords.get(v, i);
     }
   }
+
+  for(size_t i = 0; i < nHighDims; ++i) {
+    highDimBaryCoords[i] /= connCompVertices.size();
+  }
+
+  return 0;
+}
+
+template <typename triangulationType>
+int ttk::Mapper::reEmbedMapper(
+  std::vector<std::array<float, 3>> &compBaryCoords,
+  float *const outputPointsCoords,
+  const Matrix &distMat,
+  const int *const outputConnComp,
+  const std::vector<std::set<SimplexId>> &compArcs,
+  const std::vector<std::vector<SimplexId>> &connCompEdges,
+  const triangulationType &triangulation) const {
+
+  Timer tm{};
+
+  // 1. extract vertices in component edges
+  std::vector<std::set<SimplexId>> connCompVertices(connCompEdges.size());
+  for(size_t i = 0; i < connCompEdges.size(); ++i) {
+    const auto &cce{connCompEdges[i]};
+    auto &ccv{connCompVertices[i]};
+    for(size_t j = 0; j < cce.size(); ++j) {
+      SimplexId v0{}, v1{};
+      triangulation.getEdgeVertex(cce[j], 0, v0);
+      triangulation.getEdgeVertex(cce[j], 1, v1);
+      ccv.emplace(v0);
+      ccv.emplace(v1);
+    }
+  }
+
+  // 2. sort vertices per connected component
+  std::vector<std::vector<SimplexId>> connCompVertsStrict(
+    connCompVertices.size());
+  for(SimplexId i = 0; i < triangulation.getNumberOfVertices(); ++i) {
+    connCompVertsStrict[outputConnComp[i]].emplace_back(i);
+  }
+
+  // 3. compute connected components centroids from input distance matrix
+  std::vector<SimplexId> centroidId{};
+  this->computeCompCentroid(
+    centroidId, distMat, connCompVertices, outputConnComp);
+
+  // 4. extract distance matrix between centroids
+  Matrix centroidsDistMat(compArcs.size(), compArcs.size());
+  for(size_t i = 0; i < compArcs.size(); ++i) {
+    for(const auto el : compArcs[i]) {
+      centroidsDistMat.get(i, el) = 1.0;
+      centroidsDistMat.get(el, i) = 1.0;
+    }
+  }
+
+  // 5. get an embedding of the distance matrix between the centroids
+  std::vector<std::vector<double>> embedCentroids{};
+  this->reduceMatrix(embedCentroids, centroidsDistMat, true,
+                     ttk::DimensionReduction::METHOD::SE);
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < embedCentroids.size(); ++i) {
+    for(size_t j = 0; j < embedCentroids[i].size(); ++j) {
+      compBaryCoords[j][i] = embedCentroids[i][j];
+    }
+  }
+
+  // 6. compute a distance matrix from the embedded centroids
+  std::vector<const float *> inputs(compBaryCoords.size());
+  for(size_t i = 0; i < compBaryCoords.size(); ++i) {
+    inputs[i] = compBaryCoords[i].data();
+  }
+  std::vector<std::vector<double>> centroidsEmbedDistMat{};
+  ttk::LDistanceMatrix ldm{};
+  if(this->LowerDimension == LOWER_DIMENSION::LOWER_DIM_2D) {
+    ldm.execute(centroidsEmbedDistMat, inputs, 2);
+  } else {
+    ldm.execute(centroidsEmbedDistMat, inputs, 3);
+  }
+
+  this->printMsg(". Re-embedded centroids", 1.0, tm.getElapsedTime(),
+                 this->threadNumber_, debug::LineMode::NEW,
+                 debug::Priority::DETAIL);
+
+  // 7. get an embedding for all vertices of each connected component
+  for(size_t i = 0; i < connCompEdges.size(); ++i) {
+
+    Timer tmcomp{};
+
+    if(connCompVertsStrict[i].empty()) {
+      continue;
+    }
+
+    Matrix distMatConnComp{};
+    std::vector<std::vector<double>> embedConnComp{};
+    this->extractSubDistMat(distMatConnComp, connCompVertsStrict[i], distMat);
+    this->reduceMatrix(
+      embedConnComp, distMatConnComp, true, this->ReductionAlgo);
+
+    // get max distance between points in sub-distance matrix
+    double compDiag{};
+    for(size_t j = 0; j < distMatConnComp.nCols() - 1; ++j) {
+      for(size_t k = j + 1; k < distMatConnComp.nCols(); ++k) {
+        if(distMatConnComp.get(j, k) > compDiag) {
+          compDiag = distMatConnComp.get(j, k);
+        }
+      }
+    }
+
+    // get min distance to neighbor in centroidsEmbedDistMat
+    auto maxDistNeigh = std::numeric_limits<double>::max();
+    for(size_t j = 0; j < centroidsEmbedDistMat[i].size(); ++j) {
+      if(j == i) {
+        continue;
+      }
+      if(centroidsEmbedDistMat[i][j] < maxDistNeigh) {
+        maxDistNeigh = centroidsEmbedDistMat[i][j];
+      }
+    }
+
+    // resize & shift component reduced coordinates
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+    for(size_t j = 0; j < embedCentroids.size(); ++j) {
+      for(auto &coords : embedConnComp[j]) {
+        coords *= 0.4 * maxDistNeigh / compDiag;
+        coords += embedCentroids[j][i];
+      }
+    }
+
+    // store reduced components in output vector
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+    for(size_t j = 0; j < connCompVertsStrict[i].size(); ++j) {
+      for(size_t k = 0; k < embedConnComp.size(); ++k) {
+        if(std::isfinite(embedConnComp[k][j])) {
+          outputPointsCoords[3 * connCompVertsStrict[i][j] + k]
+            = embedConnComp[k][j];
+        } else {
+          outputPointsCoords[3 * connCompVertsStrict[i][j] + k]
+            = compBaryCoords[i][k];
+        }
+      }
+    }
+
+    this->printMsg(".. Re-embedded component " + std::to_string(i), 1.0,
+                   tmcomp.getElapsedTime(), this->threadNumber_,
+                   debug::LineMode::NEW, debug::Priority::DETAIL);
+  }
+
+  this->printMsg(
+    "Re-embedded mapper", 1.0, tm.getElapsedTime(), this->threadNumber_);
 
   return 0;
 }

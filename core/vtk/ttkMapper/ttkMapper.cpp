@@ -41,12 +41,9 @@ int ttkMapper::FillOutputPortInformation(int port, vtkInformation *info) {
   return 0;
 }
 
-void setNodes(vtkUnstructuredGrid *const nodes,
-              const std::vector<std::array<float, 3>> &compBaryCoords,
-              const std::vector<std::vector<double>> &highDimBaryCoords,
-              const std::vector<std::string> &highDimArrayNames,
-              const std::vector<int> &compBucketId,
-              const bool computeHighDimBarycenters) {
+static void setNodes(vtkUnstructuredGrid *const nodes,
+                     const std::vector<std::array<float, 3>> &compBaryCoords,
+                     const std::vector<int> &compBucketId) {
 
   vtkNew<vtkIntArray> compId{};
   compId->SetName("ComponentId");
@@ -69,23 +66,11 @@ void setNodes(vtkUnstructuredGrid *const nodes,
   ttkUtils::CellVertexFromPoints(nodes, points);
   nodes->GetPointData()->AddArray(bucket);
   nodes->GetPointData()->SetScalars(compId);
-
-  if(computeHighDimBarycenters) {
-    for(size_t i = 0; i < highDimArrayNames.size(); ++i) {
-      vtkNew<vtkDoubleArray> coord{};
-      coord->SetName(highDimArrayNames[i].c_str());
-      coord->SetNumberOfTuples(highDimBaryCoords.size());
-      for(size_t j = 0; j < highDimBaryCoords.size(); ++j) {
-        coord->SetTuple1(j, highDimBaryCoords[j][i]);
-        nodes->GetPointData()->AddArray(coord);
-      }
-    }
-  }
 }
 
-void setArcs(vtkUnstructuredGrid *const arcs,
-             const std::vector<std::vector<ttk::SimplexId>> &compArcs,
-             vtkPoints *const points) {
+static void setArcs(vtkUnstructuredGrid *const arcs,
+                    const std::vector<std::set<ttk::SimplexId>> &compArcs,
+                    vtkPoints *const points) {
 
   arcs->SetPoints(points);
 
@@ -124,6 +109,61 @@ void setArcs(vtkUnstructuredGrid *const arcs,
   arcs->GetCellData()->SetScalars(arcId);
 }
 
+static void extractInputMatrix(ttk::Mapper::Matrix &inputMatrix,
+                               std::vector<std::string> &arrayNames,
+                               vtkPointData *const pd,
+                               const std::string &regexp,
+                               const int nThreads,
+                               const bool useRegexp) {
+  if(pd == nullptr) {
+    return;
+  }
+
+  if(useRegexp) {
+    // select all input columns whose name is matching the regexp
+    arrayNames.clear();
+    const auto n = pd->GetNumberOfArrays();
+    arrayNames.reserve(n);
+    for(int i = 0; i < n; ++i) {
+      const auto name = pd->GetArrayName(i);
+
+      if(name == nullptr) {
+        continue;
+      }
+
+      // check regexp
+      if(!std::regex_match(name, std::regex(regexp))) {
+        continue;
+      }
+
+      // sanity check
+      const auto arr{pd->GetArray(name)};
+      if(arr == nullptr || arr->GetNumberOfComponents() != 1) {
+        continue;
+      }
+
+      // store matching array names
+      arrayNames.emplace_back(name);
+    }
+  }
+
+  std::vector<vtkDataArray *> arrays(arrayNames.size());
+  for(size_t i = 0; i < arrayNames.size(); ++i) {
+    arrays[i] = pd->GetArray(arrayNames[i].data());
+  }
+
+  inputMatrix.alloc(pd->GetNumberOfTuples(), arrayNames.size());
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(nThreads)
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < inputMatrix.nRows(); ++i) {
+    for(size_t j = 0; j < inputMatrix.nCols(); ++j) {
+      const auto array{arrays[j]};
+      inputMatrix.get(i, j) = array->GetVariantValue(i).ToDouble();
+    }
+  }
+}
+
 int ttkMapper::RequestData(vtkInformation *ttkNotUsed(request),
                            vtkInformationVector **inputVector,
                            vtkInformationVector *outputVector) {
@@ -157,30 +197,6 @@ int ttkMapper::RequestData(vtkInformation *ttkNotUsed(request),
     return 0;
   }
 
-  const auto pd{input->GetPointData()};
-  if(pd != nullptr && this->ComputeHighDimBarycenters
-     && this->SelectFieldsWithRegexp) {
-    // select all input columns whose name is matching the regexp
-    this->HighDimCoords.clear();
-    const auto n = pd->GetNumberOfArrays();
-    for(int i = 0; i < n; ++i) {
-      const auto &name = pd->GetArrayName(i);
-      if(std::regex_match(name, std::regex(RegexpString))) {
-        this->HighDimCoords.emplace_back(name);
-      }
-    }
-  }
-
-  std::vector<double> inputHighDimCoords{};
-  if(this->ComputeHighDimBarycenters) {
-    for(int i = 0; i < input->GetNumberOfPoints(); ++i) {
-      for(const auto &arrName : this->HighDimCoords) {
-        const auto array{pd->GetArray(arrName.data())};
-        inputHighDimCoords.emplace_back(array->GetVariantValue(i).ToDouble());
-      }
-    }
-  }
-
   vtkNew<vtkIntArray> connComp{};
   connComp->SetName("ComponentId");
   connComp->SetNumberOfComponents(1);
@@ -195,22 +211,44 @@ int ttkMapper::RequestData(vtkInformation *ttkNotUsed(request),
   outputSegmentation->GetPointData()->AddArray(bucket);
   outputSegmentation->GetPointData()->AddArray(connComp);
 
+  Matrix inputDistMat{};
+  vtkNew<vtkPoints> outputPoints{};
+  if(this->ReEmbedMapper) {
+    ttk::Timer tm{};
+    extractInputMatrix(inputDistMat, this->DistanceMatrix,
+                       input->GetPointData(), this->DistanceMatrixRegexp,
+                       this->threadNumber_, this->SelectMatrixWithRegexp);
+    if(inputDistMat.nRows() != inputDistMat.nCols() || inputDistMat.nCols() == 0
+       || inputDistMat.nRows() == 0) {
+      this->printErr("Invalid input distance matrix");
+      return 0;
+    }
+    outputPoints->SetNumberOfPoints(input->GetNumberOfPoints());
+    outputPoints->GetData()->Fill(0.0);
+    auto outSegVTU = vtkUnstructuredGrid::SafeDownCast(outputSegmentation);
+    if(outSegVTU != nullptr) {
+      outSegVTU->SetPoints(outputPoints);
+    }
+    this->printMsg("Extracted input distance matrix", 1.0, tm.getElapsedTime(),
+                   this->threadNumber_, ttk::debug::LineMode::NEW,
+                   ttk::debug::Priority::DETAIL);
+  }
+
   std::vector<std::array<float, 3>> compBaryCoords{};
-  std::vector<std::vector<double>> highDimBaryCoords{};
   std::vector<int> compBucketId{};
-  std::vector<std::vector<ttk::SimplexId>> compArcs{};
+  std::vector<std::set<ttk::SimplexId>> compArcs{};
 
   // calling the base module
   ttkVtkTemplateMacro(
     inputScalarField->GetDataType(), triangulation->getType(),
     this->execute(ttkUtils::GetPointer<int>(bucket),
                   ttkUtils::GetPointer<int>(connComp), compBaryCoords,
-                  compBucketId, compArcs, highDimBaryCoords, inputHighDimCoords,
-                  ttkUtils::GetPointer<VTK_TT>(inputScalarField),
+                  compBucketId, compArcs,
+                  ttkUtils::GetPointer<float>(outputPoints->GetData()),
+                  inputDistMat, ttkUtils::GetPointer<VTK_TT>(inputScalarField),
                   *static_cast<TTK_TT *>(triangulation->getData())));
 
-  setNodes(outputNodes, compBaryCoords, highDimBaryCoords, this->HighDimCoords,
-           compBucketId, this->ComputeHighDimBarycenters);
+  setNodes(outputNodes, compBaryCoords, compBucketId);
   setArcs(outputArcs, compArcs, outputNodes->GetPoints());
 
   return 1;

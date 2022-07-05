@@ -35,6 +35,7 @@
 // ttk code includes
 #include <Mapper.h>
 #include <ttkAlgorithm.h>
+#include <ttkMacros.h>
 
 class TTKMAPPER_EXPORT ttkMapper : public ttkAlgorithm, protected ttk::Mapper {
 public:
@@ -45,24 +46,29 @@ public:
   vtkSetMacro(NumberOfBuckets, int);
   vtkGetMacro(NumberOfBuckets, int);
 
-  vtkSetMacro(ComputeHighDimBarycenters, bool);
-  vtkGetMacro(ComputeHighDimBarycenters, bool);
+  vtkSetMacro(ReEmbedMapper, bool);
+  vtkGetMacro(ReEmbedMapper, bool);
 
-  void SetHighDimCoords(const std::string &s) {
-    HighDimCoords.push_back(s);
-    Modified();
+  vtkSetMacro(SelectMatrixWithRegexp, bool);
+  vtkGetMacro(SelectMatrixWithRegexp, bool);
+
+  vtkSetMacro(DistanceMatrixRegexp, const std::string &);
+  vtkGetMacro(DistanceMatrixRegexp, std::string);
+
+  void SetDistMat(const std::string &s) {
+    this->DistanceMatrix.emplace_back(s);
+    this->Modified();
+  }
+  void ClearDistMat() {
+    this->DistanceMatrix.clear();
+    this->Modified();
   }
 
-  void ClearHighDimCoords() {
-    HighDimCoords.clear();
-    Modified();
-  }
+  ttkSetEnumMacro(LowerDimension, LOWER_DIMENSION);
+  vtkGetEnumMacro(LowerDimension, LOWER_DIMENSION);
 
-  vtkSetMacro(SelectFieldsWithRegexp, bool);
-  vtkGetMacro(SelectFieldsWithRegexp, bool);
-
-  vtkSetMacro(RegexpString, const std::string &);
-  vtkGetMacro(RegexpString, std::string);
+  ttkSetEnumMacro(ReductionAlgo, REDUCTION_ALGO);
+  vtkGetEnumMacro(ReductionAlgo, REDUCTION_ALGO);
 
 protected:
   ttkMapper();
@@ -78,7 +84,8 @@ protected:
                   vtkInformationVector *outputVector) override;
 
 private:
-  bool SelectFieldsWithRegexp{false};
-  std::string RegexpString{".*"};
-  std::vector<std::string> HighDimCoords{};
+  // domain vertices coordinates in high dimension
+  bool SelectMatrixWithRegexp{false};
+  std::string DistanceMatrixRegexp{".*"};
+  std::vector<std::string> DistanceMatrix{};
 };

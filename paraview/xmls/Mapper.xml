@@ -28,7 +28,7 @@
           <Property name="Input" function="FieldDataSelection" />
         </InputArrayDomain>
         <Documentation>
-          Data-set to smooth.
+          Input data-set.
         </Documentation>
       </InputProperty>
 
@@ -46,7 +46,7 @@
           </RequiredProperties>
         </ArrayListDomain>
         <Documentation>
-          Select the scalar field to smooth.
+          Select the input scalar field.
         </Documentation>
       </StringVectorProperty>
 
@@ -63,40 +63,41 @@
       </IntVectorProperty>
 
       <IntVectorProperty
-        name="ComputeHighDimBarycenters"
-        label="Compute High Dimension Barycenters"
-        command="SetComputeHighDimBarycenters"
+        name="ReEmbedMapper"
+        label="Re-Embed Mapper"
+        command="SetReEmbedMapper"
         number_of_elements="1"
         default_values="0">
         <BooleanDomain name="bool"/>
         <Documentation>
-          Also compute barycenters coordinates in high dimension space
-          from coordinates scalar fields as point data.
+          Use Dimension Reduction to compute an embedding of the
+          Mapper barycenters from their high-dimensional coordinates.
         </Documentation>
       </IntVectorProperty>
 
       <IntVectorProperty
-        name="SelectFieldsWithRegexp"
-        label="Select Fields with a Regexp"
-        command="SetSelectFieldsWithRegexp"
+        name="SelectMatrixWithRegexp"
+        label="Select Matrix With Regexp"
+        command="SetSelectMatrixWithRegexp"
         number_of_elements="1"
         default_values="0">
         <BooleanDomain name="bool"/>
         <Hints>
           <PropertyWidgetDecorator type="GenericDecorator"
                                    mode="visibility"
-                                   property="ComputeHighDimBarycenters"
+                                   property="ReEmbedMapper"
                                    value="1" />
         </Hints>
         <Documentation>
-          Select input scalar fields matching a regular expression.
+          Select input distance matrix Point Data arrays with a
+          regular expression.
         </Documentation>
       </IntVectorProperty>
 
-      <StringVectorProperty command="SetHighDimCoords"
-        clean_command="ClearHighDimCoords"
-        label="Input High Dimension Coordinates"
-        name="HighDimCoords"
+      <StringVectorProperty command="SetDistMat"
+        clean_command="ClearDistMat"
+        label="Input Distance Matrix"
+        name="DistMat"
         number_of_elements="0"
         default_values="1"
         number_of_elements_per_command="1"
@@ -114,45 +115,104 @@
             <Expression type="and">
               <PropertyWidgetDecorator type="GenericDecorator"
                                        mode="visibility"
-                                       property="SelectFieldsWithRegexp"
+                                       property="SelectMatrixWithRegexp"
                                        value="0" />
               <PropertyWidgetDecorator type="GenericDecorator"
                                        mode="visibility"
-                                       property="ComputeHighDimBarycenters"
+                                       property="ReEmbedMapper"
                                        value="1" />
             </Expression>
           </PropertyWidgetDecorator>
         </Hints>
         <Documentation>
-          Select the high dimension coordinates scalar fields.
+          Select the input distance matrix scalar fields.
         </Documentation>
       </StringVectorProperty>
 
       <StringVectorProperty
-         name="Regexp"
-         command="SetRegexpString"
-         number_of_elements="1"
-         default_values=".*"
-         panel_visibility="advanced">
+        name="DistanceMatrixRegexp"
+        label="Distance Matrix Regexp"
+        command="SetDistanceMatrixRegexp"
+        number_of_elements="1"
+        default_values=".*">
+        <Hints>
+          <PropertyWidgetDecorator type="CompositeDecorator">
+            <Expression type="and">
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="SelectMatrixWithRegexp"
+                                       value="1" />
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="ReEmbedMapper"
+                                       value="1" />
+            </Expression>
+          </PropertyWidgetDecorator>
+        </Hints>
+        <Documentation>
+          Select the Distance Matrix Point Data arrays with a regular
+          expression.
+        </Documentation>
+      </StringVectorProperty>
+
+      <IntVectorProperty name="ReductionAlgo"
+                         label="Reduction Algorithm"
+                         command="SetReductionAlgo"
+                         number_of_elements="1"
+                         default_values="2"
+                         panel_visibility="default">
+        <EnumerationDomain name="enum">
+          <Entry value="0" text="Spectral Embedding"/>
+          <Entry value="1" text="Locally Linear Embedding"/>
+          <Entry value="2" text="Multi-Dimensional Scaling" />
+          <Entry value="3" text="t-distributed Stochastic Neighbor Embedding"/>
+          <Entry value="4" text="Isomap Embedding"/>
+          <Entry value="5" text="Principal Component Analysis" />
+        </EnumerationDomain>
         <Hints>
           <PropertyWidgetDecorator type="GenericDecorator"
                                    mode="visibility"
-                                   property="SelectFieldsWithRegexp"
+                                   property="ReEmbedMapper"
                                    value="1" />
         </Hints>
-         <Documentation>
-            This regexp will be used to filter the chosen fields. Only
-            matching ones will be selected.
-         </Documentation>
-      </StringVectorProperty>
+        <Documentation>
+          Dimension Reduction algorithm to use.
+        </Documentation>
+      </IntVectorProperty>
+
+      <IntVectorProperty
+        name="LowerDimension"
+        label="Lower Dimension"
+        command="SetLowerDimension"
+        number_of_elements="1"
+        default_values="0">
+        <EnumerationDomain name="enum">
+          <Entry value="2" text="2D"/>
+          <Entry value="3" text="3D"/>
+        </EnumerationDomain>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="ReEmbedMapper"
+                                   value="1" />
+        </Hints>
+        <Documentation>
+          Compute barycenters coordinates in high dimension space from
+          coordinates scalar fields as point data, then use Dimension
+          Reduction to project barycenters and high-dimension input
+          points.
+        </Documentation>
+      </IntVectorProperty>
 
       <PropertyGroup panel_widget="Line" label="Input options">
         <Property name="ScalarFieldNew" />
         <Property name="NumberOfBuckets" />
-        <Property name="ComputeHighDimBarycenters" />
-        <Property name="SelectFieldsWithRegexp" />
-        <Property name="HighDimCoords" />
-        <Property name="Regexp" />
+        <Property name="ReEmbedMapper" />
+        <Property name="SelectMatrixWithRegexp" />
+        <Property name="DistMat" />
+        <Property name="DistanceMatrixRegexp" />
+        <Property name="ReductionAlgo" />
+        <Property name="LowerDimension" />
       </PropertyGroup>
 
       ${DEBUG_WIDGETS}

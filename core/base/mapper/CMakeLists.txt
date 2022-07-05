@@ -6,4 +6,6 @@ ttk_add_base_library(mapper
   DEPENDS
     triangulation
     unionFind
+    dimensionReduction
+    lDistanceMatrix
   )
