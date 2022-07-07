@@ -58,22 +58,8 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
 
   using ttk::CriticalType;
   int currentVertex = 0;
-
-  const auto printTrackingTuple = [&dbg](const ttk::trackingTuple &tt) {
-    std::stringstream ss{};
-    ss << std::get<0>(tt) << " " << std::get<1>(tt) << " chain ";
-    for(const auto c : std::get<2>(tt)) {
-      ss << c << " ";
-    }
-    ss << std::endl;
-    dbg.printMsg(ss.str());
-  };
-
   for(size_t k = 0; k < trackings.size(); ++k) {
     const ttk::trackingTuple &tt = trackings[k];
-
-    std::cout << "tracking " << k << ": ";
-    printTrackingTuple(tt);
 
     int numStart = std::get<0>(tt);
     //     int numEnd = std::get<1>(tt);
@@ -157,9 +143,6 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
         if(!connected.empty()) {
           int min = connected.begin()->first;
           const ttk::trackingTuple &ttt = trackings[min];
-
-          printTrackingTuple(ttt);
-
           // int numStart2 = std::get<0>(ttt);
           int numEnd2 = std::get<1>(ttt);
           if((numEnd2 > 0 && numStart + c > numEnd2 + 1) && min < (int)k) {
@@ -288,15 +271,6 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
       lengthScalars->InsertTuple1(currentVertex, chainLength);
 
       currentVertex++;
-    }
-  }
-
-  if(doPostProc) {
-    for(size_t i = 0; i < trackingTupleToMerged.size(); ++i) {
-      const auto &tt{trackings[i]};
-      const auto &mergeIds{trackingTupleToMerged[i]};
-      for(const auto &p : mergeIds) {
-      }
     }
   }
 
