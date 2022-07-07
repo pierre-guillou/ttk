@@ -86,7 +86,7 @@ int ttkTrackingFromFields::trackWithPersistenceMatching(
   std::vector<trackingTuple> trackingsBase;
   tfp.performTracking(persistenceDiagrams, outputMatchings, trackingsBase);
 
-  std::vector<std::set<int>> trackingTupleToMerged(trackingsBase.size());
+  std::vector<ttk::tupleToMerge> trackingTupleToMerged(trackingsBase.size());
 
   if(DoPostProc) {
     tfp.performPostProcess(persistenceDiagrams, trackingsBase,

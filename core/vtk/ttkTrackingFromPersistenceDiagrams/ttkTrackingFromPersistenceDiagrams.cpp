@@ -44,7 +44,7 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
   const bool useGeometricSpacing,
   const double spacing,
   const bool doPostProc,
-  const std::vector<std::set<int>> &trackingTupleToMerged,
+  const std::vector<ttk::tupleToMerge> &trackingTupleToMerged,
   vtkPoints *points,
   vtkUnstructuredGrid *persistenceDiagram,
   vtkDoubleArray *persistenceScalars,
@@ -141,7 +141,7 @@ int ttkTrackingFromPersistenceDiagrams::buildMesh(
       if(doPostProc) {
         const auto &connected = trackingTupleToMerged[k];
         if(!connected.empty()) {
-          int min = *(connected.begin());
+          int min = connected.begin()->first;
           const ttk::trackingTuple &ttt = trackings[min];
           // int numStart2 = std::get<0>(ttt);
           int numEnd2 = std::get<1>(ttt);
@@ -393,7 +393,7 @@ int ttkTrackingFromPersistenceDiagrams::RequestData(
   this->performTracking(
     inputPersistenceDiagrams, outputMatchings, trackingsBase);
 
-  std::vector<std::set<int>> trackingTupleToMerged(trackingsBase.size());
+  std::vector<ttk::tupleToMerge> trackingTupleToMerged(trackingsBase.size());
   if(DoPostProc)
     this->performPostProcess(inputPersistenceDiagrams, trackingsBase,
                              trackingTupleToMerged, PostProcThresh);

@@ -176,7 +176,7 @@ int ttk::TrackingFromPersistenceDiagrams::performTracking(
 int ttk::TrackingFromPersistenceDiagrams::performPostProcess(
   const std::vector<ttk::DiagramType> &allDiagrams,
   const std::vector<trackingTuple> &trackings,
-  std::vector<std::set<int>> &trackingTupleToMerged,
+  std::vector<ttk::tupleToMerge> &trackingTupleToMerged,
   const double postProcThresh) {
 
   const int numPersistenceDiagramsInput = allDiagrams.size();
@@ -309,14 +309,7 @@ int ttk::TrackingFromPersistenceDiagrams::performPostProcess(
         printMsg(msg.str());
 
         // Get every other tracking trajectory.
-        std::set<int> &mergedM = trackingTupleToMerged[m];
-        // std::set<int> mergedK = trackingTupleToMerged[k];
-
-        // Push for others to merge.
-        // for (auto& i : mergedM) mergedK.insert(i);
-        // for (auto& i : mergedK) mergedM.insert(i);
-        // mergedK.insert(m);
-        mergedM.insert(k);
+        trackingTupleToMerged[m].insert({k, doMatch1 ? startK : endK});
         break;
       }
     }

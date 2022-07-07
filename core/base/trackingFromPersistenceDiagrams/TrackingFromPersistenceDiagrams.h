@@ -12,6 +12,8 @@
 namespace ttk {
 
   using trackingTuple = std::tuple<int, int, std::vector<SimplexId>>;
+  // first: tracking tuple id, second: merge time
+  using tupleToMerge = std::set<std::pair<SimplexId, SimplexId>>;
 
   class TrackingFromPersistenceDiagrams : virtual public Debug {
 
@@ -54,7 +56,7 @@ namespace ttk {
 
     int performPostProcess(const std::vector<ttk::DiagramType> &allDiagrams,
                            const std::vector<trackingTuple> &trackings,
-                           std::vector<std::set<int>> &trackingTupleToMerged,
+                           std::vector<tupleToMerge> &trackingTupleToMerged,
                            const double postProcThresh);
 
     /// Pass a pointer to an input array representing a scalarfield.

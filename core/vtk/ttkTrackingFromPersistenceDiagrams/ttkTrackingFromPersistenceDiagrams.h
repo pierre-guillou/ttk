@@ -65,7 +65,7 @@ public:
     const bool useGeometricSpacing,
     const double spacing,
     const bool doPostProc,
-    const std::vector<std::set<int>> &trackingTupleToMerged,
+    const std::vector<ttk::tupleToMerge> &trackingTupleToMerged,
     vtkPoints *points,
     vtkUnstructuredGrid *persistenceDiagram,
     vtkDoubleArray *persistenceScalars,
