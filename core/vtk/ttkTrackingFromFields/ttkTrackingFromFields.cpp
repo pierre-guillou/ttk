@@ -91,6 +91,23 @@ int ttkTrackingFromFields::trackWithPersistenceMatching(
   if(DoPostProc) {
     tfp.performPostProcess(persistenceDiagrams, trackingsBase,
                            trackingTupleToMerged, PostProcThresh);
+
+    for(size_t i = 0; i < trackingTupleToMerged.size(); ++i) {
+      std::cout << i << ": ";
+      for(const auto &p : trackingTupleToMerged[i]) {
+        std::cout << p.first << " " << p.second << " ";
+      }
+      std::cout << '\n';
+    }
+  }
+
+  for(const auto &m : outputMatchings) {
+    std::cout << m.size() << '\n';
+    for(const auto &mm : m) {
+      std::cout << std::get<0>(mm) << " " << std::get<1>(mm) << " "
+                << std::get<2>(mm) << '\n';
+    }
+    std::cout << '\n';
   }
 
   bool useGeometricSpacing = UseGeometricSpacing;
