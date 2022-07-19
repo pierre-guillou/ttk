@@ -32,6 +32,7 @@
     call;                                                                 \
   }; break
 
+#ifndef TTK_REDUCE_TEMPLATE_INSTANTIATIONS
 #define ttkTemplateMacro(triangulationType, call)                              \
   switch(triangulationType) {                                                  \
     ttkTemplateMacroCase(                                                      \
@@ -47,6 +48,20 @@
     ttkTemplateMacroCase(                                                      \
       ttk::Triangulation::Type::COMPACT, ttk::CompactTriangulation, call);     \
   }
+#else
+// only explicit and hybrid versions of implicit & periodic triangulations
+#define ttkTemplateMacro(triangulationType, call)                            \
+  switch(triangulationType) {                                                \
+    ttkTemplateMacroCase(                                                    \
+      ttk::Triangulation::Type::EXPLICIT, ttk::ExplicitTriangulation, call); \
+    ttkTemplateMacroCase(ttk::Triangulation::Type::HYBRID_IMPLICIT,          \
+                         ttk::ImplicitWithPreconditions, call);              \
+    ttkTemplateMacroCase(ttk::Triangulation::Type::HYBRID_PERIODIC,          \
+                         ttk::PeriodicWithPreconditions, call);              \
+    default:                                                                 \
+      break;                                                                 \
+  }
+#endif // TTK_REDUCE_TEMPLATE_INSTANTIATIONS
 
 namespace ttk {
 

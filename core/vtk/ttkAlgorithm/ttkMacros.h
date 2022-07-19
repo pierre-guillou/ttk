@@ -66,6 +66,7 @@ using ttkSimplexIdTypeArray = vtkIntArray;
     switch(dataType) { vtkTemplateMacro((call)); };      \
   }; break;
 
+#ifndef TTK_REDUCE_TEMPLATE_INSTANTIATIONS
 #define ttkVtkTemplateMacro(dataType, triangulationType, call)            \
   switch(triangulationType) {                                             \
     ttkVtkTemplateMacroCase(dataType, ttk::Triangulation::Type::EXPLICIT, \
@@ -83,6 +84,22 @@ using ttkSimplexIdTypeArray = vtkIntArray;
     ttkVtkTemplateMacroCase(dataType, ttk::Triangulation::Type::COMPACT,  \
                             ttk::CompactTriangulation, call);             \
   }
+#else
+// only explicit and hybrid versions of implicit & periodic triangulations
+#define ttkVtkTemplateMacro(dataType, triangulationType, call)            \
+  switch(triangulationType) {                                             \
+    ttkVtkTemplateMacroCase(dataType, ttk::Triangulation::Type::EXPLICIT, \
+                            ttk::ExplicitTriangulation, call);            \
+    ttkVtkTemplateMacroCase(dataType,                                     \
+                            ttk::Triangulation::Type::HYBRID_IMPLICIT,    \
+                            ttk::ImplicitWithPreconditions, call);        \
+    ttkVtkTemplateMacroCase(dataType,                                     \
+                            ttk::Triangulation::Type::HYBRID_PERIODIC,    \
+                            ttk::PeriodicWithPreconditions, call);        \
+    default:                                                              \
+      break;                                                              \
+  }
+#endif // TTK_REDUCE_TEMPLATE_INSTANTIATIONS
 
 #define ttkTemplate2IdMacro(call)                                           \
   vtkTemplate2MacroCase1(VTK_LONG_LONG, long long, call);                   \
