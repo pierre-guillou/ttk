@@ -522,6 +522,7 @@ int ttk::QuadrangulationSubdivision::execute(
 
   // also needed by computeStatistics
   qd.preconditionVertexNeighbors();
+  qd.preconditionVertexStars();
 
   if(this->RelaxationIterations > 0) {
 
