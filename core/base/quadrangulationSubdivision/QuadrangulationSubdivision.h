@@ -24,6 +24,7 @@
 #include <Quadrangulation.h>
 #include <Triangulation.h>
 
+#include <limits>
 #include <map>
 #include <numeric>
 #include <set>
@@ -204,6 +205,59 @@ namespace ttk {
     std::vector<float> quadEdgesRatio_{};
     std::vector<float> quadAnglesRatio_{};
     std::vector<float> hausdorff_{};
+
+    template <typename triangulationType>
+    void fixDeformity(const Quadrangulation &qd,
+                      const triangulationType &triangulation) {
+      size_t nSimpl{};
+      for(SimplexId i = 0; i < qd.getNumberOfVertices(); ++i) {
+        // compute deformity
+        const auto minMax{qd.computeNeighborsDistance(i)};
+        if(minMax[0].second == 0.0) {
+          continue;
+        }
+        const auto ratio{minMax[1].second / minMax[0].second};
+        if(ratio > 5) {
+          std::cout << i << " (" << minMax[0].first << ' ' << minMax[0].second
+                    << ") (" << minMax[1].first << ' ' << minMax[1].second
+                    << ") " << ratio << '\n';
+
+          Point &closest{outputPoints_[minMax[0].first]};
+          Point &farthest{outputPoints_[minMax[1].first]};
+
+          while(true) {
+            const auto nv{this->nearestVertexIdentifier_[i]};
+            const auto nNeighs{triangulation.getVertexNeighborNumber(nv)};
+            std::pair<SimplexId, float> neighborRatio{nv, ratio};
+
+            for(SimplexId j = 0; j < nNeighs; ++j) {
+              SimplexId neigh{};
+              triangulation.getVertexNeighbor(nv, j, neigh);
+              Point np{};
+              triangulation.getVertexPoint(neigh, np[0], np[1], np[2]);
+              const auto d0{Geometry::distance(np.data(), closest.data())};
+              const auto d1{Geometry::distance(np.data(), farthest.data())};
+
+              if(d1 / d0 < neighborRatio.second) {
+                neighborRatio = std::make_pair(neigh, ratio);
+              }
+            }
+
+            if(neighborRatio.second >= ratio || neighborRatio.second <= 1.0F) {
+              break;
+            }
+
+            this->nearestVertexIdentifier_[i] = neighborRatio.first;
+            Point &np{this->outputPoints_[i]};
+            triangulation.getVertexPoint(
+              neighborRatio.first, np[0], np[1], np[2]);
+          }
+
+          nSimpl++;
+        }
+      }
+      std::cout << nSimpl << '\n';
+    }
   };
 } // namespace ttk
 
@@ -529,6 +583,8 @@ int ttk::QuadrangulationSubdivision::execute(
   // also needed by computeStatistics
   qd.preconditionVertexNeighbors();
   qd.preconditionVertexStars();
+
+  this->fixDeformity(qd, triangulation);
 
   if(this->RelaxationIterations > 0) {
 

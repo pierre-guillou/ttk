@@ -110,6 +110,27 @@ namespace ttk {
       deformity = std::exp(-minDist / maxDist);
     }
 
+    inline std::array<std::pair<SimplexId, float>, 2>
+      computeNeighborsDistance(const SimplexId v) const {
+
+      std::array<std::pair<SimplexId, float>, 2> minMax{
+        std::make_pair(-1, std::numeric_limits<float>::max()),
+        std::make_pair(-1, std::numeric_limits<float>::lowest())};
+
+      const auto &pi{this->vertCoords_[v]};
+      for(const auto j : this->vertexNeighbors_[v]) {
+        const auto &pj{this->vertCoords_[j]};
+        const auto dist{Geometry::distance(pi.data(), pj.data())};
+        if(dist < minMax[0].second) {
+          minMax[0] = std::make_pair(j, dist);
+        }
+        if(dist > minMax[1].second) {
+          minMax[1] = std::make_pair(j, dist);
+        }
+      }
+      return minMax;
+    }
+
     void computeStatistics(std::vector<SimplexId> &vertsValence,
                            std::vector<float> &vertsDensity,
                            std::vector<float> &vertsDifformity,
