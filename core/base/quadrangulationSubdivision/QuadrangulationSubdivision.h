@@ -24,7 +24,6 @@
 #include <Quadrangulation.h>
 #include <Triangulation.h>
 
-#include <limits>
 #include <map>
 #include <numeric>
 #include <set>
@@ -205,88 +204,6 @@ namespace ttk {
     std::vector<float> quadEdgesRatio_{};
     std::vector<float> quadAnglesRatio_{};
     std::vector<float> hausdorff_{};
-
-    template <typename triangulationType>
-    void fixDeformity(const Quadrangulation &qd,
-                      const triangulationType &triangulation) {
-      size_t nSimpl{};
-      for(SimplexId i = 0; i < qd.getNumberOfVertices(); ++i) {
-        // compute deformity
-        const auto minMax{qd.computeNeighborsDistance(i)};
-        if(minMax[0].second == 0.0) {
-          continue;
-        }
-        const auto ratio{minMax[1].second / minMax[0].second};
-        if(ratio > 5) {
-
-          std::vector<SimplexId> bounds{};
-          const auto nNeighs0{qd.getVertexNeighborNumber(minMax[0].first)};
-          const auto nNeighs1{qd.getVertexNeighborNumber(minMax[1].first)};
-          bounds.reserve(nNeighs0 + nNeighs1);
-          for(SimplexId j = 0; j < nNeighs0; ++j) {
-            SimplexId neigh{};
-            qd.getVertexNeighbor(minMax[0].first, j, neigh);
-            bounds.emplace_back(neigh);
-          }
-          for(SimplexId j = 0; j < nNeighs1; ++j) {
-            SimplexId neigh{};
-            qd.getVertexNeighbor(minMax[1].first, j, neigh);
-            bounds.emplace_back(neigh);
-          }
-          std::vector<float> outputDists(triangulation.getNumberOfVertices(),
-                                         std::numeric_limits<float>::max());
-          Dijkstra::shortestPath(this->nearestVertexIdentifier_[i],
-                                 triangulation, outputDists, bounds);
-
-          std::cout << i << " (" << minMax[0].first << ' ' << minMax[0].second
-                    << " "
-                    << outputDists[nearestVertexIdentifier_[minMax[0].first]]
-                    << ") (" << minMax[1].first << ' ' << minMax[1].second
-                    << " "
-                    << outputDists[nearestVertexIdentifier_[minMax[1].first]]
-                    << ") " << ratio << '\n';
-
-          const auto getShortestNeigh
-            = [&](const std::pair<SimplexId, float> &vd) {
-                const auto nNeigh{
-                  triangulation.getVertexNeighborNumber(vd.first)};
-                if(nNeigh == 0) {
-                  return std::make_pair(-1, 0.0F);
-                }
-                if(nNeigh == 1) {
-                  SimplexId neigh{};
-                  triangulation.getVertexNeighbor(vd.first, 0, neigh);
-                  return std::make_pair(neigh, outputDists[neigh]);
-                }
-                auto dist{vd.second};
-                SimplexId res{-1};
-
-                for(SimplexId j = 1; j < nNeigh; ++j) {
-                  SimplexId neigh{};
-                  triangulation.getVertexNeighbor(vd.first, j, neigh);
-                  if(outputDists[neigh] < dist) {
-                    dist = outputDists[neigh];
-                    res = neigh;
-                  }
-                }
-                return std::make_pair(res, dist);
-              };
-
-          const auto maxVert{this->nearestVertexIdentifier_[minMax[1].first]};
-          std::pair<SimplexId, float> vertDist{maxVert, outputDists[maxVert]};
-          while(vertDist.second > 0.5 * outputDists[maxVert]) {
-            vertDist = getShortestNeigh(vertDist);
-          }
-
-          this->nearestVertexIdentifier_[i] = vertDist.first;
-          Point &np{this->outputPoints_[i]};
-          triangulation.getVertexPoint(vertDist.first, np[0], np[1], np[2]);
-
-          nSimpl++;
-        }
-      }
-      std::cout << nSimpl << '\n';
-    }
   };
 } // namespace ttk
 
@@ -612,8 +529,6 @@ int ttk::QuadrangulationSubdivision::execute(
   // also needed by computeStatistics
   qd.preconditionVertexNeighbors();
   qd.preconditionVertexStars();
-
-  this->fixDeformity(qd, triangulation);
 
   if(this->RelaxationIterations > 0) {
 
