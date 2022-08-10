@@ -218,40 +218,69 @@ namespace ttk {
         }
         const auto ratio{minMax[1].second / minMax[0].second};
         if(ratio > 5) {
+
+          std::vector<SimplexId> bounds{};
+          const auto nNeighs0{qd.getVertexNeighborNumber(minMax[0].first)};
+          const auto nNeighs1{qd.getVertexNeighborNumber(minMax[1].first)};
+          bounds.reserve(nNeighs0 + nNeighs1);
+          for(SimplexId j = 0; j < nNeighs0; ++j) {
+            SimplexId neigh{};
+            qd.getVertexNeighbor(minMax[0].first, j, neigh);
+            bounds.emplace_back(neigh);
+          }
+          for(SimplexId j = 0; j < nNeighs1; ++j) {
+            SimplexId neigh{};
+            qd.getVertexNeighbor(minMax[1].first, j, neigh);
+            bounds.emplace_back(neigh);
+          }
+          std::vector<float> outputDists(triangulation.getNumberOfVertices(),
+                                         std::numeric_limits<float>::max());
+          Dijkstra::shortestPath(this->nearestVertexIdentifier_[i],
+                                 triangulation, outputDists, bounds);
+
           std::cout << i << " (" << minMax[0].first << ' ' << minMax[0].second
+                    << " "
+                    << outputDists[nearestVertexIdentifier_[minMax[0].first]]
                     << ") (" << minMax[1].first << ' ' << minMax[1].second
+                    << " "
+                    << outputDists[nearestVertexIdentifier_[minMax[1].first]]
                     << ") " << ratio << '\n';
 
-          Point &closest{outputPoints_[minMax[0].first]};
-          Point &farthest{outputPoints_[minMax[1].first]};
+          const auto getShortestNeigh
+            = [&](const std::pair<SimplexId, float> &vd) {
+                const auto nNeigh{
+                  triangulation.getVertexNeighborNumber(vd.first)};
+                if(nNeigh == 0) {
+                  return std::make_pair(-1, 0.0F);
+                }
+                if(nNeigh == 1) {
+                  SimplexId neigh{};
+                  triangulation.getVertexNeighbor(vd.first, 0, neigh);
+                  return std::make_pair(neigh, outputDists[neigh]);
+                }
+                auto dist{vd.second};
+                SimplexId res{-1};
 
-          while(true) {
-            const auto nv{this->nearestVertexIdentifier_[i]};
-            const auto nNeighs{triangulation.getVertexNeighborNumber(nv)};
-            std::pair<SimplexId, float> neighborRatio{nv, ratio};
+                for(SimplexId j = 1; j < nNeigh; ++j) {
+                  SimplexId neigh{};
+                  triangulation.getVertexNeighbor(vd.first, j, neigh);
+                  if(outputDists[neigh] < dist) {
+                    dist = outputDists[neigh];
+                    res = neigh;
+                  }
+                }
+                return std::make_pair(res, dist);
+              };
 
-            for(SimplexId j = 0; j < nNeighs; ++j) {
-              SimplexId neigh{};
-              triangulation.getVertexNeighbor(nv, j, neigh);
-              Point np{};
-              triangulation.getVertexPoint(neigh, np[0], np[1], np[2]);
-              const auto d0{Geometry::distance(np.data(), closest.data())};
-              const auto d1{Geometry::distance(np.data(), farthest.data())};
-
-              if(d1 / d0 < neighborRatio.second) {
-                neighborRatio = std::make_pair(neigh, ratio);
-              }
-            }
-
-            if(neighborRatio.second >= ratio || neighborRatio.second <= 1.0F) {
-              break;
-            }
-
-            this->nearestVertexIdentifier_[i] = neighborRatio.first;
-            Point &np{this->outputPoints_[i]};
-            triangulation.getVertexPoint(
-              neighborRatio.first, np[0], np[1], np[2]);
+          const auto maxVert{this->nearestVertexIdentifier_[minMax[1].first]};
+          std::pair<SimplexId, float> vertDist{maxVert, outputDists[maxVert]};
+          while(vertDist.second > 0.5 * outputDists[maxVert]) {
+            vertDist = getShortestNeigh(vertDist);
           }
+
+          this->nearestVertexIdentifier_[i] = vertDist.first;
+          Point &np{this->outputPoints_[i]};
+          triangulation.getVertexPoint(vertDist.first, np[0], np[1], np[2]);
 
           nSimpl++;
         }
