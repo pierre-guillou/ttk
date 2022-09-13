@@ -1907,10 +1907,10 @@ std::vector<double> ttk::PDClustering::updateCentroidsPosition(
         for(int i = 0; i < numberOfInputs_; ++i) {
           // Step 5 of Accelerated KMeans: Update the lower bound on distance
           // thanks to the triangular inequality
-          l_[i][c] = Geometry::pow(
+          l_[i][c] = Geometry::powInt(
             Geometry::pow(l_[i][c], 1. / wasserstein_)
               - Geometry::pow(wasserstein_shift, 1. / wasserstein_),
-            wasserstein_);
+            this->wasserstein_);
           if(l_[i][c] < 0) {
             l_[i][c] = 0;
           }
@@ -1918,10 +1918,10 @@ std::vector<double> ttk::PDClustering::updateCentroidsPosition(
         for(int idx : clustering_[c]) {
           // Step 6, update the upper bound on the distance to the centroid
           // thanks to the triangle inequality
-          u_[idx] = Geometry::pow(
+          u_[idx] = Geometry::powInt(
             Geometry::pow(u_[idx], 1. / wasserstein_)
               + Geometry::pow(wasserstein_shift, 1. / wasserstein_),
-            wasserstein_);
+            this->wasserstein_);
           r_[idx] = true;
         }
       }
@@ -2218,18 +2218,18 @@ std::vector<double> ttk::PDClustering::enrichCurrentBidderDiagrams(
               // Step 5 of Accelerated KMeans: Update the lower bound on
               // distance thanks to the triangular inequality
               l_[i][c]
-                = Geometry::pow(Geometry::pow(l_[i][c], 1. / wasserstein_)
-                                  - persistence / sqrt(2),
-                                wasserstein_);
+                = Geometry::powInt(Geometry::pow(l_[i][c], 1. / wasserstein_)
+                                     - persistence / sqrt(2),
+                                   this->wasserstein_);
               if(l_[i][c] < 0) {
                 l_[i][c] = 0;
               }
             }
             // Step 6, update the upper bound on the distance to the centroid
             // thanks to the triangle inequality
-            u_[i] = Geometry::pow(
+            u_[i] = Geometry::powInt(
               Geometry::pow(u_[i], 1. / wasserstein_) + persistence / sqrt(2),
-              wasserstein_);
+              this->wasserstein_);
             r_[i] = true;
           }
           int to_be_added_to_barycenter
@@ -2278,18 +2278,18 @@ std::vector<double> ttk::PDClustering::enrichCurrentBidderDiagrams(
               // Step 5 of Accelerated KMeans: Update the lower bound on
               // distance thanks to the triangular inequality
               l_[i][c]
-                = Geometry::pow(Geometry::pow(l_[i][c], 1. / wasserstein_)
-                                  - persistence / sqrt(2),
-                                wasserstein_);
+                = Geometry::powInt(Geometry::pow(l_[i][c], 1. / wasserstein_)
+                                     - persistence / sqrt(2),
+                                   this->wasserstein_);
               if(l_[i][c] < 0) {
                 l_[i][c] = 0;
               }
             }
             // Step 6, update the upper bound on the distance to the centroid
             // thanks to the triangle inequality
-            u_[i] = Geometry::pow(
+            u_[i] = Geometry::powInt(
               Geometry::pow(u_[i], 1. / wasserstein_) + persistence / sqrt(2),
-              wasserstein_);
+              this->wasserstein_);
             r_[i] = true;
           }
           int to_be_added_to_barycenter
@@ -2334,18 +2334,18 @@ std::vector<double> ttk::PDClustering::enrichCurrentBidderDiagrams(
               // Step 5 of Accelerated KMeans: Update the lower bound on
               // distance thanks to the triangular inequality
               l_[i][c]
-                = Geometry::pow(Geometry::pow(l_[i][c], 1. / wasserstein_)
-                                  - persistence / sqrt(2),
-                                wasserstein_);
+                = Geometry::powInt(Geometry::pow(l_[i][c], 1. / wasserstein_)
+                                     - persistence / sqrt(2),
+                                   this->wasserstein_);
               if(l_[i][c] < 0) {
                 l_[i][c] = 0;
               }
             }
             // Step 6, update the upper bound on the distance to the centroid
             // thanks to the triangle inequality
-            u_[i] = Geometry::pow(
+            u_[i] = Geometry::powInt(
               Geometry::pow(u_[i], 1. / wasserstein_) + persistence / sqrt(2),
-              wasserstein_);
+              this->wasserstein_);
             r_[i] = true;
           }
           int to_be_added_to_barycenter
@@ -2635,8 +2635,8 @@ void ttk::PDClustering::computeBarycenterForTwo(
         double gy = (bx + by) / 2;
         gx = (gx + bx) / 2;
         gy = (gy + by) / 2;
-        double cost = Geometry::pow((gx - bx), wasserstein_)
-                      + Geometry::pow((gy - by), wasserstein_);
+        double cost = Geometry::powInt((gx - bx), this->wasserstein_)
+                      + Geometry::powInt((gy - by), this->wasserstein_);
         MatchingType t2 = std::make_tuple(bidderId, barycenter.size(), cost);
         MatchingType t3 = std::make_tuple(-1, barycenter.size(), cost);
         Good g = Good(gx, gy, false, barycenter.size());
@@ -2687,8 +2687,8 @@ void ttk::PDClustering::computeBarycenterForTwo(
       Good g = barycenter.at(goodId);
       double gx = g.x_;
       double gy = g.y_;
-      double cost = Geometry::pow((gx - bx), wasserstein_)
-                    + Geometry::pow((gy - by), wasserstein_);
+      double cost = Geometry::powInt((gx - bx), this->wasserstein_)
+                    + Geometry::powInt((gy - by), this->wasserstein_);
       std::get<2>(t) = cost;
     }
   }

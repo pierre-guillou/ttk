@@ -450,27 +450,27 @@ double ttk::BottleneckDistance::distanceFunction(const ttk::PersistencePair &a,
 
   const auto x
     = ((isMin1 && !isMax1) ? this->PE : this->PS)
-      * Geometry::pow(std::abs(a.birth.sfValue - b.birth.sfValue), w);
+      * Geometry::powInt(std::abs(a.birth.sfValue - b.birth.sfValue), w);
   const auto y
     = (isMax1 ? this->PE : this->PS)
-      * Geometry::pow(std::abs(a.death.sfValue - b.death.sfValue), w);
+      * Geometry::powInt(std::abs(a.death.sfValue - b.death.sfValue), w);
   const double geoDistance
     = isMax1 || isMin1
-        ? (this->PX * Geometry::pow(coordsAbsDiff[0], w)
-           + this->PY * Geometry::pow(coordsAbsDiff[1], w)
-           + this->PZ * Geometry::pow(coordsAbsDiff[2], w))
+        ? (this->PX * Geometry::powInt(coordsAbsDiff[0], w)
+           + this->PY * Geometry::powInt(coordsAbsDiff[1], w)
+           + this->PZ * Geometry::powInt(coordsAbsDiff[2], w))
         : (this->PX
-             * Geometry::pow(
+             * Geometry::powInt(
                std::abs(a.birth.coords[0] + a.death.coords[0]) / 2
                  - std::abs(b.birth.coords[0] + b.death.coords[0]) / 2,
                w)
            + this->PY
-               * Geometry::pow(
+               * Geometry::powInt(
                  std::abs(a.birth.coords[1] + a.death.coords[1]) / 2
                    - std::abs(b.birth.coords[1] + b.death.coords[1]) / 2,
                  w)
            + this->PZ
-               * Geometry::pow(
+               * Geometry::powInt(
                  std::abs(a.birth.coords[2] + a.death.coords[2]) / 2
                    - std::abs(b.birth.coords[2] + b.death.coords[2]) / 2,
                  w));
@@ -487,15 +487,17 @@ double ttk::BottleneckDistance::diagonalDistanceFunction(
   const bool isMax1 = a.death.type == CriticalType::Local_maximum;
   // projection on diagonal: cost = persistence ** w / 2.0
   const double infDistance = (isMin1 || isMax1 ? this->PE : this->PS)
-                             * Geometry::pow(std::abs(a.persistence()), w)
+                             * Geometry::powInt(std::abs(a.persistence()), w)
                              / 2.0;
   const double geoDistance
     = (this->PX
-         * Geometry::pow(std::abs(a.death.coords[0] - a.birth.coords[0]), w)
+         * Geometry::powInt(std::abs(a.death.coords[0] - a.birth.coords[0]), w)
        + this->PY
-           * Geometry::pow(std::abs(a.death.coords[1] - a.birth.coords[1]), w)
+           * Geometry::powInt(
+             std::abs(a.death.coords[1] - a.birth.coords[1]), w)
        + this->PZ
-           * Geometry::pow(std::abs(a.death.coords[2] - a.birth.coords[2]), w));
+           * Geometry::powInt(
+             std::abs(a.death.coords[2] - a.birth.coords[2]), w));
 
   return infDistance + geoDistance;
 }

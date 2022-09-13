@@ -250,8 +250,8 @@ double ttk::PDBarycenter::updateBarycenter(
       // TODO adjust shift with geometrical_factor_
       double dx = barycenter_goods_[0].at(i).x_ - new_x;
       double dy = barycenter_goods_[0].at(i).y_ - new_y;
-      double shift = Geometry::pow(std::abs(dx), wasserstein_)
-                     + Geometry::pow(std::abs(dy), wasserstein_);
+      double shift = Geometry::powInt(std::abs(dx), this->wasserstein_)
+                     + Geometry::powInt(std::abs(dy), this->wasserstein_);
       if(shift > max_shift) {
         max_shift = shift;
       }
@@ -282,8 +282,8 @@ double ttk::PDBarycenter::updateBarycenter(
       points_deleted_ += 1;
       double shift
         = 2
-          * Geometry::pow(
-            barycenter_goods_[0].at(i).getPersistence() / 2., wasserstein_);
+          * Geometry::powInt(barycenter_goods_[0].at(i).getPersistence() / 2.,
+                             this->wasserstein_);
       if(shift > max_shift) {
         max_shift = shift;
       }
@@ -311,10 +311,10 @@ double ttk::PDBarycenter::updateBarycenter(
                                  std::get<2>(critical_coordinates));
       }
       barycenter_goods_[j].emplace_back(g);
-      double shift
-        = 2
-          * Geometry::pow(
-            barycenter_goods_[j].at(g.id_).getPersistence() / 2., wasserstein_);
+      double shift = 2
+                     * Geometry::powInt(
+                       barycenter_goods_[j].at(g.id_).getPersistence() / 2.,
+                       this->wasserstein_);
       if(shift > max_shift) {
         max_shift = shift;
       }
