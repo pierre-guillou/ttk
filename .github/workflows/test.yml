@@ -550,6 +550,20 @@ jobs:
       env:
         PYTHONPATH: ${{ env.PV_DIR }}\bin\Lib\site-packages
 
+    - name: Fetch OpenGL software implementation
+      run: |
+        Invoke-WebRequest `
+          -OutFile mesa3d.7z `
+          -Uri https://github.com/pal1000/mesa-dist-win/releases/download/22.1.7/mesa3d-22.1.7-release-msvc.7z
+
+    - name: Install OpenGL software implementation
+      shell: bash
+      run: |
+        mkdir mesa-dist-win
+        cd mesa-dist-win
+        7z x ../mesa3d.7z
+        cp -v x64/* "$PV_DIR/bin"
+
     - name: Run ttk-data Python scripts
       shell: cmd
       run: |
