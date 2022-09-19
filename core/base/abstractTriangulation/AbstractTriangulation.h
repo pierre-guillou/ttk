@@ -2998,7 +2998,6 @@ namespace ttk {
 
 #endif // TTK_ENABLE_MPI
 
-  protected:
     virtual int getCellEdgeInternal(const SimplexId &ttkNotUsed(cellId),
                                     const int &ttkNotUsed(localEdgeId),
                                     SimplexId &ttkNotUsed(edgeId)) const {

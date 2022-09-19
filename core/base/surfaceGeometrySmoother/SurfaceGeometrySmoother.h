@@ -309,25 +309,13 @@ ttk::SurfaceGeometrySmoother::Point
       triangulation.getCellVertex(c, 2, q[2]);
       triangulation.getCellVertex(c, 3, q[3]);
       if(q[0] == a) {
-        edges.emplace_back(std::array<SimplexId, 2>{
-          static_cast<SimplexId>(q[3]),
-          static_cast<SimplexId>(q[1]),
-        });
+        edges.emplace_back(std::array<SimplexId, 2>{q[3], q[1]});
       } else if(q[1] == a) {
-        edges.emplace_back(std::array<SimplexId, 2>{
-          static_cast<SimplexId>(q[0]),
-          static_cast<SimplexId>(q[2]),
-        });
+        edges.emplace_back(std::array<SimplexId, 2>{q[0], q[2]});
       } else if(q[2] == a) {
-        edges.emplace_back(std::array<SimplexId, 2>{
-          static_cast<SimplexId>(q[1]),
-          static_cast<SimplexId>(q[3]),
-        });
+        edges.emplace_back(std::array<SimplexId, 2>{q[1], q[3]});
       } else if(q[3] == a) {
-        edges.emplace_back(std::array<SimplexId, 2>{
-          static_cast<SimplexId>(q[2]),
-          static_cast<SimplexId>(q[0]),
-        });
+        edges.emplace_back(std::array<SimplexId, 2>{q[2], q[0]});
       }
     }
   }

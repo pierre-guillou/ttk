@@ -247,12 +247,12 @@ namespace ttk {
 
     // Off-diagonal Bidding (with or without the use of a KD-Tree
     int runBidding(GoodDiagram *goods,
-                   Good &diagonalGood,
+                   Good &twinGood,
                    int wasserstein,
                    double epsilon,
                    double geometricalFactor);
     int runKDTBidding(GoodDiagram *goods,
-                      Good &diagonalGood,
+                      Good &twinGood,
                       int wasserstein,
                       double epsilon,
                       double geometricalFactor,
@@ -271,7 +271,7 @@ namespace ttk {
                           Compare> &diagonal_queue);
     int runDiagonalKDTBidding(
       GoodDiagram *goods,
-      Good &diagonalGood,
+      Good &twinGood,
       int wasserstein,
       double epsilon,
       double geometricalFactor,

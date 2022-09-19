@@ -178,7 +178,7 @@ int ttkProjectionFromTable::RequestData(vtkInformation *ttkNotUsed(request),
   double yRange[2] = {*std::min_element(yValues.begin(), yValues.end()),
                       *std::max_element(yValues.begin(), yValues.end())};
   double minXInterval = std::numeric_limits<double>::max();
-  for(unsigned int i = 1; i < nUniqueXValues; ++i)
+  for(int i = 1; i < nUniqueXValues; ++i)
     minXInterval = std::min(minXInterval, xValues[i] - xValues[i - 1]);
   const auto normValue = [&](double v) {
     return (v - yRange[0]) / (yRange[1] - yRange[0]) * minXInterval * 0.99;

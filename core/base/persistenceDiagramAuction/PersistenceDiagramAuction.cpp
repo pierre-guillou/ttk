@@ -8,7 +8,7 @@ void ttk::PersistenceDiagramAuction::runAuctionRound(int &n_biddings,
     // Risks of floating point limits reached...
     epsilon = 1e-6 * max_price;
   }
-  while(unassignedBidders_.size() > 0) {
+  while(!unassignedBidders_.empty()) {
     n_biddings++;
     int pos = unassignedBidders_.front();
     Bidder &b = this->bidders_[pos];
@@ -267,7 +267,7 @@ int ttk::Bidder::runDiagonalBidding(
   bool updated_top_pair
     = false; // Boolean which equals true iff the top pair in the priority
              // queue is given the good price
-  bool non_empty_goods = goods->size() > 0;
+  bool non_empty_goods = !goods->empty();
   std::pair<int, double> best_pair;
   if(non_empty_goods) {
     while(!updated_top_pair) {
@@ -288,7 +288,7 @@ int ttk::Bidder::runDiagonalBidding(
   }
 
   std::pair<int, double> second_pair;
-  if(non_empty_goods && diagonal_queue.size() > 0) {
+  if(non_empty_goods && !diagonal_queue.empty()) {
     bool updated_second_pair = false;
     while(!updated_second_pair) {
       second_pair = diagonal_queue.top();
@@ -310,7 +310,7 @@ int ttk::Bidder::runDiagonalBidding(
   double second_val = 0;
   if(non_empty_goods) {
     best_val = -best_pair.second;
-    second_val = diagonal_queue.size() > 0 ? -second_pair.second : best_val;
+    second_val = !diagonal_queue.empty() ? -second_pair.second : best_val;
     best_good = &(*goods)[best_pair.first];
   }
 
@@ -383,7 +383,7 @@ int ttk::Bidder::runDiagonalKDTBidding(
   bool updated_top_pair
     = false; // Boolean which equals true iff the top pair in the priority
              // queue is given the good price
-  bool non_empty_goods = goods->size() > 0;
+  bool non_empty_goods = !goods->empty();
   std::pair<int, double> best_pair;
   if(non_empty_goods) {
     while(!updated_top_pair) {
@@ -403,7 +403,7 @@ int ttk::Bidder::runDiagonalKDTBidding(
     }
   }
   std::pair<int, double> second_pair;
-  if(non_empty_goods && diagonal_queue.size() > 0) {
+  if(non_empty_goods && !diagonal_queue.empty()) {
     bool updated_second_pair = false;
     while(!updated_second_pair) {
       second_pair = diagonal_queue.top();
@@ -425,7 +425,7 @@ int ttk::Bidder::runDiagonalKDTBidding(
   double second_val = 0;
   if(non_empty_goods) {
     best_val = -best_pair.second;
-    second_val = diagonal_queue.size() > 0 ? -second_pair.second : best_val;
+    second_val = !diagonal_queue.empty() ? -second_pair.second : best_val;
     best_good = &(*goods)[best_pair.first];
   }
 

@@ -198,7 +198,7 @@ namespace ttk {
       if(progress >= 0)
         chunks[q++] = std::to_string((int)(progress * 100)) + "%";
 
-      std::string stats = "";
+      std::string stats{};
       if(q > 0) {
         stats += " [";
         stats += chunks[0];
@@ -426,7 +426,7 @@ namespace ttk {
         return 0;
 
       // on error or warning print end of line
-      if((int)priority < 2 && this->lastLineMode == debug::LineMode::REPLACE)
+      if((int)priority < 2 && Debug::lastLineMode == debug::LineMode::REPLACE)
         stream << "\n";
 
       // print prefix
@@ -454,7 +454,7 @@ namespace ttk {
       // flush stream
       stream.flush();
 
-      this->lastLineMode = lineMode;
+      Debug::lastLineMode = lineMode;
 
       return 1;
     }

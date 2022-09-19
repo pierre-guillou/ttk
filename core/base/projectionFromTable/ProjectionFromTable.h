@@ -50,10 +50,10 @@ namespace ttk {
       std::vector<std::array<int, 4>> quadPoints(noPoints);
       for(unsigned int i = 0; i < noPoints; ++i) {
         int i0 = 0, i1 = 0;
-        for(unsigned int j = 0; j < surfaceDim[0]; ++j)
+        for(int j = 0; j < surfaceDim[0]; ++j)
           if(std::get<1>(surfaceValues[j * surfaceDim[1]]) < tableXValues[i])
             i0 = j;
-        for(unsigned int j = 0; j < surfaceDim[1]; ++j)
+        for(int j = 0; j < surfaceDim[1]; ++j)
           if(std::get<2>(surfaceValues[j]) < tableYValues[i])
             i1 = j;
         quadPoints[i][0] = i0 * surfaceDim[1] + i1 + 1;

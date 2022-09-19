@@ -322,7 +322,7 @@ int ttk::PersistenceDiagram::computeCTPersistenceDiagram(
     const ttk::SimplexId v1 = std::get<1>(pairs[i]);
     const bool type = std::get<3>(pairs[i]);
 
-    if(type == true) {
+    if(type) {
       diagram[i] = PersistencePair{
         CriticalVertex{
           v0, getNodeType(tree.getJoinTree(), ftm::TreeType::Join, v0), {}, {}},
