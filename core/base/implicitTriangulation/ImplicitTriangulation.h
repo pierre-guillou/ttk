@@ -235,8 +235,8 @@ namespace ttk {
       return 0;
     }
 
-    inline int getCellVTKIDInternal(const int &ttkId,
-                                    int &vtkId) const override {
+    inline int getCellVTKIdInternal(const SimplexId ttkId,
+                                    SimplexId &vtkId) const override {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(ttkId < 0) {
         return -1;

@@ -2565,13 +2565,13 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline int getCellVTKID(const int &ttkId, int &vtkId) const {
-
+    virtual inline int getCellVTKId(const SimplexId ttkId,
+                                    SimplexId &vtkId) const {
 #ifndef TTK_ENABLE_KAMIKAZE
       // initialize output variable before early return
       vtkId = -1;
-#endif
-      return getCellVTKIDInternal(ttkId, vtkId);
+#endif // TTK_ENABLE_KAMIKAZE
+      return getCellVTKIdInternal(ttkId, vtkId);
     }
 
 #ifdef TTK_ENABLE_MPI
@@ -3702,13 +3702,13 @@ namespace ttk {
       return 0;
     }
 
-    virtual inline int getCellVTKIDInternal(const int &ttkId,
-                                            int &vtkId) const {
+    virtual inline int getCellVTKIdInternal(const SimplexId ttkId,
+                                            SimplexId &vtkId) const {
 #ifndef TTK_ENABLE_KAMIKAZE
       if(ttkId < 0) {
         return -1;
       }
-#endif
+#endif // TTK_ENABLE_KAMIKAZE
       vtkId = ttkId;
       return 0;
     }

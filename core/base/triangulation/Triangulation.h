@@ -2385,24 +2385,25 @@ namespace ttk {
       return abstractTriangulation_->preconditionVertexEdges();
     }
 
+    /// \brief Get the VTK id of a cell using the TTK id of a cell.
     ///
-    /// \pre Get the VTK id of a cell using the TTK id of a cell.
     /// For implicit triangulations, VTK cells are squares or cubes,
     /// whereas TTK cells are triangles and tetrahedron.
     /// For other triangulations, the TTK and VTK cells coincide.
     ///
-    /// \param ttkId TTK cell id
-    /// \param vtkId Output VTK cell id
+    /// \param[in] ttkId TTK cell id
+    /// \param[out] vtkId Output VTK cell id
     /// \return Returns 0 upon success, negative values otherwise.
     ///
-    inline int getCellVTKID(const int &ttkId, int &vtkId) const override {
+    inline int getCellVTKId(const SimplexId ttkId,
+                            SimplexId &vtkId) const override {
 
 #ifndef TTK_ENABLE_KAMIKAZE
       if(isEmptyCheck())
         return -1;
 #endif
 
-      return abstractTriangulation_->getCellVTKID(ttkId, vtkId);
+      return abstractTriangulation_->getCellVTKId(ttkId, vtkId);
     }
 
 #ifdef TTK_ENABLE_MPI
