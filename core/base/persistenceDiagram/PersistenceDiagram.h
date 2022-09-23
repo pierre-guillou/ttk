@@ -350,18 +350,12 @@ int ttk::PersistenceDiagram::execute(std::vector<PersistencePair> &CTDiagram,
 
   switch(BackEnd) {
     case BACKEND::PERSISTENT_SIMPLEX:
-      executePersistentSimplex(CTDiagram, inputOffsets, triangulation);
-      break;
     case BACKEND::DISCRETE_MORSE_SANDWICH:
       executeDiscreteMorseSandwich(
         CTDiagram, inputScalars, scalarsMTime, inputOffsets, triangulation);
       break;
     case BACKEND::PROGRESSIVE_TOPOLOGY:
-      executeProgressiveTopology(CTDiagram, inputOffsets, triangulation);
-      break;
     case BACKEND::APPROXIMATE_TOPOLOGY:
-      executeApproximateTopology(CTDiagram, inputScalars, triangulation);
-      break;
     case BACKEND::FTM:
       executeFTM(CTDiagram, inputScalars, inputOffsets, triangulation);
       break;
