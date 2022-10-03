@@ -277,7 +277,7 @@ void ttkPersistenceDiagramClustering::outputClusteredDiagrams(
 
       // avoid out-of-bound accesses
       if(bidderId >= static_cast<ttk::SimplexId>(diag.size())) {
-        this->printWrn("Out-of-bounds access averted");
+        this->printMsg("Out-of-bounds access averted", debug::Priority::DETAIL);
         continue;
       }
 
@@ -503,7 +503,7 @@ void ttkPersistenceDiagramClustering::outputMatchings(
       // avoid out-of-bound accesses
       if(goodId >= static_cast<ttk::SimplexId>(centroids[cid].size())
          || bidderId >= static_cast<ttk::SimplexId>(diag.size())) {
-        this->printWrn("Out-of-bounds access averted");
+        this->printMsg("Out-of-bounds access averted", debug::Priority::DETAIL);
         continue;
       }
 
