@@ -1,0 +1,42 @@
+<ServerManagerConfiguration>
+
+  <ProxyGroup name="writers">
+    <!-- ================================================================== -->
+    <WriterProxy
+        name="ttkOineusWriter"
+        class="ttkOineusWriter"
+        label="TTK Custom File Format Writer for Oineus">
+        <Documentation
+          long_help="Export a VTK DataSet for Oineus."
+          short_help="Write an .oin file.">
+          Export a VTK DataSet for Oineus.
+        </Documentation>
+        <InputProperty name="Input" command="SetInputConnection">
+          <ProxyGroupDomain name="groups">
+            <Group name="sources"/>
+            <Group name="filters"/>
+          </ProxyGroupDomain>
+          <DataTypeDomain name="input_type" composite_data_supported="0">
+            <DataType value="vtkDataSet"/>
+          </DataTypeDomain>
+        </InputProperty>
+        <StringVectorProperty
+          name="FileName"
+          command="SetFilename"
+          number_of_elements="1">
+          <FileListDomain name="files"/>
+          <Documentation>
+              This property specifies the file name for the Oineus writer.
+          </Documentation>
+        </StringVectorProperty>
+        <Hints>
+          <Property name="Input" show="0"/>
+          <Property name="FileName" show="0"/>
+          <WriterFactory extensions="oin"
+                file_description="Oineus Filtration File Format" />
+        </Hints>
+    </WriterProxy>
+    <!-- End Writer -->
+  </ProxyGroup>
+
+</ServerManagerConfiguration>

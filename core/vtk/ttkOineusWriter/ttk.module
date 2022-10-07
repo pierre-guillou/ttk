@@ -1,0 +1,8 @@
+NAME
+  ttkOineusWriter
+SOURCES
+  ttkOineusWriter.cpp
+HEADERS
+  ttkOineusWriter.h
+DEPENDS
+  ttkAlgorithm
