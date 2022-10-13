@@ -722,9 +722,7 @@ ttk::SimplexId ttk::ProgressiveTopology::propagateFromSaddles(
     return reps[0];
   }
 
-  if(this->threadNumber_ > 1) {
-    vertLock[vertexId].lock();
-  }
+  const auto guard = vertLock[vertexId].lock();
 
   if(toProp) { // SADDLE POINT
     const auto &CC = saddleCC[vertexId];
@@ -748,9 +746,6 @@ ttk::SimplexId ttk::ProgressiveTopology::propagateFromSaddles(
     }
 
     updated = 255;
-    if(this->threadNumber_ > 1) {
-      vertLock[vertexId].unlock();
-    }
 
     return reps[0];
 
@@ -784,9 +779,6 @@ ttk::SimplexId ttk::ProgressiveTopology::propagateFromSaddles(
     reps.resize(1);
     reps[0] = ret;
     updated = 255;
-    if(this->threadNumber_ > 1) {
-      vertLock[vertexId].unlock();
-    }
     return ret;
   }
 }

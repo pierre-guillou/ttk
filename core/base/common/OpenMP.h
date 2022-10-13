@@ -48,9 +48,33 @@ namespace ttk {
 
 namespace ttk {
   /**
+   * @brief A C++ port of Rust's std::sync::MutexGuard
+   */
+  template <typename T>
+  class LockGuard {
+  public:
+    LockGuard(T &lock) : lock_{lock} {
+    }
+    ~LockGuard() {
+      if(!this->unlocked_) {
+        this->lock_.unlock();
+      }
+    }
+    void unlock() && {
+      this->lock_.unlock();
+      this->unlocked_ = true;
+    }
+
+  private:
+    T &lock_;
+    bool unlocked_{false};
+  };
+
+  /**
    * @brief RAII wrapper around OpenMP lock
    */
   class Lock {
+    friend class LockGuard<Lock>;
 #ifdef TTK_ENABLE_OPENMP
   public:
     Lock() {
@@ -59,11 +83,12 @@ namespace ttk {
     ~Lock() {
       omp_destroy_lock(&this->lock_);
     }
-    inline void lock() {
-      omp_set_lock(&this->lock_);
-    }
-    inline void unlock() {
-      omp_unset_lock(&this->lock_);
+    [[nodiscard("Destructor will release the lock")]] inline LockGuard<Lock>
+      lock() {
+      if(omp_get_num_threads() > 1) {
+        omp_set_lock(&this->lock_);
+      }
+      return {*this};
     }
     Lock(const Lock &) = delete;
     Lock(Lock &&) = delete;
@@ -71,11 +96,18 @@ namespace ttk {
     Lock &operator=(Lock &&) = delete;
 
   private:
+    inline void unlock() {
+      omp_unset_lock(&this->lock_);
+    }
+
     omp_lock_t lock_{};
 #else
   public:
-    inline void lock() {
+    inline LockGuard<Lock> lock() {
+      return {*this};
     }
+
+  private:
     inline void unlock() {
     }
 #endif // TTK_ENABLE_OPENMP

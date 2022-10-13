@@ -774,7 +774,7 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
 
   // lock the 2-saddle to ensure that only one thread can perform the
   // boundary expansion
-  s2Locks[s2Mapping[s2]].lock();
+  auto guard = s2Locks[s2Mapping[s2]].lock();
 
   while(!boundaryIds.empty()) {
     // tau: youngest edge on boundary
@@ -801,19 +801,21 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
 
       // compare-and-swap from "Towards Lockfree Persistent Homology"
       // using locks over 1-saddles instead of atomics (OpenMP compatibility)
-      s1Locks[s1Mapping[tau]].lock();
-      const auto cap = partners[tau];
-      if(partners[tau] == -1) {
-        partners[tau] = s2;
+      SimplexId cap{-1};
+      {
+        const auto guardTau = s1Locks[s1Mapping[tau]].lock();
+        cap = partners[tau];
+        if(partners[tau] == -1) {
+          partners[tau] = s2;
+        }
       }
-      s1Locks[s1Mapping[tau]].unlock();
 
       // cleanup before exiting
       clearOnBoundary();
-      s2Locks[s2Mapping[s2]].unlock();
       if(cap == -1) {
         return tau;
       } else {
+        std::move(guard).unlock();
         return this->eliminateBoundariesSandwich(
           s2, onBoundary, s2Boundaries, s2Mapping, s1Mapping, partners, s1Locks,
           s2Locks, triangulation);
@@ -828,11 +830,10 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
 
           // make sure that pTau boundary is not modified by another
           // thread while we merge the two boundaries...
-          s2Locks[s2Mapping[pTau]].lock();
+          const auto guardPTau = s2Locks[s2Mapping[pTau]].lock();
           for(const auto e : s2Boundaries[s2Mapping[pTau]]) {
             addBoundary(e);
           }
-          s2Locks[s2Mapping[pTau]].unlock();
           if(this->Compute2SaddlesChildren) {
             this->s2Children_[s2Mapping[s2]].emplace_back(s2Mapping[pTau]);
           }
@@ -841,17 +842,19 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
 
           // compare-and-swap from "Towards Lockfree Persistent
           // Homology" using locks over 1-saddles
-          s1Locks[s1Mapping[tau]].lock();
-          const auto cap = partners[tau];
-          if(partners[tau] == pTau) {
-            partners[tau] = s2;
+          SimplexId cap{-1};
+          {
+            const auto guardTau = s1Locks[s1Mapping[tau]].lock();
+            cap = partners[tau];
+            if(partners[tau] == pTau) {
+              partners[tau] = s2;
+            }
           }
-          s1Locks[s1Mapping[tau]].unlock();
 
           if(cap == pTau) {
             // cleanup before exiting
             clearOnBoundary();
-            s2Locks[s2Mapping[s2]].unlock();
+            std::move(guard).unlock();
             return this->eliminateBoundariesSandwich(
               pTau, onBoundary, s2Boundaries, s2Mapping, s1Mapping, partners,
               s1Locks, s2Locks, triangulation);
@@ -870,7 +873,6 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
 
   // cleanup before exiting
   clearOnBoundary();
-  s2Locks[s2Mapping[s2]].unlock();
   return -1;
 }
 

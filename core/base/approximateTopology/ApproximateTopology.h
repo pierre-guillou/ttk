@@ -827,9 +827,8 @@ ttk::SimplexId ttk::ApproximateTopology::propagateFromSaddles(
            == splitTree;
   };
 
-  if(this->threadNumber_ > 1) {
-    vertLock[vertexId].lock();
-  }
+  const auto guard = vertLock[vertexId].lock();
+
   if(!saddleCC[vertexId].empty()
      and !toProp) { // tis a saddle point, should have to propagate on it
     printErr("ERRRROR");
@@ -870,9 +869,6 @@ ttk::SimplexId ttk::ApproximateTopology::propagateFromSaddles(
     }
 
     updated = 255;
-    if(this->threadNumber_ > 1) {
-      vertLock[vertexId].unlock();
-    }
 
     return reps[0];
 
@@ -916,9 +912,6 @@ ttk::SimplexId ttk::ApproximateTopology::propagateFromSaddles(
     reps.resize(1);
     reps[0] = ret;
     updated = 255;
-    if(this->threadNumber_ > 1) {
-      vertLock[vertexId].unlock();
-    }
     return ret;
   }
 }
