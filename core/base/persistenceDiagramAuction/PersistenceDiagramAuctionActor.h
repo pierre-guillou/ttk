@@ -251,17 +251,17 @@ namespace ttk {
                    int wasserstein,
                    double epsilon,
                    double geometricalFactor);
-    int runKDTBidding(GoodDiagram *goods,
+    int runKDTBidding(GoodDiagram &goods,
                       Good &twinGood,
                       int wasserstein,
                       double epsilon,
                       double geometricalFactor,
-                      KDT *kdt,
+                      KDT &kdt,
                       const int kdt_index = 0);
 
     // Diagonal Bidding (with or without the use of a KD-Tree
     int runDiagonalBidding(
-      GoodDiagram *goods,
+      GoodDiagram &goods,
       Good &twinGood,
       int wasserstein,
       double epsilon,
@@ -270,7 +270,7 @@ namespace ttk {
                           std::vector<std::pair<int, double>>,
                           Compare> &diagonal_queue);
     int runDiagonalKDTBidding(
-      GoodDiagram *goods,
+      GoodDiagram &goods,
       Good &twinGood,
       int wasserstein,
       double epsilon,

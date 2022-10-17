@@ -21,19 +21,19 @@ void ttk::PersistenceDiagramAuction::runAuctionRound(int &n_biddings,
     if(b.isDiagonal()) {
       if(use_kdt_) {
         idx_reassigned = b.runDiagonalKDTBidding(
-          &all_goods, twin_good, wasserstein_, epsilon, geometricalFactor_,
+          all_goods, twin_good, wasserstein_, epsilon, geometricalFactor_,
           correspondence_kdt_map_, diagonal_queue_, kdt_index);
       } else {
         idx_reassigned
-          = b.runDiagonalBidding(&all_goods, twin_good, wasserstein_, epsilon,
+          = b.runDiagonalBidding(all_goods, twin_good, wasserstein_, epsilon,
                                  geometricalFactor_, diagonal_queue_);
       }
     } else {
       if(use_kdt_) {
         // We can use the kd-tree to speed up the search
         idx_reassigned
-          = b.runKDTBidding(&all_goods, twin_good, wasserstein_, epsilon,
-                            geometricalFactor_, &kdt_, kdt_index);
+          = b.runKDTBidding(all_goods, twin_good, wasserstein_, epsilon,
+                            geometricalFactor_, kdt_, kdt_index);
       } else {
         idx_reassigned = b.runBidding(
           &all_goods, twin_good, wasserstein_, epsilon, geometricalFactor_);
@@ -250,7 +250,7 @@ int ttk::Bidder::runBidding(GoodDiagram *goods,
 }
 
 int ttk::Bidder::runDiagonalBidding(
-  GoodDiagram *goods,
+  GoodDiagram &goods,
   Good &twinGood,
   int wasserstein,
   double epsilon,
@@ -267,7 +267,7 @@ int ttk::Bidder::runDiagonalBidding(
   bool updated_top_pair
     = false; // Boolean which equals true iff the top pair in the priority
              // queue is given the good price
-  bool non_empty_goods = !goods->empty();
+  bool non_empty_goods = !goods.empty();
   std::pair<int, double> best_pair;
   if(non_empty_goods) {
     while(!updated_top_pair) {
@@ -275,7 +275,7 @@ int ttk::Bidder::runDiagonalBidding(
       diagonal_queue.pop();
 
       double queue_weight = top_pair.second;
-      const auto &good = (*goods)[top_pair.first];
+      const auto &good = goods[top_pair.first];
       if(good.getPrice() > queue_weight) {
         // If the weight in the priority queue is not the good one, update
         std::get<1>(top_pair) = good.getPrice();
@@ -293,7 +293,7 @@ int ttk::Bidder::runDiagonalBidding(
     while(!updated_second_pair) {
       second_pair = diagonal_queue.top();
       double queue_weight = second_pair.second;
-      const auto &good = (*goods)[second_pair.first];
+      const auto &good = goods[second_pair.first];
       if(good.getPrice() != queue_weight) {
         // If the weight in the priority queue is not the good one, update it
         diagonal_queue.pop();
@@ -311,7 +311,7 @@ int ttk::Bidder::runDiagonalBidding(
   if(non_empty_goods) {
     best_val = -best_pair.second;
     second_val = !diagonal_queue.empty() ? -second_pair.second : best_val;
-    best_good = &(*goods)[best_pair.first];
+    best_good = &goods[best_pair.first];
   }
 
   // And now check for the corresponding twin bidder
@@ -363,7 +363,7 @@ int ttk::Bidder::runDiagonalBidding(
 }
 
 int ttk::Bidder::runDiagonalKDTBidding(
-  GoodDiagram *goods,
+  GoodDiagram &goods,
   Good &twinGood,
   int wasserstein,
   double epsilon,
@@ -383,13 +383,13 @@ int ttk::Bidder::runDiagonalKDTBidding(
   bool updated_top_pair
     = false; // Boolean which equals true iff the top pair in the priority
              // queue is given the good price
-  bool non_empty_goods = !goods->empty();
+  bool non_empty_goods = !goods.empty();
   std::pair<int, double> best_pair;
   if(non_empty_goods) {
     while(!updated_top_pair) {
       std::pair<int, double> top_pair = diagonal_queue.top();
       double queue_weight = top_pair.second;
-      const auto &good = (*goods)[top_pair.first];
+      const auto &good = goods[top_pair.first];
 
       diagonal_queue.pop();
       if(good.getPrice() > queue_weight) {
@@ -408,7 +408,7 @@ int ttk::Bidder::runDiagonalKDTBidding(
     while(!updated_second_pair) {
       second_pair = diagonal_queue.top();
       double queue_weight = second_pair.second;
-      const auto &good = (*goods)[second_pair.first];
+      const auto &good = goods[second_pair.first];
       if(good.getPrice() > queue_weight) {
         // If the weight in the priority queue is not the good one, update it
         diagonal_queue.pop();
@@ -426,7 +426,7 @@ int ttk::Bidder::runDiagonalKDTBidding(
   if(non_empty_goods) {
     best_val = -best_pair.second;
     second_val = !diagonal_queue.empty() ? -second_pair.second : best_val;
-    best_good = &(*goods)[best_pair.first];
+    best_good = &goods[best_pair.first];
   }
 
   // And now check for the corresponding twin bidder
@@ -483,12 +483,12 @@ int ttk::Bidder::runDiagonalKDTBidding(
   return idx_reassigned;
 }
 
-int ttk::Bidder::runKDTBidding(GoodDiagram *goods,
+int ttk::Bidder::runKDTBidding(GoodDiagram &goods,
                                Good &twinGood,
                                int wasserstein,
                                double epsilon,
                                double geometricalFactor,
-                               KDT *kdt,
+                               KDT &kdt,
                                const int kdt_index) {
 
   /// Runs bidding of a non-diagonal bidder
@@ -498,7 +498,7 @@ int ttk::Bidder::runKDTBidding(GoodDiagram *goods,
   std::array<double, 5> coordinates;
   GetKDTCoordinates(geometricalFactor, coordinates);
 
-  kdt->getKClosest(2, coordinates, neighbours, costs, kdt_index);
+  kdt.getKClosest(2, coordinates, neighbours, costs, kdt_index);
   double best_val, second_val;
   KDT *closest_kdt;
   Good *best_good{};
@@ -508,7 +508,7 @@ int ttk::Bidder::runKDTBidding(GoodDiagram *goods,
               [&costs](int &a, int &b) { return costs[a] < costs[b]; });
 
     closest_kdt = neighbours[idx[0]];
-    best_good = &(*goods)[closest_kdt->id_];
+    best_good = &goods[closest_kdt->id_];
     // Value is defined as the opposite of cost (each bidder aims at
     // maximizing it)
     best_val = -costs[idx[0]];
@@ -516,7 +516,7 @@ int ttk::Bidder::runKDTBidding(GoodDiagram *goods,
   } else {
     // If the kdtree contains only one point
     closest_kdt = neighbours[0];
-    best_good = &(*goods)[closest_kdt->id_];
+    best_good = &goods[closest_kdt->id_];
     best_val = -costs[0];
     second_val = best_val;
   }
