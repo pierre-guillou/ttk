@@ -30,7 +30,7 @@ int ttkOineusWriter::FillInputPortInformation(int port, vtkInformation *info) {
 
 int ttkOineusWriter::OpenFile() {
 
-  std::ofstream f(Filename, ios::out);
+  std::ofstream f(Filename, ios::out | ios::binary);
 
   if(!f.fail()) {
     Stream = std::move(f);
@@ -39,6 +39,11 @@ int ttkOineusWriter::OpenFile() {
   }
 
   return 0;
+}
+
+template <typename T>
+void writeBin(std::ofstream &stream, const T var) {
+  stream.write(reinterpret_cast<const char *>(&var), sizeof(var));
 }
 
 vtkDataArray *getValidArray(vtkPointData *const pd) {
@@ -97,6 +102,11 @@ int ttkOineusWriter::writeUnstructuredGrid(vtkDataObject *input) {
   const auto nTri = (dim > 1) ? triangulation->getNumberOfTriangles() : 0;
   const auto nTetra = (dim > 2) ? triangulation->getNumberOfCells() : 0;
 
+  writeBin<int64_t>(Stream, nVerts);
+  writeBin<int64_t>(Stream, nEdges);
+  writeBin<int64_t>(Stream, nTri);
+  writeBin<int64_t>(Stream, nTetra);
+
   // actual data (first data array)
   const auto arr = getValidArray(dataSet->GetPointData());
   if(arr == nullptr) {
@@ -106,22 +116,26 @@ int ttkOineusWriter::writeUnstructuredGrid(vtkDataObject *input) {
   const auto buf = ttkUtils::GetPointer<ttk::SimplexId>(arr);
 
   for(ttk::SimplexId i = 0; i < nVerts; ++i) {
-    Stream << i << ' ' << -1 << ' ' << -1 << ' ' << -1 << ' ' << buf[i] << '\n';
+    writeBin<int64_t>(Stream, i);
+    writeBin<double>(Stream, buf[i]);
   }
   for(ttk::SimplexId i = 0; i < nEdges; ++i) {
     ttk::SimplexId v0{}, v1{};
     triangulation->getEdgeVertex(i, 0, v0);
     triangulation->getEdgeVertex(i, 1, v1);
-    Stream << v0 << ' ' << v1 << ' ' << -1 << ' ' << -1 << ' '
-           << std::max(buf[v0], buf[v1]) << '\n';
+    writeBin<int64_t>(Stream, v0);
+    writeBin<int64_t>(Stream, v1);
+    writeBin<double>(Stream, std::max(buf[v0], buf[v1]));
   }
   for(ttk::SimplexId i = 0; i < nTri; ++i) {
     ttk::SimplexId v0{}, v1{}, v2{};
     triangulation->getTriangleVertex(i, 0, v0);
     triangulation->getTriangleVertex(i, 1, v1);
     triangulation->getTriangleVertex(i, 2, v2);
-    Stream << v0 << ' ' << v1 << ' ' << v2 << ' ' << -1 << ' '
-           << std::max(std::max(buf[v0], buf[v1]), buf[v2]) << '\n';
+    writeBin<int64_t>(Stream, v0);
+    writeBin<int64_t>(Stream, v1);
+    writeBin<int64_t>(Stream, v2);
+    writeBin<double>(Stream, std::max(std::max(buf[v0], buf[v1]), buf[v2]));
   }
   for(ttk::SimplexId i = 0; i < nTetra; ++i) {
     ttk::SimplexId v0{}, v1{}, v2{}, v3{};
@@ -129,9 +143,12 @@ int ttkOineusWriter::writeUnstructuredGrid(vtkDataObject *input) {
     triangulation->getCellVertex(i, 1, v1);
     triangulation->getCellVertex(i, 2, v2);
     triangulation->getCellVertex(i, 3, v3);
-    Stream << v0 << ' ' << v1 << ' ' << v2 << ' ' << v3 << ' '
-           << std::max(std::max(buf[v0], buf[v1]), std::max(buf[v2], buf[v3]))
-           << '\n';
+    writeBin<int64_t>(Stream, v0);
+    writeBin<int64_t>(Stream, v1);
+    writeBin<int64_t>(Stream, v2);
+    writeBin<int64_t>(Stream, v3);
+    writeBin<double>(
+      Stream, std::max(std::max(buf[v0], buf[v1]), std::max(buf[v2], buf[v3])));
   }
 
   return 1;
