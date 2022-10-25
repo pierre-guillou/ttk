@@ -57,6 +57,27 @@ jobs:
       run: |
         cd build
         cpack -G DEB
+        sudo apt install -f ./ttk-paraview.deb
+
+    - name: Test Python VTK module import
+      run: |
+        python3 -m vtk
+    - name: Test Python paraview.simple module import
+      run: |
+        python3 -m paraview.simple
+
+    - name: Set PYTHONPATH for Ubuntu 22.04 pvpython
+      if: matrix.os == 'ubuntu-22.04'
+      run: |
+        # pvpython does not embed the correct PYTHONPATH
+        echo "PYTHONPATH=/usr/lib/python3/dist-packages:$PYTHONPATH" >> $GITHUB_ENV
+
+    - name: Test pvpython VTK module import
+      run: |
+        pvpython -m vtk
+    - name: Test pvpython paraview.simple module import
+      run: |
+        pvpython -m paraview.simple
 
     - name: Upload Debian package
       uses: actions/upload-artifact@v3
@@ -73,10 +94,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       name: Checkout TTK-ParaView source code
-
-    - name: Remove hosted Python
-      run: |
-        sudo rm -rf /usr/local/Frameworks/Python.framework
 
     - name: Install macOS dependencies
       run: |
@@ -100,6 +117,25 @@ jobs:
         cd build
         cmake --build . --parallel
         sudo cmake --build . --target install
+
+    - name: Test Python VTK module import
+      run: |
+        python3 -m vtk
+    - name: Test Python paraview.simple module import
+      run: |
+        python3 -m paraview.simple
+
+    - name: Set PYTHONPATH for pvpython
+      run: |
+        # pvpython does not embed the correct PYTHONPATH
+        echo "PYTHONPATH=/usr/local/lib/python3.10/site-packages:$PYTHONPATH" >> $GITHUB_ENV
+
+    - name: Test pvpython VTK module import
+      run: |
+        pvpython -m vtk
+    - name: Test pvpython paraview.simple module import
+      run: |
+        pvpython -m paraview.simple
 
     - name: Create ParaView package
       run: |
