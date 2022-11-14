@@ -181,10 +181,10 @@ int ttkHelloWorld::RequestData(vtkInformation *ttkNotUsed(request),
   // Templatize over the different input array data types and call the base code
   int status = 0; // this integer checks if the base code returns an error
   ttkVtkTemplateMacro(inputArray->GetDataType(), triangulation->getType(),
-                      (status = this->computeAverages<VTK_TT, TTK_TT>(
-                         (VTK_TT *)ttkUtils::GetVoidPointer(outputArray),
-                         (VTK_TT *)ttkUtils::GetVoidPointer(inputArray),
-                         (TTK_TT *)triangulation->getData())));
+                      (status = this->computeAverages(
+                         ttkUtils::GetPointer<VTK_TT>(outputArray),
+                         ttkUtils::GetPointer<VTK_TT>(inputArray),
+                         static_cast<TTK_TT *>(triangulation->getData()))));
 
   // On error cancel filter execution
   if(status != 1)
