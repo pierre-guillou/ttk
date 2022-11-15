@@ -113,6 +113,31 @@ int ttkDiscreteGradient::fillCriticalPoints(
 #endif
   }
 
+#ifdef TTK_ENABLE_MPI
+  for(size_t i = 0; i < nPoints; ++i) {
+    const auto dim{critPoints_cellDimensions[i]};
+    const auto id{critPoints_cellIds[i]};
+
+    SimplexId gid{}, lid{};
+    if(dim == 0) {
+      lid = triangulation.getVertexLocalId(id);
+      gid = triangulation.getVertexGlobalId(lid);
+    } else if(dim == 1) {
+      lid = triangulation.getEdgeLocalId(id);
+      gid = triangulation.getEdgeGlobalId(lid);
+    } else if(dim == 2) {
+      lid = triangulation.getTriangleLocalId(id);
+      gid = triangulation.getTriangleGlobalId(lid);
+    } else if(dim == 3) {
+      lid = triangulation.getCellLocalId(id);
+      gid = triangulation.getCellGlobalId(lid);
+    }
+    std::stringstream msg{};
+    msg << int(dim) << " " << id << " " << gid << " " << lid << '\n';
+    std::cout << msg.str();
+  }
+#endif // TTK_ENABLE_MPI
+
   ttkUtils::CellVertexFromPoints(outputCriticalPoints, points);
 
   vtkPointData *pointData = outputCriticalPoints->GetPointData();

@@ -8,3 +8,6 @@ ttk_add_base_library(implicitTriangulation
   DEPENDS
     abstractTriangulation
     )
+
+    # target_compile_options(implicitTriangulation PRIVATE -fsanitize=address -O0)
+    # target_link_options(implicitTriangulation PRIVATE -fsanitize=address)
