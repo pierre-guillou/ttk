@@ -553,21 +553,28 @@ int ttkAlgorithm::GenerateGlobalIds(
           input->GetCellData()->GetArray("vtkGhostType"));
         identifiers.setCellGhost(cellGhost);
         vtkPointSet *pointSet = vtkPointSet::SafeDownCast(input);
-        identifiers.setPointSet(static_cast<float *>(
-          ttkUtils::GetVoidPointer(pointSet->GetPoints())));
+        if(pointSet != nullptr) {
+          identifiers.setPointSet(static_cast<float *>(
+            ttkUtils::GetVoidPointer(pointSet->GetPoints())));
+        }
         vtkCellArray *cells = nullptr;
         switch(input->GetDataObjectType()) {
           case VTK_UNSTRUCTURED_GRID: {
             auto dataSetAsUG = vtkUnstructuredGrid::SafeDownCast(input);
-            cells = dataSetAsUG->GetCells();
+            if(dataSetAsUG != nullptr) {
+              cells = dataSetAsUG->GetCells();
+            }
             break;
           }
           case VTK_POLY_DATA: {
             auto dataSetAsPD = vtkPolyData::SafeDownCast(input);
-            cells
-              = dataSetAsPD->GetNumberOfPolys() > 0   ? dataSetAsPD->GetPolys()
-                : dataSetAsPD->GetNumberOfLines() > 0 ? dataSetAsPD->GetLines()
-                                                      : dataSetAsPD->GetVerts();
+            if(dataSetAsPD != nullptr) {
+              cells = dataSetAsPD->GetNumberOfPolys() > 0
+                        ? dataSetAsPD->GetPolys()
+                      : dataSetAsPD->GetNumberOfLines() > 0
+                        ? dataSetAsPD->GetLines()
+                        : dataSetAsPD->GetVerts();
+            }
             break;
           }
           default: {
