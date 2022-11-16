@@ -605,9 +605,11 @@ void ttk::ContourTreeAlignment::computeNewAlignmenttree(
           + (currTree->child1->node2 == nullptr
                ? 0
                : currTree->child1->node2->freq);
-      childNode->type = currTree->child1->node1 == nullptr
-                          ? currTree->child1->node2->type
-                          : currTree->child1->node1->type;
+
+      if(currTree->child1->node1 != nullptr)
+        childNode->type = currTree->child1->node1->type;
+      else if(currTree->child1->node2 != nullptr)
+        childNode->type = currTree->child1->node2->type;
 
       childNode->branchID = -1;
 
@@ -783,9 +785,10 @@ void ttk::ContourTreeAlignment::computeNewAlignmenttree(
           + (currTree->child2->node2 == nullptr
                ? 0
                : currTree->child2->node2->freq);
-      childNode->type = currTree->child2->node1 == nullptr
-                          ? currTree->child2->node2->type
-                          : currTree->child2->node1->type;
+      if(currTree->child2->node2 != nullptr)
+        childNode->type = currTree->child2->node2->type;
+      else if(currTree->child2->node1 != nullptr)
+        childNode->type = currTree->child2->node1->type;
 
       childNode->branchID = -1;
 
@@ -797,22 +800,24 @@ void ttk::ContourTreeAlignment::computeNewAlignmenttree(
 
       } else if(alignmenttreeType == ttk::cta::averageValues) {
 
-        childNode->scalarValue = currTree->child2->node1 == nullptr
-                                   ? currTree->child2->node2->scalarValue
-                                 : currTree->child2->node2 == nullptr
-                                   ? currTree->child2->node1->scalarValue
-                                   : (currTree->child2->node1->scalarValue
-                                        * currTree->child2->node1->freq
-                                      + currTree->child2->node2->scalarValue)
-                                       / childNode->freq;
+        if(currTree->child2->node1 != nullptr
+           && currTree->child2->node2 != nullptr)
+          childNode->scalarValue = (currTree->child2->node1->scalarValue
+                                      * currTree->child2->node1->freq
+                                    + currTree->child2->node2->scalarValue)
+                                   / childNode->freq;
+        else if(currTree->child2->node1 != nullptr)
+          childNode->scalarValue = currTree->child2->node1->scalarValue;
+        else if(currTree->child2->node2 != nullptr)
+          childNode->scalarValue = currTree->child2->node2->scalarValue;
 
       } else {
 
-        if(currTree->child2->node1 == nullptr)
-          childNode->scalarValue = currTree->child2->node2->scalarValue;
-        else if(currTree->child2->node2 == nullptr)
+        if(currTree->child2->node1 != nullptr)
           childNode->scalarValue = currTree->child2->node1->scalarValue;
-        else {
+        else if(currTree->child2->node2 != nullptr)
+          childNode->scalarValue = currTree->child2->node2->scalarValue;
+        else if(currTree->child2->node1 != nullptr) {
           std::vector<float> values;
           for(auto p : currTree->child2->node1->nodeRefs) {
             values.push_back(
