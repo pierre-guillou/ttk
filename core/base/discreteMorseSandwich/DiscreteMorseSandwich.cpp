@@ -8,7 +8,7 @@ void ttk::DiscreteMorseSandwich::tripletsToPersistencePairs(
   std::vector<PersistencePair> &pairs,
   std::vector<bool> &pairedExtrema,
   std::vector<bool> &pairedSaddles,
-  std::vector<SimplexId> &reps,
+  SparseStorage &reps,
   std::vector<tripletType> &triplets,
   const SimplexId *const saddlesOrder,
   const SimplexId *const extremaOrder,

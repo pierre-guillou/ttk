@@ -20,10 +20,12 @@
 
 #pragma once
 
+#define REDUCE_MEM
 #include <DiscreteGradient.h>
 
 #include <algorithm>
 #include <numeric>
+#include <unordered_map>
 
 namespace ttk {
   class DiscreteMorseSandwich : virtual public Debug {
@@ -146,6 +148,12 @@ namespace ttk {
     };
 
   protected:
+#ifdef REDUCE_MEM
+    using SparseStorage = std::unordered_map<SimplexId, SimplexId>;
+#else
+    using SparseStorage = std::vector<SimplexId>;
+#endif // REDUCE_MEM
+
     /**
      * @brief Follow the descending 1-separatrices to compute the saddles ->
      * minima association
@@ -310,7 +318,7 @@ namespace ttk {
     void tripletsToPersistencePairs(std::vector<PersistencePair> &pairs,
                                     std::vector<bool> &pairedExtrema,
                                     std::vector<bool> &pairedSaddles,
-                                    std::vector<SimplexId> &reps,
+                                    SparseStorage &reps,
                                     std::vector<tripletType> &triplets,
                                     const SimplexId *const saddlesOrder,
                                     const SimplexId *const extremaOrder,
@@ -339,8 +347,8 @@ namespace ttk {
       eliminateBoundariesSandwich(const SimplexId s2,
                                   std::vector<bool> &onBoundary,
                                   std::vector<Container> &s2Boundaries,
-                                  const std::vector<SimplexId> &s2Mapping,
-                                  const std::vector<SimplexId> &s1Mapping,
+                                  SparseStorage &s2Mapping,
+                                  SparseStorage &s1Mapping,
                                   std::vector<SimplexId> &partners,
                                   std::vector<Lock> &s1Locks,
                                   std::vector<Lock> &s2Locks,
@@ -432,16 +440,20 @@ namespace ttk {
       if(dim > 3 || dim < 1) {
         return;
       }
+#ifndef REDUCE_MEM
       this->firstRepMin_.resize(triangulation.getNumberOfVertices());
       if(dim > 1) {
         this->firstRepMax_.resize(triangulation.getNumberOfCells());
       }
+#endif // REDUCE_MEM
       if(dim > 2) {
         this->critEdges_.resize(triangulation.getNumberOfEdges());
         this->edgeTrianglePartner_.resize(triangulation.getNumberOfEdges(), -1);
         this->onBoundary_.resize(triangulation.getNumberOfEdges(), false);
+#ifndef REDUCE_MEM
         this->s2Mapping_.resize(triangulation.getNumberOfTriangles(), -1);
         this->s1Mapping_.resize(triangulation.getNumberOfEdges(), -1);
+#endif // REDUCE_MEM
       }
       for(int i = 0; i < dim + 1; ++i) {
         this->pairedCritCells_[i].resize(
@@ -473,8 +485,9 @@ namespace ttk {
     dcg::DiscreteGradient dg_{};
 
     // factor memory allocations outside computation loops
-    mutable std::vector<SimplexId> firstRepMin_{}, firstRepMax_{},
-      edgeTrianglePartner_{}, s2Mapping_{}, s1Mapping_{};
+    mutable SparseStorage firstRepMin_{}, firstRepMax_{}, s2Mapping_{},
+      s1Mapping_{};
+    mutable std::vector<SimplexId> edgeTrianglePartner_{};
     mutable std::vector<EdgeSimplex> critEdges_{};
     mutable std::array<std::vector<bool>, 4> pairedCritCells_{};
     mutable std::vector<bool> onBoundary_{};
@@ -603,7 +616,15 @@ void ttk::DiscreteMorseSandwich::getMinSaddlePairs(
   Timer tmseq{};
 
   auto &firstRep{this->firstRepMin_};
+#ifdef REDUCE_MEM
+  for(const auto &el : saddle1ToMinima) {
+    for(const auto &min : el) {
+      firstRep[min] = min;
+    }
+  }
+#else
   std::iota(firstRep.begin(), firstRep.end(), 0);
+#endif // REDUCE_MEM
   std::vector<tripletType> sadMinTriplets{};
 
   for(size_t i = 0; i < saddle1ToMinima.size(); ++i) {
@@ -677,7 +698,15 @@ void ttk::DiscreteMorseSandwich::getMaxSaddlePairs(
   Timer tmseq{};
 
   auto &firstRep{this->firstRepMax_};
+#ifdef REDUCE_MEM
+  for(const auto &el : saddle2ToMaxima) {
+    for(const auto &max : el) {
+      firstRep[max] = max;
+    }
+  }
+#else
   std::iota(firstRep.begin(), firstRep.end(), 0);
+#endif // REDUCE_MEM
   std::vector<tripletType> sadMaxTriplets{};
 
   for(size_t i = 0; i < saddle2ToMaxima.size(); ++i) {
@@ -730,8 +759,8 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
   const SimplexId s2,
   std::vector<bool> &onBoundary,
   std::vector<Container> &s2Boundaries,
-  const std::vector<SimplexId> &s2Mapping,
-  const std::vector<SimplexId> &s1Mapping,
+  SparseStorage &s2Mapping,
+  SparseStorage &s1Mapping,
   std::vector<SimplexId> &partners,
   std::vector<Lock> &s1Locks,
   std::vector<Lock> &s2Locks,
@@ -927,7 +956,7 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
 
   // unpaired critical triangle id -> index in saddle2 vector
   auto &s2Mapping{this->s2Mapping_};
-#ifdef TTK_ENABLE_OPENMP
+#if defined(TTK_ENABLE_OPENMP) && !defined(REDUCE_MEM)
 #pragma omp parallel for num_threads(threadNumber_)
 #endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < saddles2.size(); ++i) {
@@ -936,7 +965,7 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
 
   // unpaired critical edge id -> index in saddle1 vector
   auto &s1Mapping{this->s1Mapping_};
-#ifdef TTK_ENABLE_OPENMP
+#if defined(TTK_ENABLE_OPENMP) && !defined(REDUCE_MEM)
 #pragma omp parallel for num_threads(threadNumber_)
 #endif // TTK_ENABLE_OPENMP
   for(size_t i = 0; i < saddles1.size(); ++i) {
