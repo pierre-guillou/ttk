@@ -420,7 +420,6 @@ int ttk::PersistentGenerators::computePersistentGenerators(
     // fix container size for 2D datasets (use
     // eliminateBoundariesSandwich for saddle-max instead of
     // tripletsToPersistencePairs)
-    this->critEdges_.resize(triangulation.getNumberOfEdges());
     this->onBoundary_.resize(triangulation.getNumberOfEdges(), false);
 #ifndef REDUCE_MEM
     this->s2Mapping_.resize(triangulation.getNumberOfTriangles(), -1);
@@ -471,7 +470,7 @@ int ttk::PersistentGenerators::computePersistentGenerators(
     this->getSaddleSaddlePairs(
       sadSadPairs, paired1Saddles, dim == 3 ? paired2Saddles : pairedMaxima,
       true, generators, criticalCellsByDim[1], criticalCellsByDim[2],
-      critCellsOrder[1], triangulation);
+      critCellsOrder[1], offsets, triangulation);
   }
 
   // detect topological handles

@@ -256,6 +256,7 @@ namespace ttk {
                               const std::vector<SimplexId> &critical1Saddles,
                               const std::vector<SimplexId> &critical2Saddles,
                               const std::vector<SimplexId> &crit1SaddlesOrder,
+                              const SimplexId *const offsets,
                               const triangulationType &triangulation) const;
 
     /**
@@ -445,7 +446,6 @@ namespace ttk {
         this->firstRepMax_.resize(triangulation.getNumberOfCells());
       }
       if(dim > 2) {
-        this->critEdges_.resize(triangulation.getNumberOfEdges());
         this->onBoundary_.resize(triangulation.getNumberOfEdges(), false);
 #ifndef REDUCE_MEM
         this->s2Mapping_.resize(triangulation.getNumberOfTriangles(), -1);
@@ -470,7 +470,6 @@ namespace ttk {
       this->firstRepMax_ = {};
       this->s2Mapping_ = {};
       this->s1Mapping_ = {};
-      this->critEdges_ = {};
       this->pairedCritCells_ = {};
       this->onBoundary_ = {};
       this->critCellsOrder_ = {};
@@ -483,7 +482,6 @@ namespace ttk {
     // factor memory allocations outside computation loops
     mutable std::vector<SimplexId> firstRepMin_{}, firstRepMax_{};
     mutable SparseStorage s2Mapping_{}, s1Mapping_{};
-    mutable std::vector<EdgeSimplex> critEdges_{};
     mutable std::array<std::vector<bool>, 4> pairedCritCells_{};
     mutable std::vector<bool> onBoundary_{};
     mutable std::array<std::vector<SimplexId>, 4> critCellsOrder_{};
@@ -894,6 +892,7 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
   const std::vector<SimplexId> &critical1Saddles,
   const std::vector<SimplexId> &critical2Saddles,
   const std::vector<SimplexId> &crit1SaddlesOrder,
+  const SimplexId *const offsets,
   const triangulationType &triangulation) const {
 
   Timer tm2{};
@@ -920,16 +919,42 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
     this->s2Children_.resize(saddles2.size());
   }
 
-  // sort every triangulation edges by filtration order
-  const auto &edgesFiltrOrder{crit1SaddlesOrder};
-
   auto &onBoundary{this->onBoundary_};
   std::vector<SimplexId> edgeTrianglePartner(saddles1.size(), -1);
+
+#ifdef REDUCE_MEM
+  const auto cmpEdges
+    = [&triangulation, offsets](const SimplexId a, const SimplexId b) {
+        std::array<SimplexId, 2> vaOff{}, vbOff{};
+        triangulation.getEdgeVertex(a, 0, vaOff[0]);
+        triangulation.getEdgeVertex(a, 1, vaOff[1]);
+        triangulation.getEdgeVertex(b, 0, vbOff[0]);
+        triangulation.getEdgeVertex(b, 1, vbOff[1]);
+        vaOff[0] = offsets[vaOff[0]];
+        vaOff[1] = offsets[vaOff[1]];
+        vbOff[0] = offsets[vbOff[0]];
+        vbOff[1] = offsets[vbOff[1]];
+        std::sort(vaOff.rbegin(), vaOff.rend());
+        std::sort(vbOff.rbegin(), vbOff.rend());
+        return vaOff > vbOff;
+      };
+
+  TTK_FORCE_USE(crit1SaddlesOrder);
+
+#else
+
+  // sort every triangulation edges by filtration order
+  const auto &edgesFiltrOrder{crit1SaddlesOrder};
 
   const auto cmpEdges
     = [&edgesFiltrOrder](const SimplexId a, const SimplexId b) {
         return edgesFiltrOrder[a] > edgesFiltrOrder[b];
       };
+
+  TTK_FORCE_USE(offsets);
+
+#endif // REDUCE_MEM
+
   using Container = std::set<SimplexId, decltype(cmpEdges)>;
   std::vector<Container> s2Boundaries(saddles2.size(), Container(cmpEdges));
 
@@ -1048,9 +1073,11 @@ void ttk::DiscreteMorseSandwich::extractCriticalCells(
                  debug::Priority::VERBOSE);
 
   // memory allocations
-  auto &critEdges{this->critEdges_};
+  std::vector<EdgeSimplex> critEdges{};
   if(!sortEdges) {
     critEdges.resize(criticalCellsByDim[1].size());
+  } else {
+    critEdges.resize(triangulation.getNumberOfEdges());
   }
   std::vector<TriangleSimplex> critTriangles(criticalCellsByDim[2].size());
   std::vector<TetraSimplex> critTetras(criticalCellsByDim[3].size());
@@ -1164,8 +1191,14 @@ int ttk::DiscreteMorseSandwich::computePersistencePairs(
   // holds the critical cells order
   auto &critCellsOrder{this->critCellsOrder_};
 
+#ifdef REDUCE_MEM
+  const auto sortEdges = false;
+#else
+  const auto sortEdges = (dim == 3);
+#endif // REDUCE_MEM
+
   this->extractCriticalCells(
-    criticalCellsByDim, critCellsOrder, offsets, triangulation, dim == 3);
+    criticalCellsByDim, critCellsOrder, offsets, triangulation, sortEdges);
 
   // if minima are paired
   auto &pairedMinima{this->pairedCritCells_[0]};
@@ -1239,7 +1272,7 @@ int ttk::DiscreteMorseSandwich::computePersistencePairs(
     std::vector<GeneratorType> tmp{};
     this->getSaddleSaddlePairs(
       pairs, paired1Saddles, paired2Saddles, false, tmp, criticalCellsByDim[1],
-      criticalCellsByDim[2], critCellsOrder[1], triangulation);
+      criticalCellsByDim[2], critCellsOrder[1], offsets, triangulation);
   }
 
   if(std::is_same<triangulationType, ttk::ExplicitTriangulation>::value) {
