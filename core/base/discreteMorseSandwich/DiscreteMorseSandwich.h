@@ -446,7 +446,6 @@ namespace ttk {
       }
       if(dim > 2) {
         this->critEdges_.resize(triangulation.getNumberOfEdges());
-        this->edgeTrianglePartner_.resize(triangulation.getNumberOfEdges(), -1);
         this->onBoundary_.resize(triangulation.getNumberOfEdges(), false);
 #ifndef REDUCE_MEM
         this->s2Mapping_.resize(triangulation.getNumberOfTriangles(), -1);
@@ -469,7 +468,6 @@ namespace ttk {
       Timer tm{};
       this->firstRepMin_ = {};
       this->firstRepMax_ = {};
-      this->edgeTrianglePartner_ = {};
       this->s2Mapping_ = {};
       this->s1Mapping_ = {};
       this->critEdges_ = {};
@@ -485,7 +483,6 @@ namespace ttk {
     // factor memory allocations outside computation loops
     mutable std::vector<SimplexId> firstRepMin_{}, firstRepMax_{};
     mutable SparseStorage s2Mapping_{}, s1Mapping_{};
-    mutable std::vector<SimplexId> edgeTrianglePartner_{};
     mutable std::vector<EdgeSimplex> critEdges_{};
     mutable std::array<std::vector<bool>, 4> pairedCritCells_{};
     mutable std::vector<bool> onBoundary_{};
@@ -799,7 +796,7 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp atomic read
 #endif // TTK_ENABLE_OPENMP
-        pTau = partners[tau];
+        pTau = partners[s1Mapping[tau]];
         if(pTau == -1 || s2Boundaries[s2Mapping[pTau]].empty()) {
           break;
         }
@@ -815,9 +812,9 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
       SimplexId cap{-1};
       {
         const auto guardTau = s1Locks[s1Mapping[tau]].lock();
-        cap = partners[tau];
-        if(partners[tau] == -1) {
-          partners[tau] = s2;
+        cap = partners[s1Mapping[tau]];
+        if(partners[s1Mapping[tau]] == -1) {
+          partners[s1Mapping[tau]] = s2;
         }
       }
 
@@ -856,9 +853,9 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
           SimplexId cap{-1};
           {
             const auto guardTau = s1Locks[s1Mapping[tau]].lock();
-            cap = partners[tau];
-            if(partners[tau] == pTau) {
-              partners[tau] = s2;
+            cap = partners[s1Mapping[tau]];
+            if(partners[s1Mapping[tau]] == pTau) {
+              partners[s1Mapping[tau]] = s2;
             }
           }
 
@@ -927,7 +924,7 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
   const auto &edgesFiltrOrder{crit1SaddlesOrder};
 
   auto &onBoundary{this->onBoundary_};
-  auto &edgeTrianglePartner{this->edgeTrianglePartner_};
+  std::vector<SimplexId> edgeTrianglePartner(saddles1.size(), -1);
 
   const auto cmpEdges
     = [&edgesFiltrOrder](const SimplexId a, const SimplexId b) {

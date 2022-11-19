@@ -421,7 +421,6 @@ int ttk::PersistentGenerators::computePersistentGenerators(
     // eliminateBoundariesSandwich for saddle-max instead of
     // tripletsToPersistencePairs)
     this->critEdges_.resize(triangulation.getNumberOfEdges());
-    this->edgeTrianglePartner_.resize(triangulation.getNumberOfEdges(), -1);
     this->onBoundary_.resize(triangulation.getNumberOfEdges(), false);
 #ifndef REDUCE_MEM
     this->s2Mapping_.resize(triangulation.getNumberOfTriangles(), -1);
