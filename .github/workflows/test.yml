@@ -2,9 +2,10 @@ name: test_build
 
 on:
   push:
+    # triggered on commit pushes on the "dev" branch
+    branches:
+      - 'dev'
     # triggered on tag pushes with tags beginning with either "v" or "dev"
-    branch-ignore:
-      - '*'
     tags:
       - 'v*'
       - 'dev*'
@@ -12,10 +13,9 @@ on:
       - 'build*'
       - 'test*'
   pull_request:
-    # also triggered by pull requests on the "dev" & "mpi" branches
+    # also triggered by pull requests on the "dev" branch
     branches:
       - 'dev'
-      - 'mpi'
 
 env:
   PV_TAG: v5.10.1-headless
@@ -29,6 +29,12 @@ jobs:
   # ------------------#
   test-build-ubuntu:
     runs-on: ${{ matrix.os }}
+    # trigger job when push event on a branch (not on a tag) only for
+    # the "topology-tool-kit/ttk" repository
+    # pull-requests and tag pushes not affected
+    if: >
+      (contains(github.ref, 'branch') && github.repository_owner == 'pierre-guillou')
+      || !contains(github.ref, 'branch')
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
@@ -203,6 +209,12 @@ jobs:
   # -----------------#
   test-build-macos:
     runs-on: macos-12
+    # trigger job when push event on a branch (not on a tag) only for
+    # the "topology-tool-kit/ttk" repository
+    # pull-requests and tag pushes not affected
+    if: >
+      (contains(github.ref, 'branch') && github.repository_owner == 'pierre-guillou')
+      || !contains(github.ref, 'branch')
     env:
       CCACHE_DIR: /Users/runner/work/ttk/.ccache
     steps:
@@ -332,6 +344,12 @@ jobs:
   # Test Windows build #
   # ------------------ #
   test-build-windows:
+    # trigger job when push event on a branch (not on a tag) only for
+    # the "topology-tool-kit/ttk" repository
+    # pull-requests and tag pushes not affected
+    if: >
+      (contains(github.ref, 'branch') && github.repository_owner == 'pierre-guillou')
+      || !contains(github.ref, 'branch')
     runs-on: windows-2022
     env:
       PV_DIR: C:\Program Files\TTK-ParaView
