@@ -318,7 +318,7 @@ namespace ttk {
     void tripletsToPersistencePairs(std::vector<PersistencePair> &pairs,
                                     std::vector<bool> &pairedExtrema,
                                     std::vector<bool> &pairedSaddles,
-                                    SparseStorage &reps,
+                                    std::vector<SimplexId> &reps,
                                     std::vector<tripletType> &triplets,
                                     const SimplexId *const saddlesOrder,
                                     const SimplexId *const extremaOrder,
@@ -440,12 +440,10 @@ namespace ttk {
       if(dim > 3 || dim < 1) {
         return;
       }
-#ifndef REDUCE_MEM
       this->firstRepMin_.resize(triangulation.getNumberOfVertices());
       if(dim > 1) {
         this->firstRepMax_.resize(triangulation.getNumberOfCells());
       }
-#endif // REDUCE_MEM
       if(dim > 2) {
         this->critEdges_.resize(triangulation.getNumberOfEdges());
         this->edgeTrianglePartner_.resize(triangulation.getNumberOfEdges(), -1);
@@ -485,8 +483,8 @@ namespace ttk {
     dcg::DiscreteGradient dg_{};
 
     // factor memory allocations outside computation loops
-    mutable SparseStorage firstRepMin_{}, firstRepMax_{}, s2Mapping_{},
-      s1Mapping_{};
+    mutable std::vector<SimplexId> firstRepMin_{}, firstRepMax_{};
+    mutable SparseStorage s2Mapping_{}, s1Mapping_{};
     mutable std::vector<SimplexId> edgeTrianglePartner_{};
     mutable std::vector<EdgeSimplex> critEdges_{};
     mutable std::array<std::vector<bool>, 4> pairedCritCells_{};
@@ -616,15 +614,7 @@ void ttk::DiscreteMorseSandwich::getMinSaddlePairs(
   Timer tmseq{};
 
   auto &firstRep{this->firstRepMin_};
-#ifdef REDUCE_MEM
-  for(const auto &el : saddle1ToMinima) {
-    for(const auto &min : el) {
-      firstRep[min] = min;
-    }
-  }
-#else
   std::iota(firstRep.begin(), firstRep.end(), 0);
-#endif // REDUCE_MEM
   std::vector<tripletType> sadMinTriplets{};
 
   for(size_t i = 0; i < saddle1ToMinima.size(); ++i) {
@@ -698,15 +688,7 @@ void ttk::DiscreteMorseSandwich::getMaxSaddlePairs(
   Timer tmseq{};
 
   auto &firstRep{this->firstRepMax_};
-#ifdef REDUCE_MEM
-  for(const auto &el : saddle2ToMaxima) {
-    for(const auto &max : el) {
-      firstRep[max] = max;
-    }
-  }
-#else
   std::iota(firstRep.begin(), firstRep.end(), 0);
-#endif // REDUCE_MEM
   std::vector<tripletType> sadMaxTriplets{};
 
   for(size_t i = 0; i < saddle2ToMaxima.size(); ++i) {
