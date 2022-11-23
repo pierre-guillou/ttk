@@ -93,8 +93,6 @@ using ttkSimplexIdTypeArray = vtkIntArray;
     ttkVtkTemplateMacroCase(dataType,                                     \
                             ttk::Triangulation::Type::HYBRID_IMPLICIT,    \
                             ttk::ImplicitWithPreconditions, call);        \
-    ttkVtkTemplateMacroCase(dataType, ttk::Triangulation::Type::IMPLICIT, \
-                            ttk::ImplicitNoPreconditions, call);          \
     ttkVtkTemplateMacroCase(dataType,                                     \
                             ttk::Triangulation::Type::HYBRID_PERIODIC,    \
                             ttk::PeriodicWithPreconditions, call);        \
