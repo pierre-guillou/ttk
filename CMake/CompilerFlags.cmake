@@ -8,8 +8,6 @@ if (NOT MSVC) # GCC and Clang
     -Wextra
     -Wtype-limits
     -Wshadow
-    -fsanitize=address
-    -g
     )
 
   # performance and debug flags
@@ -29,7 +27,8 @@ if (NOT MSVC) # GCC and Clang
   # hardened linker flags for Clang and GCC
   if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     list(APPEND TTK_LINKER_FLAGS
-      -fsanitize=address
+      -Wl,--as-needed
+      -Wl,--no-undefined
       )
   endif()
 
