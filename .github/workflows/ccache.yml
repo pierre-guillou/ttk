@@ -8,7 +8,7 @@ on:
       - 'ccache'
 
 env:
-  PV_TAG: 5.10.1-headless
+  PV_TAG: 5.11.0-headless
   PV_REPO: pierre-guillou/paraview-ttk
 
 jobs:
