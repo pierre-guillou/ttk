@@ -14,6 +14,7 @@ runs:
         ./ttkExample-c++ -i ../../data/inputData.off
 
     - name: Test VTK-C++ example
+      if: false
       shell: bash
       run: |
         cd $GITHUB_WORKSPACE/examples/vtk-c++

@@ -120,12 +120,6 @@ jobs:
         cmake --build . --parallel
         sudo cmake --build . --target install
 
-    - name: Set PYTHONPATH for Ubuntu 22.04 pvpython
-      if: matrix.os == 'ubuntu-22.04'
-      run: |
-        # pvpython does not embed the correct PYTHONPATH
-        echo "PYTHONPATH=/usr/lib/python3/dist-packages:$PYTHONPATH" >> $GITHUB_ENV
-
     - name: Run TTK tests
       uses: ./.github/actions/test-ttk-unix
 
@@ -306,11 +300,6 @@ jobs:
         cd build
         cmake --build . --parallel
         sudo cmake --build . --target install
-
-    - name: Set PYTHONPATH for macOS pvpython
-      run: |
-        # pvpython does not embed the correct PYTHONPATH
-        echo "PYTHONPATH=/usr/local/lib/python3.11/site-packages:$PYTHONPATH" >> $GITHUB_ENV
 
     - name: Run TTK tests
       uses: ./.github/actions/test-ttk-unix
