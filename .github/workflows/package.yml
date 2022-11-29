@@ -157,6 +157,7 @@ jobs:
 
     - name: Remove hosted Python
       run: |
+        sudo rm -rf /Library/Frameworks/Python.framework
         sudo rm -rf /usr/local/Frameworks/Python.framework
 
     - name: Install macOS dependencies
@@ -228,6 +229,7 @@ jobs:
 
     - name: Remove hosted Python
       run: |
+        sudo rm -rf /Library/Frameworks/Python.framework
         sudo rm -rf /usr/local/Frameworks/Python.framework
 
     - name: Install macOS dependencies
@@ -274,7 +276,7 @@ jobs:
         cmake --build . --parallel
         ./ttkExample-vtk-c++ -i ../../data/inputData.vtu
         # pure Python
-        export PYTHONPATH=/Applications/lib/python3.9/site-packages
+        export PYTHONPATH=/Applications/lib/python3.10/site-packages
         export DYLD_LIBRARY_PATH=/Applications/lib:$DYLD_LIBRARY_PATH
         cd $GITHUB_WORKSPACE/examples/python
         python3 example.py ../data/inputData.vtu
@@ -301,7 +303,7 @@ jobs:
         cat python/res.json
         diff python/hashes/macOS.json python/res.json
       env:
-        PYTHONPATH: /Applications/lib/python3.9/site-packages
+        PYTHONPATH: /Applications/lib/python3.10/site-packages
         PV_PLUGIN_PATH: /Applications/bin/plugins/TopologyToolKit
         OMP_NUM_THREADS: 1
 

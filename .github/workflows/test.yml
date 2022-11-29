@@ -246,12 +246,9 @@ jobs:
         brew install wget llvm libomp ninja python open-mpi
         # TTK dependencies
         brew install boost eigen graphviz numpy embree websocketpp ccache
-        python3.10 -m pip install scikit-learn
+        python3 -m pip install scikit-learn
         # prepend ccache to system path
         echo "$(brew --prefix)/opt/ccache/libexec" >> $GITHUB_PATH
-        # remove Python 3.11 installation
-        sudo rm -rf /Library/Frameworks/Python.framework/Versions/3.11
-        sudo rm -rf /usr/local/Frameworks/Python.framework/Versions/3.11
 
     - name: Install optional dependencies
       uses: ./.github/actions/install-deps-unix
@@ -313,7 +310,7 @@ jobs:
     - name: Set PYTHONPATH for macOS pvpython
       run: |
         # pvpython does not embed the correct PYTHONPATH
-        echo "PYTHONPATH=/usr/local/lib/python3.10/site-packages:$PYTHONPATH" >> $GITHUB_ENV
+        echo "PYTHONPATH=/usr/local/lib/python3.11/site-packages:$PYTHONPATH" >> $GITHUB_ENV
 
     - name: Run TTK tests
       uses: ./.github/actions/test-ttk-unix
@@ -347,7 +344,7 @@ jobs:
     - name: Run ttk-data Python scripts
       run: |
         cd ttk-data
-        python3.10 -u python/run.py
+        python3 -u python/run.py
       env:
         PV_PLUGIN_PATH: /usr/local/bin/plugins/TopologyToolKit
 
