@@ -1009,24 +1009,6 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
     }
   }
 
-  {
-    size_t nEmpty{};
-    for(const auto s2 : saddles2) {
-      // 2-saddles sorted in increasing order
-      if(s2Parent[s2].empty()) {
-        nEmpty++;
-        continue;
-      }
-      // parent 2-saddles
-      std::cout << s2 << " #" << s2Parent[s2].size() << ": ";
-      for(const auto p : s2Parent[s2]) {
-        std::cout << p << ',';
-      }
-      std::cout << '\n';
-    }
-    std::cout << saddles2.size() << " " << nEmpty << '\n';
-  }
-
   if(exportBoundaries) {
     boundaries.resize(s2Boundaries.size());
     for(size_t i = 0; i < boundaries.size(); ++i) {
