@@ -3269,32 +3269,9 @@ int ImplicitTriangulation::preconditionDistributedVertices() {
                  MPI_STATUS_IGNORE);
   }
 
-  stringstream ss{};
-  for(size_t i = 0; i < this->neighborRanks_.size(); ++i) {
-    ss << neighborRanks_[i] << " [";
-    for(const auto el : neighborBBoxes_[neighborRanks_[i]]) {
-      ss << el << ", ";
-    }
-    ss << "]\n";
-  }
-  printMsg(ss.str());
-
   this->ghostVerticesPerOwner_.resize(ttk::MPIsize_);
-  int nDiff{};
 
   for(LongSimplexId lvid = 0; lvid < nLocVertices; ++lvid) {
-    const auto old{this->vertexRankArray_[lvid]};
-    const auto nuw{this->getVertexRankInternal(lvid)};
-    if(old != nuw && nDiff < 10) {
-      nDiff++;
-      std::array<float, 3> pt{};
-      this->getVertexPoint(lvid, pt[0], pt[1], pt[2]);
-
-      this->printMsg(std::to_string(lvid) + " "
-                     + std::to_string(this->getVertexGlobalIdInternal(lvid))
-                     + ": " + std::to_string(old) + " " + " instead of "
-                     + std::to_string(nuw));
-    }
     if(this->getVertexRankInternal(lvid) != ttk::MPIrank_) {
       // store ghost cell global ids (per rank)
       this->ghostVerticesPerOwner_[this->getVertexRankInternal(lvid)]
