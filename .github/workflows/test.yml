@@ -236,7 +236,7 @@ jobs:
         brew install wget llvm libomp ninja python open-mpi
         # TTK dependencies
         brew install boost eigen graphviz numpy embree websocketpp ccache
-        python3 -m pip install scikit-learn
+        python3.11 -m pip install scikit-learn
         # prepend ccache to system path
         echo "$(brew --prefix)/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -296,6 +296,11 @@ jobs:
         cd build
         cmake --build . --parallel
         sudo cmake --build . --target install
+
+    - name: Set PYTHONPATH for macOS pvpython
+      run: |
+        # pvpython does not embed the correct PYTHONPATH
+        echo "PYTHONPATH=/usr/local/lib/python3.11/site-packages:$PYTHONPATH" >> $GITHUB_ENV
 
     - name: Run TTK tests
       uses: ./.github/actions/test-ttk-unix
