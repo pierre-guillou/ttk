@@ -22,7 +22,7 @@ def doIt(X, method, ncomponents, nneighbors, njobs, rstate, params):
 
     if platform == "darwin":
         import sklearn
-
+        print("there")
         sklearn.utils.parallel_backend("threading")
 
     if rstate > 0:

@@ -334,9 +334,10 @@ jobs:
     - name: Run ttk-data Python scripts
       run: |
         cd ttk-data
-        python3 -u python/run.py
+        python3.11 -u python/run.py
       env:
         PV_PLUGIN_PATH: /usr/local/bin/plugins/TopologyToolKit
+        PYTHONUNBUFFERED: 1
 
     - name: Test ttk-data Python scripts results [NOT ENFORCED]
       continue-on-error: true
