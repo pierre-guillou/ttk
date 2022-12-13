@@ -3319,10 +3319,6 @@ void ttk::ImplicitTriangulation::createMetaGrid(const double *const bounds) {
     return;
   }
 
-  std::stringstream ss;
-  ss << "bounds " << bounds[0] << " " << bounds[1] << " " << bounds[2] << " "
-     << bounds[3] << " " << bounds[4] << " " << bounds[5] << "\n";
-
   // Reorganize bounds to only execute Allreduce twice
   std::array<double, 6> tempBounds = {
     bounds[0], bounds[2], bounds[4], bounds[1], bounds[3], bounds[5],
@@ -3353,15 +3349,6 @@ void ttk::ImplicitTriangulation::createMetaGrid(const double *const bounds) {
       std::round((globalBounds[5] - globalBounds[4]) / this->spacing_[2]))
       + 1,
   };
-
-  ss << "global bounds " << globalBounds[0] << " " << globalBounds[1] << " "
-     << globalBounds[2] << " " << globalBounds[3] << " " << globalBounds[4]
-     << " " << globalBounds[5] << "\n";
-  ss << "spacing_ " << spacing_[0] << " " << spacing_[1] << " " << spacing_[2]
-     << '\n';
-  ss << "dimensions " << dimensions[0] << " " << dimensions[1] << " "
-     << dimensions[2];
-  printMsg(ss.str());
 
   this->localGridOffset_ = {
     static_cast<SimplexId>(
