@@ -13,7 +13,7 @@
 #include <array>
 
 // base code includes
-#include <AbstractTriangulation.h>
+#include <RegularGridTriangulation.h>
 
 #ifdef TTK_ENABLE_MPI
 #include <memory>
@@ -21,7 +21,7 @@
 
 namespace ttk {
 
-  class ImplicitTriangulation : public AbstractTriangulation {
+  class ImplicitTriangulation : public RegularGridTriangulation {
 
   public:
     ImplicitTriangulation();
@@ -208,7 +208,7 @@ namespace ttk {
                      const float &zSpacing,
                      const SimplexId &xDim,
                      const SimplexId &yDim,
-                     const SimplexId &zDim);
+                     const SimplexId &zDim) override;
 
     virtual int preconditionVerticesInternal() = 0;
     int preconditionVertexNeighborsInternal() override;
@@ -278,10 +278,6 @@ namespace ttk {
       isTriangleOnGlobalBoundaryInternal(const SimplexId ltid) const override;
 
   private:
-    SimplexId findEdgeFromVertices(const SimplexId v0,
-                                   const SimplexId v1) const;
-    SimplexId findTriangleFromVertices(std::array<SimplexId, 3> &verts) const;
-
     std::array<SimplexId, 3> getVertGlobalCoords(const SimplexId lvid) const;
     std::array<SimplexId, 3> getVertLocalCoords(const SimplexId gvid) const;
 
@@ -289,7 +285,7 @@ namespace ttk {
 
   protected:
 #ifdef TTK_ENABLE_MPI
-    std::shared_ptr<ImplicitTriangulation> metaGrid_{};
+    std::shared_ptr<RegularGridTriangulation> metaGrid_{};
     // offset coordinates of the local grid inside the metaGrid_
     std::array<SimplexId, 3> localGridOffset_{};
     // hold the neighboring ranks vertex bounding boxes (metaGrid_ coordinates)
@@ -550,10 +546,12 @@ namespace ttk {
 
     //\cond
     // 2D //
-    void vertexToPosition2d(const SimplexId vertex, SimplexId p[2]) const;
+    void vertexToPosition2d(const SimplexId vertex,
+                            SimplexId p[2]) const override;
     void
       edgeToPosition2d(const SimplexId edge, const int k, SimplexId p[2]) const;
-    void triangleToPosition2d(const SimplexId triangle, SimplexId p[2]) const;
+    void triangleToPosition2d(const SimplexId triangle,
+                              SimplexId p[2]) const override;
 
     SimplexId getVertexEdge2dA(const SimplexId p[2], const int id) const;
     SimplexId getVertexEdge2dB(const SimplexId p[2], const int id) const;
@@ -601,14 +599,15 @@ namespace ttk {
     SimplexId getEdgeStar2dH(const SimplexId p[2], const int id) const;
 
     // 3D //
-    void vertexToPosition(const SimplexId vertex, SimplexId p[3]) const;
+    void vertexToPosition(const SimplexId vertex,
+                          SimplexId p[3]) const override;
     void
       edgeToPosition(const SimplexId edge, const int k, SimplexId p[3]) const;
     void triangleToPosition(const SimplexId triangle,
                             const int k,
-                            SimplexId p[3]) const;
+                            SimplexId p[3]) const override;
     void tetrahedronToPosition(const SimplexId tetrahedron,
-                               SimplexId p[3]) const;
+                               SimplexId p[3]) const override;
 
     SimplexId getVertexEdgeA(const SimplexId p[3], const int id) const;
     SimplexId getVertexEdgeB(const SimplexId p[3], const int id) const;

@@ -13,13 +13,13 @@
 #pragma once
 
 // base code includes
-#include <AbstractTriangulation.h>
+#include <RegularGridTriangulation.h>
 
 #include <array>
 
 namespace ttk {
 
-  class PeriodicImplicitTriangulation : public AbstractTriangulation {
+  class PeriodicImplicitTriangulation : public RegularGridTriangulation {
 
   public:
     PeriodicImplicitTriangulation();
@@ -219,7 +219,7 @@ namespace ttk {
                      const float &zSpacing,
                      const int &xDim,
                      const int &yDim,
-                     const int &zDim);
+                     const int &zDim) override;
 
     virtual int preconditionVerticesInternal() = 0;
     int preconditionEdgesInternal() override = 0;
@@ -362,10 +362,12 @@ namespace ttk {
 
     //\cond
     // 2D //
-    void vertexToPosition2d(const SimplexId vertex, SimplexId p[2]) const;
+    void vertexToPosition2d(const SimplexId vertex,
+                            SimplexId p[2]) const override;
     void
       edgeToPosition2d(const SimplexId edge, const int k, SimplexId p[2]) const;
-    void triangleToPosition2d(const SimplexId triangle, SimplexId p[2]) const;
+    void triangleToPosition2d(const SimplexId triangle,
+                              SimplexId p[2]) const override;
 
     SimplexId getVertexNeighbor2d(const SimplexId p[2],
                                   const SimplexId v,
@@ -386,14 +388,15 @@ namespace ttk {
     SimplexId getEdgeStar2dH(const SimplexId p[2], const int id) const;
 
     // 3D //
-    void vertexToPosition(const SimplexId vertex, SimplexId p[3]) const;
+    void vertexToPosition(const SimplexId vertex,
+                          SimplexId p[3]) const override;
     void
       edgeToPosition(const SimplexId edge, const int k, SimplexId p[3]) const;
     void triangleToPosition(const SimplexId triangle,
                             const int k,
-                            SimplexId p[3]) const;
+                            SimplexId p[3]) const override;
     void tetrahedronToPosition(const SimplexId tetrahedron,
-                               SimplexId p[3]) const;
+                               SimplexId p[3]) const override;
 
     SimplexId getVertexNeighbor3d(const SimplexId p[3],
                                   const SimplexId v,

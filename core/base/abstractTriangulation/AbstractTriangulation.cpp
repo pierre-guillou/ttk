@@ -1,4 +1,5 @@
 #include <AbstractTriangulation.h>
+#include <RegularGridTriangulation.h>
 
 using namespace std;
 using namespace ttk;
@@ -141,4 +142,46 @@ size_t AbstractTriangulation::footprint(size_t size) const {
   printMsg(msg.str());
 
   return size;
+}
+
+SimplexId ttk::RegularGridTriangulation::findEdgeFromVertices(
+  const SimplexId v0, const SimplexId v1) const {
+  // loop over v0 edges to find the one between v0 and v1
+  const auto nEdges = this->getVertexEdgeNumberInternal(v0);
+  for(SimplexId i = 0; i < nEdges; ++i) {
+    SimplexId e{};
+    std::array<SimplexId, 2> eVerts{};
+    this->getVertexEdgeInternal(v0, i, e);
+    this->getEdgeVertexInternal(e, 0, eVerts[0]);
+    this->getEdgeVertexInternal(e, 1, eVerts[1]);
+    if((v0 == eVerts[0] && v1 == eVerts[1])
+       || (v0 == eVerts[1] && v1 == eVerts[0])) {
+      return e;
+    }
+  }
+
+  return -1;
+}
+
+SimplexId ttk::RegularGridTriangulation::findTriangleFromVertices(
+  std::array<SimplexId, 3> &verts) const {
+
+  std::sort(verts.begin(), verts.end());
+
+  // loop over verts[0] triangles to find the one shared by all 3
+  const auto nTriangles = this->getVertexTriangleNumberInternal(verts[0]);
+  for(SimplexId i = 0; i < nTriangles; ++i) {
+    SimplexId t{};
+    std::array<SimplexId, 3> tVerts{};
+    this->getVertexTriangleInternal(verts[0], i, t);
+    this->getTriangleVertexInternal(t, 0, tVerts[0]);
+    this->getTriangleVertexInternal(t, 1, tVerts[1]);
+    this->getTriangleVertexInternal(t, 2, tVerts[2]);
+    std::sort(tVerts.begin(), tVerts.end());
+    if(tVerts == verts) {
+      return t;
+    }
+  }
+
+  return -1;
 }
