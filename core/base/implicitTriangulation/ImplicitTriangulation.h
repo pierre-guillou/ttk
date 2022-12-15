@@ -254,7 +254,8 @@ namespace ttk {
     int preconditionDistributedVertices() override;
 
   public:
-    void createMetaGrid(const double *const bounds);
+    void createMetaGrid(const double *const bounds,
+                        const bool periodic = false);
 
     SimplexId getVertexGlobalIdInternal(const SimplexId lvid) const override;
     SimplexId getVertexLocalIdInternal(const SimplexId gvid) const override;

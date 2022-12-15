@@ -1,4 +1,5 @@
 #include <ImplicitTriangulation.h>
+#include <PeriodicImplicitTriangulation.h>
 
 #include <numeric>
 #include <sstream>
@@ -3307,7 +3308,8 @@ int ImplicitTriangulation::preconditionDistributedVertices() {
   return 0;
 }
 
-void ttk::ImplicitTriangulation::createMetaGrid(const double *const bounds) {
+void ttk::ImplicitTriangulation::createMetaGrid(const double *const bounds,
+                                                const bool periodic) {
 
   // only works with 2 processes or more
   if(!ttk::isRunningWithMPI()) {
@@ -3359,7 +3361,12 @@ void ttk::ImplicitTriangulation::createMetaGrid(const double *const bounds) {
       std::round((this->origin_[2] - globalBounds[4]) / this->spacing_[2])),
   };
 
-  this->metaGrid_ = std::make_shared<ImplicitNoPreconditions>();
+  if(periodic) {
+    this->metaGrid_ = std::make_shared<PeriodicNoPreconditions>();
+  } else {
+    this->metaGrid_ = std::make_shared<ImplicitNoPreconditions>();
+  }
+
   this->metaGrid_->setInputGrid(globalBounds[0], globalBounds[1],
                                 globalBounds[2], this->spacing_[0],
                                 this->spacing_[1], this->spacing_[2],

@@ -7,6 +7,7 @@ ttk_add_base_library(implicitTriangulation
     ImplicitPreconditions.h
   DEPENDS
     abstractTriangulation
+    periodicImplicitTriangulation
     )
 
     # target_compile_options(implicitTriangulation PRIVATE -fsanitize=address -O0)
