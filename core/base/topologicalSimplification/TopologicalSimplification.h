@@ -167,6 +167,12 @@ int ttk::TopologicalSimplification::execute(
   const SimplexId constraintNumber,
   const bool addPerturbation,
   const triangulationType &triangulation) {
+
+  if(constraintNumber == 0) {
+    this->printWrn("No constraints provided, skipping...");
+    return 0;
+  }
+
   switch(backend_) {
     case BACKEND::LTS:
       return ltsObject_
