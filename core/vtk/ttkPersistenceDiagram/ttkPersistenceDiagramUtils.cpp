@@ -13,9 +13,9 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkVersion.h> // for VTK_VERSION_CHECK via ParaView 5.8.1
 
-int VTUToDiagram(ttk::DiagramType &diagram,
-                 vtkUnstructuredGrid *vtu,
-                 const ttk::Debug &dbg) {
+int ttk::VTUToDiagram(ttk::DiagramType &diagram,
+                      vtkUnstructuredGrid *vtu,
+                      const ttk::Debug &dbg) {
 
   const auto pd = vtu->GetPointData();
   const auto cd = vtu->GetCellData();
@@ -153,12 +153,12 @@ int VTUToDiagram(ttk::DiagramType &diagram,
   return 0;
 }
 
-int DiagramToVTU(vtkUnstructuredGrid *vtu,
-                 const ttk::DiagramType &diagram,
-                 vtkDataArray *const inputScalars,
-                 const ttk::Debug &dbg,
-                 const int dim,
-                 const bool embedInDomain) {
+int ttk::DiagramToVTU(vtkUnstructuredGrid *vtu,
+                      const ttk::DiagramType &diagram,
+                      vtkDataArray *const inputScalars,
+                      const ttk::Debug &dbg,
+                      const int dim,
+                      const bool embedInDomain) {
 
   if(diagram.empty()) {
     dbg.printErr("Empty diagram");
@@ -299,9 +299,9 @@ int DiagramToVTU(vtkUnstructuredGrid *vtu,
   return 0;
 }
 
-int ProjectDiagramInsideDomain(vtkUnstructuredGrid *const inputDiagram,
-                               vtkUnstructuredGrid *const outputDiagram,
-                               const ttk::Debug &dbg) {
+int ttk::ProjectDiagramInsideDomain(vtkUnstructuredGrid *const inputDiagram,
+                                    vtkUnstructuredGrid *const outputDiagram,
+                                    const ttk::Debug &dbg) {
 
   ttk::Timer tm{};
 
@@ -372,9 +372,9 @@ void getCoords(vtkPoints *points,
   TTK_FORCE_USE(nThreads);
 }
 
-int ProjectDiagramIn2D(vtkUnstructuredGrid *const inputDiagram,
-                       vtkUnstructuredGrid *const outputDiagram,
-                       const ttk::Debug &dbg) {
+int ttk::ProjectDiagramIn2D(vtkUnstructuredGrid *const inputDiagram,
+                            vtkUnstructuredGrid *const outputDiagram,
+                            const ttk::Debug &dbg) {
 
   ttk::Timer tm{};
 
@@ -445,8 +445,8 @@ int ProjectDiagramIn2D(vtkUnstructuredGrid *const inputDiagram,
   return 0;
 }
 
-int TranslateDiagram(vtkUnstructuredGrid *const diagram,
-                     const std::array<double, 3> &trans) {
+int ttk::TranslateDiagram(vtkUnstructuredGrid *const diagram,
+                          const std::array<double, 3> &trans) {
 
   vtkNew<vtkUnstructuredGrid> tmp{};
   tmp->ShallowCopy(diagram);
@@ -464,8 +464,8 @@ int TranslateDiagram(vtkUnstructuredGrid *const diagram,
   return 0;
 }
 
-int ResetDiagramPosition(vtkUnstructuredGrid *const diagram,
-                         const ttk::Debug &dbg) {
+int ttk::ResetDiagramPosition(vtkUnstructuredGrid *const diagram,
+                              const ttk::Debug &dbg) {
 
   const bool embedded
     = diagram->GetPointData()->GetArray(ttk::PersistenceCoordinatesName)
