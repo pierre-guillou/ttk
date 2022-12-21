@@ -28,14 +28,15 @@
 #include <vtkCellData.h>
 #include <vtkPointData.h>
 
-ttk::ttkCinemaImagingVTK::ttkCinemaImagingVTK() {
+ttkCinemaImagingVTK::ttkCinemaImagingVTK() {
   this->setDebugMsgPrefix("CinemaImaging(VTK)");
-};
-ttk::ttkCinemaImagingVTK::~ttkCinemaImagingVTK() = default;
+}
 
-int ttk::ttkCinemaImagingVTK::setupRenderer(vtkRenderer *renderer,
-                                            vtkPointSet *object,
-                                            vtkCamera *camera) const {
+ttkCinemaImagingVTK::~ttkCinemaImagingVTK() = default;
+
+int ttkCinemaImagingVTK::setupRenderer(vtkRenderer *renderer,
+                                       vtkPointSet *object,
+                                       vtkCamera *camera) const {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputDataObject(object);
 
@@ -50,9 +51,9 @@ int ttk::ttkCinemaImagingVTK::setupRenderer(vtkRenderer *renderer,
   return 1;
 }
 
-int ttk::ttkCinemaImagingVTK::setupWindow(vtkRenderWindow *window,
-                                          vtkRenderer *renderer,
-                                          const double resolution[2]) const {
+int ttkCinemaImagingVTK::setupWindow(vtkRenderWindow *window,
+                                     vtkRenderer *renderer,
+                                     const double resolution[2]) const {
   window->SetSize(resolution[0], resolution[1]);
   window->SetMultiSamples(0); // Disable AA
   window->OffScreenRenderingOn();
@@ -61,7 +62,7 @@ int ttk::ttkCinemaImagingVTK::setupWindow(vtkRenderWindow *window,
   return 1;
 };
 
-int ttk::ttkCinemaImagingVTK::addValuePass(
+int ttkCinemaImagingVTK::addValuePass(
   vtkPointSet *object,
   int fieldType,
   vtkRenderPassCollection *valuePassCollection,
@@ -97,11 +98,9 @@ int ttk::ttkCinemaImagingVTK::addValuePass(
   return 1;
 };
 
-int ttk::ttkCinemaImagingVTK::RenderVTKObject(
-  vtkMultiBlockDataSet *outputImages,
-
-  vtkPointSet *inputObject,
-  vtkPointSet *inputGrid) const {
+int ttkCinemaImagingVTK::RenderVTKObject(vtkMultiBlockDataSet *outputImages,
+                                         vtkPointSet *inputObject,
+                                         vtkPointSet *inputGrid) const {
 
   auto inputObjectAsPD = vtkSmartPointer<vtkPolyData>::New();
   if(inputObject->IsA("vtkPolyData")) {

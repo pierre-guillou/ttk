@@ -15,17 +15,15 @@
 
 #include <BoundingVolumeHierarchy.h>
 
-ttk::ttkCinemaImagingNative::ttkCinemaImagingNative() {
+ttkCinemaImagingNative::ttkCinemaImagingNative() {
   this->setDebugMsgPrefix("CinemaImaging(Native)");
-};
+}
 
-ttk::ttkCinemaImagingNative::~ttkCinemaImagingNative() = default;
+ttkCinemaImagingNative::~ttkCinemaImagingNative() = default;
 
-int ttk::ttkCinemaImagingNative::RenderVTKObject(
-  vtkMultiBlockDataSet *outputImages,
-
-  vtkPointSet *inputObject,
-  vtkPointSet *inputGrid) const {
+int ttkCinemaImagingNative::RenderVTKObject(vtkMultiBlockDataSet *outputImages,
+                                            vtkPointSet *inputObject,
+                                            vtkPointSet *inputGrid) const {
   int status = 0;
 
   auto inputObjectCells = ttkCinemaImaging::GetCells(inputObject);
@@ -59,7 +57,7 @@ int ttk::ttkCinemaImagingNative::RenderVTKObject(
     ttkUtils::GetVoidPointer(inputObjectCells->GetConnectivityArray()));
 
   ttk::Timer test;
-  BoundingVolumeHierarchy<vtkIdType> bvh(
+  ttk::BoundingVolumeHierarchy<vtkIdType> bvh(
     static_cast<float *>(ttkUtils::GetVoidPointer(inputObject->GetPoints())),
     inputObjectConnectivityList, inputObjectCells->GetNumberOfCells());
 

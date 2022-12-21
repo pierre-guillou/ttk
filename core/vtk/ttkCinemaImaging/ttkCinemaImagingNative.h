@@ -5,15 +5,13 @@
 class vtkMultiBlockDataSet;
 class vtkPointSet;
 
-namespace ttk {
-  class ttkCinemaImagingNative : public CinemaImagingNative {
-  public:
-    ttkCinemaImagingNative();
-    ~ttkCinemaImagingNative() override;
+class ttkCinemaImagingNative : public ttk::CinemaImagingNative {
+public:
+  ttkCinemaImagingNative();
+  ~ttkCinemaImagingNative() override;
 
-    int RenderVTKObject(vtkMultiBlockDataSet *outputImages,
+  int RenderVTKObject(vtkMultiBlockDataSet *outputImages,
 
-                        vtkPointSet *inputObject,
-                        vtkPointSet *inputGrid) const;
-  };
-}; // namespace ttk
+                      vtkPointSet *inputObject,
+                      vtkPointSet *inputGrid) const;
+};

@@ -28,7 +28,6 @@ ttkCinemaImaging::ttkCinemaImaging() {
 };
 
 ttkCinemaImaging::~ttkCinemaImaging() = default;
-;
 
 int ttkCinemaImaging::FillInputPortInformation(int port, vtkInformation *info) {
   if(port == 0) {
@@ -234,17 +233,17 @@ int ttkCinemaImaging::RequestDataSingle(
 
   int status = 0;
   if(this->Backend == 0) {
-    ttk::ttkCinemaImagingVTK renderer;
+    ttkCinemaImagingVTK renderer;
     renderer.setDebugLevel(this->debugLevel_);
     renderer.setThreadNumber(this->threadNumber_);
     status = renderer.RenderVTKObject(outputImages, inputObject, inputGrid);
   } else if(this->Backend == 1) {
-    ttk::ttkCinemaImagingEmbree renderer;
+    ttkCinemaImagingEmbree renderer;
     renderer.setDebugLevel(this->debugLevel_);
     renderer.setThreadNumber(this->threadNumber_);
     status = renderer.RenderVTKObject(outputImages, inputObject, inputGrid);
   } else {
-    ttk::ttkCinemaImagingNative renderer;
+    ttkCinemaImagingNative renderer;
     renderer.setDebugLevel(this->debugLevel_);
     renderer.setThreadNumber(this->threadNumber_);
     status = renderer.RenderVTKObject(outputImages, inputObject, inputGrid);

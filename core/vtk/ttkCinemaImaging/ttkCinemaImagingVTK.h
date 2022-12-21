@@ -9,29 +9,27 @@ class vtkMultiBlockDataSet;
 class vtkRenderPassCollection;
 class vtkCamera;
 
-namespace ttk {
-  class ttkCinemaImagingVTK : virtual public Debug {
-  public:
-    ttkCinemaImagingVTK();
-    ~ttkCinemaImagingVTK() override;
+class ttkCinemaImagingVTK : virtual public ttk::Debug {
+public:
+  ttkCinemaImagingVTK();
+  ~ttkCinemaImagingVTK() override;
 
-    int RenderVTKObject(vtkMultiBlockDataSet *outputImages,
+  int RenderVTKObject(vtkMultiBlockDataSet *outputImages,
 
-                        vtkPointSet *inputObject,
-                        vtkPointSet *inputGrid) const;
+                      vtkPointSet *inputObject,
+                      vtkPointSet *inputGrid) const;
 
-  protected:
-    int setupRenderer(vtkRenderer *renderer,
-                      vtkPointSet *object,
-                      vtkCamera *camera) const;
+protected:
+  int setupRenderer(vtkRenderer *renderer,
+                    vtkPointSet *object,
+                    vtkCamera *camera) const;
 
-    int setupWindow(vtkRenderWindow *window,
-                    vtkRenderer *renderer,
-                    const double resolution[2]) const;
+  int setupWindow(vtkRenderWindow *window,
+                  vtkRenderer *renderer,
+                  const double resolution[2]) const;
 
-    int addValuePass(vtkPointSet *object,
-                     int fieldType,
-                     vtkRenderPassCollection *valuePassCollection,
-                     std::vector<std::string> &valuePassNames) const;
-  };
-}; // namespace ttk
+  int addValuePass(vtkPointSet *object,
+                   int fieldType,
+                   vtkRenderPassCollection *valuePassCollection,
+                   std::vector<std::string> &valuePassNames) const;
+};

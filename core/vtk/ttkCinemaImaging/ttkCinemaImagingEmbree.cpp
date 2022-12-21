@@ -13,16 +13,15 @@
 #include <vtkFloatArray.h>
 #include <vtkUnsignedIntArray.h>
 
-ttk::ttkCinemaImagingEmbree::ttkCinemaImagingEmbree() {
+ttkCinemaImagingEmbree::ttkCinemaImagingEmbree() {
   this->setDebugMsgPrefix("CinemaImaging(Embree)");
-};
-ttk::ttkCinemaImagingEmbree::~ttkCinemaImagingEmbree() = default;
+}
 
-int ttk::ttkCinemaImagingEmbree::RenderVTKObject(
-  vtkMultiBlockDataSet *outputImages,
+ttkCinemaImagingEmbree::~ttkCinemaImagingEmbree() = default;
 
-  vtkPointSet *inputObject,
-  vtkPointSet *inputGrid) const {
+int ttkCinemaImagingEmbree::RenderVTKObject(vtkMultiBlockDataSet *outputImages,
+                                            vtkPointSet *inputObject,
+                                            vtkPointSet *inputGrid) const {
   int status = 0;
 
 #ifdef TTK_ENABLE_EMBREE
