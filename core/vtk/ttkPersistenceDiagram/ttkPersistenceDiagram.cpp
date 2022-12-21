@@ -42,22 +42,40 @@ int ttkPersistenceDiagram::dispatch(
   vtkUnstructuredGrid *outputCTPersistenceDiagram,
   vtkDataArray *const inputScalarsArray,
   const scalarType *const inputScalars,
-  scalarType *outputScalars,
-  SimplexId *outputOffsets,
-  int *outputMonotonyOffsets,
   const SimplexId *const inputOrder,
   const triangulationType *triangulation) {
 
   int status{};
   ttk::DiagramType CTDiagram{};
 
+  vtkNew<ttkSimplexIdTypeArray> outputOffsets{};
+  vtkNew<vtkIntArray> outputMonotonyOffsets{};
+  vtkSmartPointer<vtkDataArray> outputScalars
+    = vtkSmartPointer<vtkDataArray>::Take(inputScalarsArray->NewInstance());
+
   if(BackEnd == BACKEND::APPROXIMATE_TOPOLOGY) {
-    std::cout << "Chosen approx" << std::endl;
+
+    outputOffsets->SetNumberOfComponents(1);
+    outputOffsets->SetNumberOfTuples(inputScalarsArray->GetNumberOfTuples());
+    outputOffsets->SetName("outputOffsets");
+
+    outputMonotonyOffsets->SetNumberOfComponents(1);
+    outputMonotonyOffsets->SetNumberOfTuples(
+      inputScalarsArray->GetNumberOfTuples());
+    outputMonotonyOffsets->SetName("outputMonotonyffsets");
+    outputMonotonyOffsets->FillComponent(0, 0);
+
+    outputScalars->SetNumberOfComponents(1);
+    outputScalars->SetNumberOfTuples(inputScalarsArray->GetNumberOfTuples());
+    outputScalars->DeepCopy(inputScalarsArray);
+    outputScalars->SetName("Cropped");
+
     double *range = inputScalarsArray->GetRange(0);
     this->setDeltaApproximate(range[1] - range[0]);
-    this->setOutputScalars(outputScalars);
-    this->setOutputOffsets(outputOffsets);
-    this->setOutputMonotonyOffsets(outputMonotonyOffsets);
+    this->setOutputScalars(ttkUtils::GetPointer<scalarType>(outputScalars));
+    this->setOutputOffsets(ttkUtils::GetPointer<SimplexId>(outputOffsets));
+    this->setOutputMonotonyOffsets(
+      ttkUtils::GetPointer<int>(outputMonotonyOffsets));
   }
 
   status = this->execute(CTDiagram, inputScalars, inputScalarsArray->GetMTime(),
@@ -76,6 +94,14 @@ int ttkPersistenceDiagram::dispatch(
   }
 
   vtkNew<vtkUnstructuredGrid> vtu{};
+
+  if(BackEnd == BACKEND::APPROXIMATE_TOPOLOGY) {
+    // replace inputScalars with outputScalars
+    for(auto &pair : CTDiagram) {
+      pair.birth.sfValue = outputScalars->GetTuple1(pair.birth.id);
+      pair.death.sfValue = outputScalars->GetTuple1(pair.death.id);
+    }
+  }
 
   // convert CTDiagram to vtkUnstructuredGrid
   DiagramToVTU(vtu, CTDiagram, inputScalarsArray, *this,
@@ -132,33 +158,12 @@ int ttkPersistenceDiagram::RequestData(vtkInformation *ttkNotUsed(request),
   }
 #endif
 
-  vtkNew<ttkSimplexIdTypeArray> outputOffsets{};
-  outputOffsets->SetNumberOfComponents(1);
-  outputOffsets->SetNumberOfTuples(inputScalars->GetNumberOfTuples());
-  outputOffsets->SetName("outputOffsets");
-
-  vtkNew<vtkIntArray> outputMonotonyOffsets{};
-  outputMonotonyOffsets->SetNumberOfComponents(1);
-  outputMonotonyOffsets->SetNumberOfTuples(inputScalars->GetNumberOfTuples());
-  outputMonotonyOffsets->SetName("outputMonotonyffsets");
-  outputMonotonyOffsets->FillComponent(0, 0);
-
-  vtkSmartPointer<vtkDataArray> outputScalars
-    = vtkSmartPointer<vtkDataArray>::Take(inputScalars->NewInstance());
-  outputScalars->SetNumberOfComponents(1);
-  outputScalars->SetNumberOfTuples(inputScalars->GetNumberOfTuples());
-  outputScalars->DeepCopy(inputScalars);
-  outputScalars->SetName("Cropped");
-
   int status{};
   ttkVtkTemplateMacro(
     inputScalars->GetDataType(), triangulation->getType(),
     status = this->dispatch(
       outputCTPersistenceDiagram, inputScalars,
       static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(inputScalars)),
-      static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(outputScalars)),
-      static_cast<SimplexId *>(ttkUtils::GetVoidPointer(outputOffsets)),
-      static_cast<int *>(ttkUtils::GetVoidPointer(outputMonotonyOffsets)),
       static_cast<SimplexId *>(ttkUtils::GetVoidPointer(offsetField)),
       static_cast<TTK_TT *>(triangulation->getData())));
 

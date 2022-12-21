@@ -236,9 +236,6 @@ private:
   int dispatch(vtkUnstructuredGrid *outputCTPersistenceDiagram,
                vtkDataArray *const inputScalarsArray,
                const scalarType *const inputScalars,
-               scalarType *outputScalars,
-               SimplexId *outputOffsets,
-               int *outputMonotonyOffsets,
                const SimplexId *const inputOrder,
                const triangulationType *triangulation);
 
