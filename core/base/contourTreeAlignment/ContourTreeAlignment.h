@@ -252,7 +252,7 @@ namespace ttk {
     /// index outputEdges[2*i] and outputEdges[2*i+1]. \param seed seed for
     /// randomization.
     template <class scalarType>
-    int execute(const std::vector<void *> &scalarsVP,
+    int execute(const std::vector<float *> &scalars,
                 const std::vector<int *> &regionSizes,
                 const std::vector<int *> &segmentationIds,
                 const std::vector<long long *> &topologies,
@@ -408,7 +408,7 @@ namespace ttk {
 
 template <class scalarType>
 int ttk::ContourTreeAlignment::execute(
-  const std::vector<void *> &scalarsVP,
+  const std::vector<float *> &scalars,
   const std::vector<int *> &regionSizes,
   const std::vector<int *> &segmentationIds,
   const std::vector<long long *> &topologies,
@@ -428,11 +428,6 @@ int ttk::ContourTreeAlignment::execute(
   Timer timer;
 
   size_t nTrees = nVertices.size();
-
-  std::vector<float *> scalars(nTrees);
-  for(size_t t = 0; t < nTrees; t++) {
-    scalars[t] = (float *)((scalarType *)scalarsVP[t]);
-  }
 
   // Print Input
   {
@@ -533,7 +528,7 @@ int ttk::ContourTreeAlignment::execute(
 
   // print permutation
   if(this->debugLevel_ >= static_cast<int>(debug::Priority::DETAIL)) {
-    std::string permutationString = "";
+    std::string permutationString{};
     for(size_t i = 0; i < permutation.size(); i++) {
       permutationString += std::to_string(permutation[i])
                            + (i == permutation.size() - 1 ? "" : ",");

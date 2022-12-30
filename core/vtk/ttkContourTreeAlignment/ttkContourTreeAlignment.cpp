@@ -76,7 +76,7 @@ int ttkContourTreeAlignment::RequestData(vtkInformation *ttkNotUsed(request),
   }
 
   int scalarType = -1;
-  vector<void *> scalars(n); // scalar type will be determined dynamically
+  vector<float *> scalars(n); // scalar type will be determined dynamically
   vector<int *> regionSizes(n);
   vector<int *> segmentationIds(n);
   vector<int *> segmentations;
@@ -134,7 +134,7 @@ int ttkContourTreeAlignment::RequestData(vtkInformation *ttkNotUsed(request),
       printErr("No Point Array \"Scalar\" found in contour tree.");
       return 0;
     }
-    scalars[i] = ttkUtils::GetVoidPointer(scalarArray);
+    scalars[i] = ttkUtils::GetPointer<float>(scalarArray);
     scalarType = scalarArray->GetDataType();
 
     this->printMsg(
@@ -197,7 +197,7 @@ int ttkContourTreeAlignment::RequestData(vtkInformation *ttkNotUsed(request),
       }
     }
     topologies[i]
-      = (long long *)ttkUtils::GetVoidPointer(cells->GetConnectivityArray());
+      = ttkUtils::GetPointer<long long>(cells->GetConnectivityArray());
   }
 
   if(scalarType < 0 || n < 1)
@@ -240,19 +240,15 @@ int ttkContourTreeAlignment::RequestData(vtkInformation *ttkNotUsed(request),
   this->setDebugLevel(this->debugLevel_);
   this->setThreadNumber(this->threadNumber_);
 
-  int success = false;
-  switch(scalarType) {
-    vtkTemplateMacro({
-      success = this->execute<VTK_TT>(
-        scalars, regionSizes, segmentationIds, topologies, nVertices, nEdges,
-        segmentations, segSizes,
+  int success = this->execute<float>(
+    scalars, regionSizes, segmentationIds, topologies, nVertices, nEdges,
+    segmentations, segSizes,
 
-        outputVertices, outputFrequencies, outputVertexIds, outputBranchIds,
-        outputSegmentationIds, outputArcIds, outputEdges,
+    outputVertices, outputFrequencies, outputVertexIds, outputBranchIds,
+    outputSegmentationIds, outputArcIds, outputEdges,
 
-        RandomSeed);
-    });
-  }
+    RandomSeed);
+
   if(!success) {
     printErr("base layer execution failed.");
     return 0;
@@ -480,8 +476,8 @@ int ttkContourTreeAlignment::RequestData(vtkInformation *ttkNotUsed(request),
       for(size_t i = 0; i < nEdges[t]; i++) {
         int id1 = topologies[t][i * 2 + 0];
         int id2 = topologies[t][i * 2 + 1];
-        float v1 = ((float *)scalars[t])[id1];
-        float v2 = ((float *)scalars[t])[id2];
+        float v1 = scalars[t][id1];
+        float v2 = scalars[t][id2];
         if(v1 > v2) {
           downEdges[id1].push_back(i);
           upEdges[id2].push_back(i);
@@ -501,7 +497,7 @@ int ttkContourTreeAlignment::RequestData(vtkInformation *ttkNotUsed(request),
         if(i < 0)
           continue;
         fileJSON << (first ? "    {" : ",\n    {");
-        fileJSON << "\"scalar\": " << ((float *)scalars[t])[i] << ", ";
+        fileJSON << "\"scalar\": " << scalars[t][i] << ", ";
         fileJSON << "\"id\": " << alignmentIDs[t][i] << ", ";
         fileJSON << "\"upEdgeIDs\": [";
         for(size_t j = 0; j < upEdges[i].size(); j++) {
