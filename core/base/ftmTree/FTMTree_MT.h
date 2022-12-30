@@ -32,8 +32,6 @@
 #include "FTMStructures.h"
 #include "FTMSuperArc.h"
 
-static ttk::Timer _launchGlobalTime;
-
 namespace ttk {
   namespace ftm {
     using UF = AtomicUF *;

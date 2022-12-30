@@ -15,17 +15,6 @@
 
 #include <stack>
 
-#define PRIOR(x)
-// #define PRIOR(x) priority(x)
-
-#ifdef __INTEL_COMPILER
-#define HIGHER
-#endif
-
-#ifndef TTK_ENABLE_OPENMP
-#define HIGHER
-#endif
-
 #ifdef TTK_ENABLE_OMP_PRIORITY
 #define OPTIONAL_PRIORITY(value) priority(value)
 #else

@@ -1226,18 +1226,6 @@ float ttk::ContourTreeAlignment::editCost(
       }
       unionsize += i == (t1->region.size()) ? t2->region.size() - j
                                             : t1->region.size() - i;
-      if(false) {
-        std::cout << "========================\nRegion 1: ";
-        for(size_t k = 0; k < t1->region.size(); k++)
-          std::cout << t1->region[k] << " ";
-        std::cout << std::endl;
-        std::cout << "Region 2: ";
-        for(size_t k = 0; k < t2->region.size(); k++)
-          std::cout << t2->region[k] << " ";
-        std::cout << std::endl;
-        std::cout << "Intersection size: " << intersectionsize
-                  << "\nUnion size: " << unionsize << std::endl;
-      }
     }
 
     if(t1 == nullptr && t2 == nullptr)

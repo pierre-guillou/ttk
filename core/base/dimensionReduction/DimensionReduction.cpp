@@ -370,7 +370,9 @@ collect_garbage:
     Py_DECREF(i);
   return -6;
 
-#endif
+#else
 
   return 0;
+
+#endif // TTK_ENABLE_SCIKIT_LEARN
 }

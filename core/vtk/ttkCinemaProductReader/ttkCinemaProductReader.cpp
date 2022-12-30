@@ -78,8 +78,6 @@ vtkSmartPointer<vtkDataObject>
       // Otherwise use vtkGenericDataObjectReader
       return readFileLocal_(pathToFile, this->genericDataObjectReader);
   }
-
-  return nullptr;
 }
 
 int ttkCinemaProductReader::addFieldDataRecursively(vtkDataObject *object,

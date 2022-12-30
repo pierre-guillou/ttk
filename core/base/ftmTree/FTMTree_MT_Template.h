@@ -143,7 +143,6 @@ namespace ttk {
 
     template <class triangulationType>
     void FTMTree_MT::leafGrowth(const triangulationType *mesh) {
-      _launchGlobalTime.reStart();
 
       const auto &nbLeaves = mt_data_.leaves.size();
 

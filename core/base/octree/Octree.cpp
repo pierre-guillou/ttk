@@ -330,9 +330,6 @@ uint32_t Octree::getChildLocation(uint32_t parLoc,
       }
     }
   }
-
-  this->printErr("getChildLocation(): Shouldn't get here!");
-  return -1;
 }
 
 void Octree::subdivide(OctreeNode *node) {

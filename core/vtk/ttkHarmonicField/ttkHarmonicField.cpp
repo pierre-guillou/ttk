@@ -90,7 +90,6 @@ int ttkHarmonicField::RequestData(vtkInformation *ttkNotUsed(request),
     default:
       this->printErr("Unknown scalar field type");
       return -7;
-      break;
   }
 
   if(outputField == nullptr) {

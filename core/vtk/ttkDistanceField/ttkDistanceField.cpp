@@ -125,7 +125,6 @@ int ttkDistanceField::RequestData(vtkInformation *ttkNotUsed(request),
     default:
       printErr("Invalid scalar field type.");
       return 0;
-      break;
   }
 
   // something wrong in baseCode

@@ -228,15 +228,6 @@ int FiberSurface::computeTriangleIntersection(
   //     return -2;
   //   }
 
-  if(p0a.size() != 3)
-    return -1;
-  if(p1a.size() != 3)
-    return -2;
-  if(p0b.size() != 3)
-    return -3;
-  if(p1b.size() != 3)
-    return -4;
-
   // we need to make sure p0a and p1a are not the same (vertex case)
   bool vertexA = false;
   bool vertexB = false;
@@ -308,9 +299,6 @@ int FiberSurface::computeTriangleIntersection(
       }
     }
   }
-
-  if((!pA.size()) || (!pB.size()))
-    return -2;
 
   if(!edgeFiber0) {
     computeTriangleIntersection(
