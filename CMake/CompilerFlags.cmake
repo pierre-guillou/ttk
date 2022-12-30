@@ -31,6 +31,14 @@ if (NOT MSVC) # GCC and Clang
       -Wlogical-op
       -Wuseless-cast
       # -Wextra-semi              # TODO?
+      -Wformat-signedness
+      -Wnormalized
+      -Wshift-negative-value
+      -Wshift-overflow=2
+      -Wsuggest-attribute=format
+      -Wsuggest-attribute=malloc
+      -Wtrampolines
+      -Wwrite-strings
       )
   endif()
 
@@ -38,6 +46,33 @@ if (NOT MSVC) # GCC and Clang
     list(APPEND TTK_COMPILER_FLAGS
       -Wpedantic
       -Wno-extra-semi
+      -Warray-bounds-pointer-arithmetic
+      -Wassign-enum
+      -Wcast-function-type
+      -Wcomma
+#      -Wcovered-switch-default
+      -Wduplicate-enum
+      -Widiomatic-parentheses
+      -Wloop-analysis
+      -Wformat-non-iso
+      -Wformat-pedantic
+      -Wformat-type-confusion
+      -Wfour-char-constants
+      -Wimplicit-fallthrough
+      -Wpointer-arith
+      -Wpragmas
+      -Wreserved-identifier
+      -Wshift-sign-overflow
+      -Wsigned-enum-bitfield
+      -Wstatic-in-inline
+      -Wtautological-constant-in-range-compare
+      -Wthread-safety
+      -Wunreachable-code
+      -Wunreachable-code-aggressive
+      -Wunused-macros
+      -Wused-but-marked-unused
+      -Wvariadic-macros
+      -Wzero-as-null-pointer-constant
       )
   endif()
 
