@@ -14,8 +14,7 @@
 /// This file will be installed by CMake as CellArray.h if the
 /// TTK_CELL_ARRAY_LAYOUT is set to SingleArray
 
-#ifndef _CELLARRAY_H
-#define _CELLARRAY_H
+#pragma once
 
 #include <DataTypes.h>
 
@@ -99,5 +98,3 @@ namespace ttk {
     bool ownerShip_ = false;
   };
 } // namespace ttk
-
-#endif
