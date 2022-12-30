@@ -516,7 +516,8 @@ namespace ttk {
 
     inline void setVertexScalars(const std::vector<real> *const vertexScalars) {
       vertexScalars_ = vertexScalars;
-      minScalar_ = 0, maxScalar_ = 0;
+      minScalar_ = 0;
+      maxScalar_ = 0;
       for(int i = 0; i < (int)vertexScalars_->size(); i++) {
         if((!i) || (minScalar_ > (*vertexScalars_)[i])) {
           minScalar_ = (*vertexScalars_)[i];

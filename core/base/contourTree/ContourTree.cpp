@@ -51,20 +51,16 @@ struct filtrationCtCmp {
   }
 } filtrationCmp;
 
-struct _persistenceCmp {
+struct persistenceCmp {
   bool operator()(const pair<pair<int, int>, double> &p0,
                   const pair<pair<int, int>, double> &p1) {
 
     return p0.second < p1.second;
   }
 
-} _pCmp;
+} pCmp;
 
-struct _persistenceCmp3 {
-  _persistenceCmp3(const vector<double> *vertexScalars)
-    : vertexScalars_{vertexScalars} {
-  }
-
+struct persistenceCmp3 {
   bool operator()(const pair<pair<int, int>, double> &p0,
                   const pair<pair<int, int>, double> &p1) {
     return (*vertexScalars_)[p0.first.first]
@@ -74,12 +70,12 @@ struct _persistenceCmp3 {
   const vector<double> *vertexScalars_;
 };
 
-struct _persistencePairCmp {
+struct persistencePairCmp {
   bool operator()(const pair<double, double> &p0,
                   const pair<double, double> &p1) {
     return p0.first < p1.first;
   }
-} _pPairCmp;
+} pPairCmp;
 
 void SuperArc::smooth(const vector<Node> &nodeList,
                       const vector<vector<double>> *vertexPositions,
@@ -1291,7 +1287,7 @@ int SubLevelSetTree::getPersistenceDiagram(
     }
   }
 
-  std::sort(diagram.begin(), diagram.end(), _pPairCmp);
+  std::sort(diagram.begin(), diagram.end(), pPairCmp);
 
   return 0;
 }
@@ -1351,7 +1347,7 @@ int SubLevelSetTree::getPersistencePairs(
   }
 
   // sort the pairs and start the processing
-  sort(pairs.begin(), pairs.end(), _pCmp);
+  sort(pairs.begin(), pairs.end(), pCmp);
 
   vector<int> pairedSaddles(vertexNumber_, 0);
   // now start the pairing...
@@ -1400,7 +1396,7 @@ int SubLevelSetTree::getPersistencePairs(
 
         if(a) {
           // we indeed update the persistence of the competitor
-          sort(pairs.begin() + j, pairs.end(), _pCmp);
+          sort(pairs.begin() + j, pairs.end(), pCmp);
         }
 
         break;
@@ -2814,7 +2810,7 @@ int ContourTree::getPersistencePairs(
   for(unsigned int i = 0; i < splitPairs->size(); ++i)
     pairs[shift + i] = (*splitPairs)[i];
 
-  std::sort(pairs.begin(), pairs.end(), _pCmp);
+  std::sort(pairs.begin(), pairs.end(), pCmp);
 
   return 0;
 }
@@ -2875,7 +2871,7 @@ int ContourTree::getPersistenceDiagram(
     }
   }
 
-  std::sort(diagram.begin(), diagram.end(), _pPairCmp);
+  std::sort(diagram.begin(), diagram.end(), pPairCmp);
 
   return 0;
 }
