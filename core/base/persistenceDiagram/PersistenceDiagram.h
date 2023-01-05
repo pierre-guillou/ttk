@@ -487,7 +487,6 @@ int ttk::PersistenceDiagram::executePersistentSimplex(
     }
   }
 
-  this->printMsg("Complete", 1.0, tm.getElapsedTime(), this->threadNumber_);
   return 0;
 }
 
