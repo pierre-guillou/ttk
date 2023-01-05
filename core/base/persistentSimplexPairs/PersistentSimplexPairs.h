@@ -226,9 +226,9 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
 
   this->pairCells(pairs, boundaries, filtration, filtOrder);
 
-  this->printMsg(
-    "Computed " + std::to_string(pairs.size()) + " persistence pairs", 1.0,
-    tm.getElapsedTime(), 1);
+  this->printMsg("Computed " + std::to_string(pairs.size())
+                   + " persistence pair" + (pairs.size() > 1 ? "s" : ""),
+                 1.0, tm.getElapsedTime(), 1);
 
   return 0;
 }
