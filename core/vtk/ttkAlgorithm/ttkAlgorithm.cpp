@@ -780,6 +780,10 @@ void ttkAlgorithm::MPIPipelinePreconditioning(
 void ttkAlgorithm::MPITriangulationPreconditioning(
   ttk::Triangulation *triangulation, vtkDataSet *input) {
 
+  if(triangulation == nullptr) {
+    return;
+  }
+
   const auto pd{input->GetPointData()};
   if(pd == nullptr) {
     triangulation->printWrn("No point data on input object");
