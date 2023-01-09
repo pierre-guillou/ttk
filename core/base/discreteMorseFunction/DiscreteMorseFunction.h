@@ -235,10 +235,20 @@ std::vector<SimplexId> ttk::DiscreteMorseFunction::computeDiscreteMorseFunction(
   }
 
   // fetch critical points
-  std::vector<Cell> criticalPoints{};
-  this->getCriticalPoints(criticalPoints, triangulation);
+  std::array<std::vector<SimplexId>, 4> criticalCellsByDim{};
+  this->getCriticalPoints(criticalCellsByDim, triangulation);
+  std::vector<Cell> criticalCells(
+    criticalCellsByDim[0].size() + criticalCellsByDim[1].size()
+    + criticalCellsByDim[2].size() + criticalCellsByDim[3].size());
+  int o{};
+  for(size_t i = 0; i < criticalCellsByDim.size(); ++i) {
+    for(const auto el : criticalCellsByDim[i]) {
+      criticalCells[o++] = Cell{static_cast<int>(i), el};
+    }
+  }
+
   std::sort(
-    criticalPoints.begin(), criticalPoints.end(),
+    criticalCells.begin(), criticalCells.end(),
     [this, offset, &triangulation](const Cell &a, const Cell &b) {
       const auto oa = offset[this->getCellGreaterVertex(a, triangulation)];
       const auto ob = offset[this->getCellGreaterVertex(b, triangulation)];
@@ -258,8 +268,8 @@ std::vector<SimplexId> ttk::DiscreteMorseFunction::computeDiscreteMorseFunction(
   };
 
   // compare critical cells two by two
-  for(size_t i = 0; i < criticalPoints.size() - 1; ++i) {
-    mg[cellId(criticalPoints[i + 1])].emplace_back(cellId(criticalPoints[i]));
+  for(size_t i = 0; i < criticalCells.size() - 1; ++i) {
+    mg[cellId(criticalCells[i + 1])].emplace_back(cellId(criticalCells[i]));
   }
 
   const auto sortedSimplices = this->topologicalSort(mg);
