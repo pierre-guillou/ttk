@@ -772,9 +772,8 @@ void ttk::DiscreteMorseSandwich::getSaddleMaxPairsNonManifold(
       };
 
   // boundaries storage
-  using Container = std::set<SimplexId, decltype(cmpSimplices)>;
-  std::vector<Container> boundaries(
-    pairedMaxima.size(), Container(cmpSimplices));
+  using Container = std::vector<SimplexId>;
+  std::vector<Container> boundaries(pairedMaxima.size());
 
   for(size_t i = 0; i < criticalMaxs.size(); ++i) {
 
@@ -783,10 +782,10 @@ void ttk::DiscreteMorseSandwich::getSaddleMaxPairsNonManifold(
 
     const auto addBoundary = [&boundary, &onBoundary](const SimplexId f) {
       if(!onBoundary[f]) {
-        boundary.emplace(f);
+        boundary.emplace_back(f);
         onBoundary[f] = true;
       } else {
-        const auto it{boundary.find(f)};
+        const auto it{std::find(boundary.begin(), boundary.end(), f)};
         boundary.erase(it);
         onBoundary[f] = false;
       }
@@ -810,7 +809,8 @@ void ttk::DiscreteMorseSandwich::getSaddleMaxPairsNonManifold(
 
     while(!boundary.empty()) {
       // youngest cell on boundary
-      const auto tau{*boundary.begin()};
+      const auto tau{
+        *std::min_element(boundary.begin(), boundary.end(), cmpSimplices)};
       const Cell cTau{dim - 1, tau};
       const auto pTau{this->dg_.getPairedCell(cTau, triangulation)};
       if(pTau == -1) {
