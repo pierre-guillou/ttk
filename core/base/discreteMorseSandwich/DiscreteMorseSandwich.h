@@ -356,7 +356,7 @@ namespace ttk {
      *
      * @return Identifier of paired 1-saddle or -1
      */
-    template <typename triangulationType, typename Container>
+    template <typename triangulationType, typename Container, typename GF>
     SimplexId
       eliminateBoundariesSandwich(const SimplexId s2,
                                   std::vector<bool> &onBoundary,
@@ -366,6 +366,8 @@ namespace ttk {
                                   std::vector<SimplexId> &partners,
                                   std::vector<Lock> &s1Locks,
                                   std::vector<Lock> &s2Locks,
+                                  const GF &getFace,
+                                  const int dim,
                                   const triangulationType &triangulation) const;
 
     /**
@@ -847,7 +849,7 @@ void ttk::DiscreteMorseSandwich::getSaddleMaxPairsNonManifold(
                  1.0, tm.getElapsedTime(), this->threadNumber_);
 }
 
-template <typename triangulationType, typename Container>
+template <typename triangulationType, typename Container, typename GF>
 SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
   const SimplexId s2,
   std::vector<bool> &onBoundary,
@@ -857,6 +859,8 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
   std::vector<SimplexId> &partners,
   std::vector<Lock> &s1Locks,
   std::vector<Lock> &s2Locks,
+  const GF &getFace,
+  const int dim,
   const triangulationType &triangulation) const {
 
   auto &boundaryIds{s2Boundaries[s2Mapping[s2]]};
@@ -888,9 +892,7 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
   } else {
     // init cascade with s2 triangle boundary (3 edges)
     for(SimplexId i = 0; i < 3; ++i) {
-      SimplexId e{};
-      triangulation.getTriangleEdge(s2, i, e);
-      addBoundary(e);
+      addBoundary(getFace(s2, i));
     }
   }
 
@@ -902,7 +904,7 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
     // tau: youngest edge on boundary
     const auto tau{*boundaryIds.begin()};
     // use the Discrete Gradient to find a triangle paired to tau
-    auto pTau{this->dg_.getPairedCell(Cell{1, tau}, triangulation)};
+    auto pTau{this->dg_.getPairedCell(Cell{dim, tau}, triangulation)};
     bool critical{false};
     if(pTau == -1) {
       // maybe tau is critical and paired to a critical triangle
@@ -938,7 +940,7 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
       } else {
         return this->eliminateBoundariesSandwich(
           s2, onBoundary, s2Boundaries, s2Mapping, s1Mapping, partners, s1Locks,
-          s2Locks, triangulation);
+          s2Locks, getFace, dim, triangulation);
       }
 
     } else {
@@ -976,15 +978,13 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
             s2Locks[s2Mapping[s2]].unlock();
             return this->eliminateBoundariesSandwich(
               pTau, onBoundary, s2Boundaries, s2Mapping, s1Mapping, partners,
-              s1Locks, s2Locks, triangulation);
+              s1Locks, s2Locks, getFace, dim, triangulation);
           }
         }
       } else { // pTau is a regular triangle
         // add pTau triangle boundary (3 edges)
         for(SimplexId i = 0; i < 3; ++i) {
-          SimplexId e{};
-          triangulation.getTriangleEdge(pTau, i, e);
-          addBoundary(e);
+          addBoundary(getFace(pTau, i));
         }
       }
     }
@@ -1077,9 +1077,15 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
   for(size_t i = 0; i < saddles2.size(); ++i) {
     // 2-saddles sorted in increasing order
     const auto s2 = saddles2[i];
-    this->eliminateBoundariesSandwich(s2, onBoundary, s2Boundaries, s2Mapping,
-                                      s1Mapping, edgeTrianglePartner, s1Locks,
-                                      s2Locks, triangulation);
+    this->eliminateBoundariesSandwich(
+      s2, onBoundary, s2Boundaries, s2Mapping, s1Mapping, edgeTrianglePartner,
+      s1Locks, s2Locks,
+      [&triangulation](const SimplexId a, const int b) {
+        SimplexId c{};
+        triangulation.getTriangleEdge(a, b, c);
+        return c;
+      },
+      1, triangulation);
   }
 
   Timer tmseq{};
