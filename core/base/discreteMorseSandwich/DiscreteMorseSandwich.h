@@ -242,6 +242,7 @@ namespace ttk {
       std::vector<PersistencePair> &pairs,
       std::vector<bool> &pairedMaxima,
       std::vector<bool> &pairedSaddles,
+      const std::vector<SimplexId> &criticalSaddles,
       const std::vector<SimplexId> &criticalMaxs,
       const std::vector<SimplexId> &facesOrder,
       const triangulationType &triangulation) const;
@@ -751,6 +752,7 @@ void ttk::DiscreteMorseSandwich::getSaddleMaxPairsNonManifold(
   std::vector<PersistencePair> &pairs,
   std::vector<bool> &pairedMaxima,
   std::vector<bool> &pairedSaddles,
+  const std::vector<SimplexId> &criticalSaddles,
   const std::vector<SimplexId> &criticalMaxs,
   const std::vector<SimplexId> &facesOrder,
   const triangulationType &triangulation) const {
@@ -773,72 +775,85 @@ void ttk::DiscreteMorseSandwich::getSaddleMaxPairsNonManifold(
         return facesOrder[a] > facesOrder[b];
       };
 
-  // boundaries storage
-  using Container = std::vector<SimplexId>;
-  std::vector<Container> boundaries(pairedMaxima.size());
-
-  for(size_t i = 0; i < criticalMaxs.size(); ++i) {
-
-    const auto &curr{criticalMaxs[i]};
-    auto &boundary{boundaries[curr]};
-
-    const auto addBoundary = [&boundary, &onBoundary](const SimplexId f) {
-      if(!onBoundary[f]) {
-        boundary.emplace_back(f);
-        onBoundary[f] = true;
-      } else {
-        const auto it{std::find(boundary.begin(), boundary.end(), f)};
-        boundary.erase(it);
-        onBoundary[f] = false;
-      }
-    };
-
-    const auto addFaces
-      = [&triangulation, &dim, &addBoundary](const SimplexId a) {
-          for(SimplexId j = 0; j < dim + 1; ++j) {
-            SimplexId face{};
-            if(dim == 3) {
-              triangulation.getCellTriangle(a, j, face);
-            } else if(dim == 2) {
-              triangulation.getTriangleEdge(a, j, face);
-            }
-            addBoundary(face);
-          }
-        };
-
-    // init boundary with max faces
-    addFaces(curr);
-
-    while(!boundary.empty()) {
-      // youngest cell on boundary
-      const auto tau{
-        *std::min_element(boundary.begin(), boundary.end(), cmpSimplices)};
-      const Cell cTau{dim - 1, tau};
-      const auto pTau{this->dg_.getPairedCell(cTau, triangulation)};
-      if(pTau == -1) {
-        // tau is a critical cell
-        if(partners[tau] == -1) {
-          // tau is not yet paired, partner it to curr
-          pairs.emplace_back(tau, curr, dim - 1);
-          pairedMaxima[curr] = true;
-          pairedSaddles[tau] = true;
-          partners[tau] = curr;
-          break;
-        } else {
-          // tau is critical but already paired, merge boundaries
-          for(const auto b : boundaries[partners[tau]]) {
-            addBoundary(b);
-          }
-        }
-      } else {
-        // tau is not critical, add pTau faces to boundary
-        addFaces(pTau);
-      }
+  // 1- and 2-saddles yet to be paired
+  std::vector<SimplexId> saddles{};
+  // filter out already paired 1-saddles (edge id)
+  for(const auto sad : criticalSaddles) {
+    if(!pairedSaddles[sad]) {
+      saddles.emplace_back(sad);
     }
+  }
 
-    // clean mask
-    for(const auto e : boundary) {
-      onBoundary[e] = false;
+  Timer tmpar{};
+
+  using Container = std::set<SimplexId, decltype(cmpSimplices)>;
+  std::vector<Container> maxBoundaries(
+    criticalMaxs.size(), Container(cmpSimplices));
+
+  // unpaired maximum id -> index in criticalMaxs vector
+  std::vector<SimplexId> maxMapping(pairedMaxima.size(), -1);
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < criticalMaxs.size(); ++i) {
+    maxMapping[criticalMaxs[i]] = i;
+  }
+
+  // unpaired saddle id -> index in saddles vector
+  std::vector<SimplexId> sadMapping(pairedSaddles.size(), -1);
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < saddles.size(); ++i) {
+    sadMapping[saddles[i]] = i;
+  }
+
+  // one lock per 1-saddle
+  std::vector<Lock> sadLocks(saddles.size());
+  // one lock per 2-saddle
+  std::vector<Lock> maxLocks(criticalMaxs.size());
+
+  // compute 2-saddles boundaries in parallel
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_) schedule(dynamic) \
+  firstprivate(onBoundary)
+#endif // TTK_ENABLE_OPENMP
+  for(size_t i = 0; i < criticalMaxs.size(); ++i) {
+    // maxima sorted in increasing order
+    const auto max = criticalMaxs[i];
+    if(dim == 3) {
+      this->eliminateBoundariesSandwich(
+        max, onBoundary, maxBoundaries, maxMapping, sadMapping, partners,
+        sadLocks, maxLocks,
+        [&triangulation](const SimplexId a, const int b) {
+          SimplexId c{};
+          triangulation.getCellTriangle(a, b, c);
+          return c;
+        },
+        2, triangulation);
+    } else if(dim == 2) {
+      this->eliminateBoundariesSandwich(
+        max, onBoundary, maxBoundaries, maxMapping, sadMapping, partners,
+        sadLocks, maxLocks,
+        [&triangulation](const SimplexId a, const int b) {
+          SimplexId c{};
+          triangulation.getTriangleEdge(a, b, c);
+          return c;
+        },
+        1, triangulation);
+    }
+  }
+
+  // extract saddle-saddle pairs from computed boundaries
+  for(size_t i = 0; i < criticalMaxs.size(); ++i) {
+    if(!maxBoundaries[i].empty()) {
+      const auto max = criticalMaxs[i];
+      const auto sad = *maxBoundaries[i].begin();
+      // we found a pair
+      pairs.emplace_back(sad, max, dim - 1);
+      pairedSaddles[sad] = true;
+      pairedMaxima[max] = true;
     }
   }
 
@@ -1344,8 +1359,8 @@ int ttk::DiscreteMorseSandwich::computePersistencePairs(
         critCellsOrder[dim - 1], critCellsOrder[dim], triangulation);
     } else {
       this->getSaddleMaxPairsNonManifold(
-        pairs, pairedMaxima, paired2Saddles, criticalCellsByDim[dim],
-        critCellsOrder[dim - 1], triangulation);
+        pairs, pairedMaxima, paired2Saddles, criticalCellsByDim[dim - 1],
+        criticalCellsByDim[dim], critCellsOrder[dim - 1], triangulation);
     }
   }
 
