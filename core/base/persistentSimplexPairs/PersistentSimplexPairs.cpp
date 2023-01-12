@@ -62,11 +62,6 @@ int ttk::PersistentSimplexPairs::pairCells(
       const auto &pc{filtration[filtOrder[getCellId(c.dim_ - 1, partner)]]};
       partners[c.cellId_] = pc;
       partners[pc.cellId_] = c;
-
-      // only record pairs with non-null persistence
-      if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
-        pairs.emplace_back(partner, c.id_, c.dim_ - 1);
-      }
     }
 
     if(filtration.size() > 10 && i % (filtration.size() / 10) == 0) {
@@ -75,6 +70,33 @@ int ttk::PersistentSimplexPairs::pairCells(
         std::round(10 * i / static_cast<float>(filtration.size())) / 10.0f,
         tm.getElapsedTime(), 1, ttk::debug::LineMode::REPLACE);
     }
+  }
+
+  std::vector<bool> paired(partners.size(), false);
+
+  for(size_t i = 0; i < partners.size(); ++i) {
+    if(paired[i]) {
+      continue;
+    }
+    const auto &pc{partners[i]};
+    if(pc.dim_ == -1) {
+      continue;
+    }
+    const auto &c{partners[pc.cellId_]};
+
+    // skill zero-persistence pairs
+    if(c.vertsOrder_[0] == pc.vertsOrder_[0]) {
+      continue;
+    }
+
+    if(pc.dim_ < c.dim_) {
+      pairs.emplace_back(pc.id_, c.id_, pc.dim_);
+    } else {
+      pairs.emplace_back(c.id_, pc.id_, c.dim_);
+    }
+
+    paired[i] = true;
+    paired[pc.cellId_] = true;
   }
 
   const auto nRegPairs{pairs.size()};
