@@ -182,7 +182,7 @@ namespace ttk {
     SimplexId eliminateBoundaries(const Simplex &c,
                                   VisitedMask &boundary,
                                   const std::vector<SimplexId> &filtOrder,
-                                  const std::vector<Simplex> &partners) const;
+                                  const std::vector<const Simplex *> &partners) const;
 
     int pairCells(std::vector<PersistencePair> &pairs,
                   std::array<std::vector<bool>, 3> &boundaries,
