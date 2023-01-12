@@ -48,6 +48,7 @@ namespace ttk {
 
     inline void preconditionTriangulation(AbstractTriangulation *const data) {
       this->dg_.preconditionTriangulation(data);
+      data->preconditionManifold();
     }
 
     inline void setInputOffsets(const SimplexId *const offsets) {
@@ -227,6 +228,25 @@ namespace ttk {
                            const triangulationType &triangulation) const;
 
     /**
+     * @brief Compute the pairs of dimension dim - 1 for non-manifold datasets
+     *
+     * @param[out] pairs Output persistence pairs
+     * @param[in] pairedMaxima If maxima are paired
+     * @param[in] pairedSaddles If 2-saddles (or 1-saddles in 2D) are paired
+     * @param[in] criticalMaxs List of local maxima
+     * @param[in] facesOrder Filtration order on faces
+     * @param[in] triangulation Triangulation
+     */
+    template <typename triangulationType>
+    void getSaddleMaxPairsNonManifold(
+      std::vector<PersistencePair> &pairs,
+      std::vector<bool> &pairedMaxima,
+      std::vector<bool> &pairedSaddles,
+      const std::vector<SimplexId> &criticalMaxs,
+      const std::vector<SimplexId> &facesOrder,
+      const triangulationType &triangulation) const;
+
+    /**
      * @brief Compute the saddle-saddle pairs (in 3D)
      *
      * @param[out] pairs Output persistence pairs
@@ -258,6 +278,7 @@ namespace ttk {
      * @param[in] offsets Vertex offset field
      * @param[in] triangulation Triangulation
      * @param[in] sortEdges Sort all edges vs. only 1-saddles
+     * @param[in] sortTriangles Sort all triangles vs. only 2-saddles/maxima
      */
     template <typename triangulationType>
     void extractCriticalCells(
@@ -265,7 +286,8 @@ namespace ttk {
       std::array<std::vector<SimplexId>, 4> &critCellsOrder,
       const SimplexId *const offsets,
       const triangulationType &triangulation,
-      const bool sortEdges) const;
+      const bool sortEdges,
+      const bool sortTriangles = false) const;
 
     /**
      * @brief Print number of pairs, critical cells per dimension & unpaired
@@ -433,7 +455,7 @@ namespace ttk {
       if(dim > 1) {
         this->firstRepMax_.resize(triangulation.getNumberOfCells());
       }
-      if(dim > 2) {
+      if(dim > 2 || (dim == 2 && !triangulation.isManifold())) {
         this->critEdges_.resize(triangulation.getNumberOfEdges());
         this->edgeTrianglePartner_.resize(triangulation.getNumberOfEdges(), -1);
         this->onBoundary_.resize(triangulation.getNumberOfEdges(), false);
@@ -722,6 +744,109 @@ void ttk::DiscreteMorseSandwich::getMaxSaddlePairs(
                  debug::Priority::VERBOSE);
 }
 
+template <typename triangulationType>
+void ttk::DiscreteMorseSandwich::getSaddleMaxPairsNonManifold(
+  std::vector<PersistencePair> &pairs,
+  std::vector<bool> &pairedMaxima,
+  std::vector<bool> &pairedSaddles,
+  const std::vector<SimplexId> &criticalMaxs,
+  const std::vector<SimplexId> &facesOrder,
+  const triangulationType &triangulation) const {
+
+  // re-implement "PairCriticalSimplices" (Zomorodian +
+  // DiscreteGradient) as it gives the correct saddle-max pairs for
+  // non-manifold datasets
+
+  Timer tm{};
+
+  const auto dim = this->dg_.getDimensionality();
+
+  const auto nMinSadPairs = pairs.size();
+
+  std::vector<SimplexId> partners(pairedSaddles.size(), -1);
+  std::vector<bool> onBoundary(pairedSaddles.size(), false);
+
+  const auto cmpSimplices
+    = [&facesOrder](const SimplexId a, const SimplexId b) {
+        return facesOrder[a] > facesOrder[b];
+      };
+
+  // boundaries storage
+  using Container = std::set<SimplexId, decltype(cmpSimplices)>;
+  std::vector<Container> boundaries(
+    pairedMaxima.size(), Container(cmpSimplices));
+
+  for(size_t i = 0; i < criticalMaxs.size(); ++i) {
+
+    const auto &curr{criticalMaxs[i]};
+    auto &boundary{boundaries[curr]};
+
+    const auto addBoundary = [&boundary, &onBoundary](const SimplexId f) {
+      if(!onBoundary[f]) {
+        boundary.emplace(f);
+        onBoundary[f] = true;
+      } else {
+        const auto it{boundary.find(f)};
+        boundary.erase(it);
+        onBoundary[f] = false;
+      }
+    };
+
+    const auto addFaces
+      = [&triangulation, &dim, &addBoundary](const SimplexId a) {
+          for(SimplexId j = 0; j < dim + 1; ++j) {
+            SimplexId face{};
+            if(dim == 3) {
+              triangulation.getCellTriangle(a, j, face);
+            } else if(dim == 2) {
+              triangulation.getTriangleEdge(a, j, face);
+            }
+            addBoundary(face);
+          }
+        };
+
+    // init boundary with max faces
+    addFaces(curr);
+
+    while(!boundary.empty()) {
+      // youngest cell on boundary
+      const auto tau{*boundary.begin()};
+      const Cell cTau{dim - 1, tau};
+      const auto pTau{this->dg_.getPairedCell(cTau, triangulation)};
+      if(pTau == -1) {
+        // tau is a critical cell
+        if(partners[tau] == -1) {
+          // tau is not yet paired, partner it to curr
+          pairs.emplace_back(tau, curr, dim - 1);
+          pairedMaxima[curr] = true;
+          pairedSaddles[tau] = true;
+          partners[tau] = curr;
+          break;
+        } else {
+          // tau is critical but already paired, merge boundaries
+          for(const auto b : boundaries[partners[tau]]) {
+            addBoundary(b);
+          }
+        }
+      } else {
+        // tau is not critical, add pTau faces to boundary
+        addFaces(pTau);
+      }
+    }
+
+    // clean mask
+    for(const auto e : boundary) {
+      onBoundary[e] = false;
+    }
+  }
+
+  const auto nSadMaxPairs = pairs.size() - nMinSadPairs;
+
+  this->printMsg("Computed " + std::to_string(nSadMaxPairs)
+                   + " saddle-max pairs (boundary expansion)",
+                 1.0, tm.getElapsedTime(), this->threadNumber_);
+}
+
 template <typename triangulationType, typename Container>
 SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
   const SimplexId s2,
@@ -1006,7 +1131,8 @@ void ttk::DiscreteMorseSandwich::extractCriticalCells(
   std::array<std::vector<SimplexId>, 4> &critCellsOrder,
   const SimplexId *const offsets,
   const triangulationType &triangulation,
-  const bool sortEdges) const {
+  const bool sortEdges,
+  const bool sortTriangles) const {
 
   Timer tm{};
 
@@ -1021,7 +1147,12 @@ void ttk::DiscreteMorseSandwich::extractCriticalCells(
   if(!sortEdges) {
     critEdges.resize(criticalCellsByDim[1].size());
   }
-  std::vector<TriangleSimplex> critTriangles(criticalCellsByDim[2].size());
+  std::vector<TriangleSimplex> critTriangles{};
+  if(!sortTriangles) {
+    critTriangles.resize(criticalCellsByDim[2].size());
+  } else {
+    critTriangles.resize(triangulation.getNumberOfTriangles());
+  }
   std::vector<TetraSimplex> critTetras(criticalCellsByDim[3].size());
 
 #ifdef TTK_ENABLE_OPENMP
@@ -1044,12 +1175,21 @@ void ttk::DiscreteMorseSandwich::extractCriticalCells(
       }
     }
 
+    if(sortTriangles) {
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp for nowait
 #endif // TTK_ENABLE_OPENMP
-    for(size_t i = 0; i < critTriangles.size(); ++i) {
-      critTriangles[i].fillTriangle(
-        criticalCellsByDim[2][i], offsets, triangulation);
+      for(size_t i = 0; i < critTriangles.size(); ++i) {
+        critTriangles[i].fillTriangle(i, offsets, triangulation);
+      }
+    } else {
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp for nowait
+#endif // TTK_ENABLE_OPENMP
+      for(size_t i = 0; i < critTriangles.size(); ++i) {
+        critTriangles[i].fillTriangle(
+          criticalCellsByDim[2][i], offsets, triangulation);
+      }
     }
 
 #ifdef TTK_ENABLE_OPENMP
@@ -1079,7 +1219,6 @@ void ttk::DiscreteMorseSandwich::extractCriticalCells(
 #pragma omp for nowait
 #endif // TTK_ENABLE_OPENMP
     for(size_t i = 0; i < critTriangles.size(); ++i) {
-      criticalCellsByDim[2][i] = critTriangles[i].id_;
       critCellsOrder[2][critTriangles[i].id_] = i;
     }
 
@@ -1104,6 +1243,21 @@ void ttk::DiscreteMorseSandwich::extractCriticalCells(
 #endif // TTK_ENABLE_OPENMP
     for(size_t i = 0; i < critEdges.size(); ++i) {
       criticalCellsByDim[1][i] = critEdges[i].id_;
+    }
+  }
+
+  if(sortTriangles) {
+    TTK_PSORT(this->threadNumber_, criticalCellsByDim[2].begin(),
+              criticalCellsByDim[2].end(),
+              [&critCellsOrder](const SimplexId a, const SimplexId b) {
+                return critCellsOrder[2][a] < critCellsOrder[2][b];
+              });
+  } else {
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+    for(size_t i = 0; i < critTriangles.size(); ++i) {
+      criticalCellsByDim[2][i] = critTriangles[i].id_;
     }
   }
 
@@ -1134,7 +1288,9 @@ int ttk::DiscreteMorseSandwich::computePersistencePairs(
   auto &critCellsOrder{this->critCellsOrder_};
 
   this->extractCriticalCells(
-    criticalCellsByDim, critCellsOrder, offsets, triangulation, dim == 3);
+    criticalCellsByDim, critCellsOrder, offsets, triangulation,
+    (dim == 3) || ((dim == 2) && !triangulation.isManifold()),
+    (dim == 3) && !triangulation.isManifold());
 
   // if minima are paired
   auto &pairedMinima{this->pairedCritCells_[0]};
@@ -1176,9 +1332,15 @@ int ttk::DiscreteMorseSandwich::computePersistencePairs(
 
   if(dim > 1 && this->ComputeSadMax) {
     // saddle - maxima pairs
-    this->getMaxSaddlePairs(
-      pairs, pairedMaxima, paired2Saddles, criticalCellsByDim[dim - 1],
-      critCellsOrder[dim - 1], critCellsOrder[dim], triangulation);
+    if(triangulation.isManifold()) {
+      this->getMaxSaddlePairs(
+        pairs, pairedMaxima, paired2Saddles, criticalCellsByDim[dim - 1],
+        critCellsOrder[dim - 1], critCellsOrder[dim], triangulation);
+    } else {
+      this->getSaddleMaxPairsNonManifold(
+        pairs, pairedMaxima, paired2Saddles, criticalCellsByDim[dim],
+        critCellsOrder[dim - 1], triangulation);
+    }
   }
 
   if(ignoreBoundary) {
