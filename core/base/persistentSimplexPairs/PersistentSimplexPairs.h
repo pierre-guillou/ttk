@@ -70,89 +70,82 @@ namespace ttk {
                                 const triangulationType &triangulation) const;
 
   private:
+    /**
+     * @brief Ad-hoc struct for sorting simplices
+     */
+    template <size_t n>
     struct Simplex {
-      SimplexId dim_{-1}; // dimension
-      SimplexId id_{-1}; // id in triangulation (overlap between dimensions)
-      SimplexId cellId_{-1}; // cell id (unique)
-      // face (triangulation) indices
-      std::array<SimplexId, 4> faceIds_{-1, -1, -1, -1};
-      // order on vertices, sorted in descending order
-      std::array<SimplexId, 4> vertsOrder_{-1, -1, -1, -1};
-
-      friend bool operator<(const Simplex &lhs, const Simplex &rhs) {
+      /** Index in the triangulation */
+      SimplexId id_{};
+      /** Order field value of the simplex vertices, sorted in
+          decreasing order */
+      std::array<SimplexId, n> vertsOrder_{};
+      /** To compare two vertices according to the filtration (lexicographic
+       * order) */
+      friend bool operator<(const Simplex<n> &lhs, const Simplex<n> &rhs) {
         return lhs.vertsOrder_ < rhs.vertsOrder_;
       }
+    };
 
-      void fillVert(const SimplexId v, const SimplexId *const offset) {
-        this->dim_ = 0;
-        this->id_ = v;
-        this->cellId_ = v;
-        this->vertsOrder_[0] = offset[v];
+    struct VertexSimplex : Simplex<1> {
+      void fillVert(const SimplexId id, const SimplexId *const offsets) {
+        this->id_ = id;
+        this->vertsOrder_[0] = offsets[this->id_];
       }
-
+    };
+    struct EdgeSimplex : Simplex<2> {
       template <typename triangulationType>
-      void fillEdge(const SimplexId e,
-                    const SimplexId c,
-                    const SimplexId *const offset,
+      void fillEdge(const SimplexId id,
+                    const SimplexId *const offsets,
                     const triangulationType &triangulation) {
-        this->dim_ = 1;
-        this->id_ = e;
-        this->cellId_ = c;
-        triangulation.getEdgeVertex(e, 0, this->faceIds_[0]);
-        triangulation.getEdgeVertex(e, 1, this->faceIds_[1]);
-        this->vertsOrder_[0] = offset[this->faceIds_[0]];
-        this->vertsOrder_[1] = offset[this->faceIds_[1]];
+        this->id_ = id;
+        triangulation.getEdgeVertex(id, 0, this->vertsOrder_[0]);
+        triangulation.getEdgeVertex(id, 1, this->vertsOrder_[1]);
+        this->vertsOrder_[0] = offsets[this->vertsOrder_[0]];
+        this->vertsOrder_[1] = offsets[this->vertsOrder_[1]];
+        // sort vertices in decreasing order
         std::sort(this->vertsOrder_.rbegin(), this->vertsOrder_.rend());
       }
-
+    };
+    struct TriangleSimplex : Simplex<3> {
       template <typename triangulationType>
-      void fillTriangle(const SimplexId t,
-                        const SimplexId c,
-                        const SimplexId *const offset,
+      void fillTriangle(const SimplexId id,
+                        const SimplexId *const offsets,
                         const triangulationType &triangulation) {
-        this->dim_ = 2;
-        this->id_ = t;
-        this->cellId_ = c;
-        triangulation.getTriangleEdge(t, 0, this->faceIds_[0]);
-        triangulation.getTriangleEdge(t, 1, this->faceIds_[1]);
-        triangulation.getTriangleEdge(t, 2, this->faceIds_[2]);
-        triangulation.getTriangleVertex(t, 0, this->vertsOrder_[0]);
-        triangulation.getTriangleVertex(t, 1, this->vertsOrder_[1]);
-        triangulation.getTriangleVertex(t, 2, this->vertsOrder_[2]);
-        this->vertsOrder_[0] = offset[this->vertsOrder_[0]];
-        this->vertsOrder_[1] = offset[this->vertsOrder_[1]];
-        this->vertsOrder_[2] = offset[this->vertsOrder_[2]];
+        this->id_ = id;
+        triangulation.getTriangleVertex(id, 0, this->vertsOrder_[0]);
+        triangulation.getTriangleVertex(id, 1, this->vertsOrder_[1]);
+        triangulation.getTriangleVertex(id, 2, this->vertsOrder_[2]);
+        this->vertsOrder_[0] = offsets[this->vertsOrder_[0]];
+        this->vertsOrder_[1] = offsets[this->vertsOrder_[1]];
+        this->vertsOrder_[2] = offsets[this->vertsOrder_[2]];
+        // sort vertices in decreasing order
         std::sort(this->vertsOrder_.rbegin(), this->vertsOrder_.rend());
       }
-
+    };
+    struct TetraSimplex : Simplex<4> {
       template <typename triangulationType>
-      void fillTetra(const SimplexId T,
-                     const SimplexId c,
-                     const SimplexId *const offset,
+      void fillTetra(const SimplexId id,
+                     const SimplexId *const offsets,
                      const triangulationType &triangulation) {
-        this->dim_ = 3;
-        this->id_ = T;
-        this->cellId_ = c;
-        triangulation.getCellTriangle(T, 0, this->faceIds_[0]);
-        triangulation.getCellTriangle(T, 1, this->faceIds_[1]);
-        triangulation.getCellTriangle(T, 2, this->faceIds_[2]);
-        triangulation.getCellTriangle(T, 3, this->faceIds_[3]);
-        triangulation.getCellVertex(T, 0, this->vertsOrder_[0]);
-        triangulation.getCellVertex(T, 1, this->vertsOrder_[1]);
-        triangulation.getCellVertex(T, 2, this->vertsOrder_[2]);
-        triangulation.getCellVertex(T, 3, this->vertsOrder_[3]);
-        this->vertsOrder_[0] = offset[this->vertsOrder_[0]];
-        this->vertsOrder_[1] = offset[this->vertsOrder_[1]];
-        this->vertsOrder_[2] = offset[this->vertsOrder_[2]];
-        this->vertsOrder_[3] = offset[this->vertsOrder_[3]];
+        this->id_ = id;
+        triangulation.getCellVertex(id, 0, this->vertsOrder_[0]);
+        triangulation.getCellVertex(id, 1, this->vertsOrder_[1]);
+        triangulation.getCellVertex(id, 2, this->vertsOrder_[2]);
+        triangulation.getCellVertex(id, 3, this->vertsOrder_[3]);
+        this->vertsOrder_[0] = offsets[this->vertsOrder_[0]];
+        this->vertsOrder_[1] = offsets[this->vertsOrder_[1]];
+        this->vertsOrder_[2] = offsets[this->vertsOrder_[2]];
+        this->vertsOrder_[3] = offsets[this->vertsOrder_[3]];
+        // sort vertices in decreasing order
         std::sort(this->vertsOrder_.rbegin(), this->vertsOrder_.rend());
       }
     };
 
     template <typename triangulationType>
-    std::vector<Simplex>
-      computeFiltrationOrder(const SimplexId *const offset,
-                             const triangulationType &triangulation) const;
+    void computeCellsOrder(std::array<std::vector<SimplexId>, 4> &cellsOrder,
+                           const SimplexId *const offset,
+                           const triangulationType &triangulation) const;
 
     inline void addCellBoundary(const Simplex &c, VisitedMask &boundary) const {
       for(SimplexId i = 0; i < c.dim_ + 1; ++i) {
@@ -230,15 +223,22 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
 }
 
 template <typename triangulationType>
-std::vector<ttk::PersistentSimplexPairs::Simplex>
-  ttk::PersistentSimplexPairs::computeFiltrationOrder(
-    const SimplexId *const offset,
-    const triangulationType &triangulation) const {
+void ttk::PersistentSimplexPairs::computeCellsOrder(
+  std::array<std::vector<SimplexId>, 4> &cellsOrder,
+  const SimplexId *const offsets,
+  const triangulationType &triangulation) const {
 
   Timer tm{};
 
-  std::vector<Simplex> res(this->nVerts_ + this->nEdges_ + this->nTri_
-                           + this->nTetra_);
+  cellsOrder[0].resize(this->nVerts_);
+  cellsOrder[1].resize(this->nEdges_);
+  cellsOrder[2].resize(this->nTri_);
+  cellsOrder[3].resize(this->nTetra_);
+
+  std::vector<VertexSimplex> verts(this->nVerts_);
+  std::vector<EdgeSimplex> edges(this->nEdges_);
+  std::vector<TriangleSimplex> triangles(this->nTri_);
+  std::vector<TetraSimplex> tetras(this->nTetra_);
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel num_threads(threadNumber_)
@@ -248,45 +248,66 @@ std::vector<ttk::PersistentSimplexPairs::Simplex>
 #pragma omp for nowait
 #endif // TTK_ENABLE_OPENMP
     for(SimplexId i = 0; i < this->nVerts_; ++i) {
-      res[i].fillVert(i, offset);
+      verts[i].fillVert(i, offsets);
     }
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp for nowait
 #endif // TTK_ENABLE_OPENMP
     for(SimplexId i = 0; i < this->nEdges_; ++i) {
-      const auto o = this->nVerts_ + i;
-      res[o].fillEdge(i, o, offset, triangulation);
+      edges[i].fillEdge(i, offsets, triangulation);
     }
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp for nowait
 #endif // TTK_ENABLE_OPENMP
     for(SimplexId i = 0; i < this->nTri_; ++i) {
-      const auto o = this->nVerts_ + this->nEdges_ + i;
-      res[o].fillTriangle(i, o, offset, triangulation);
-      res[o].faceIds_[0] += this->nVerts_;
-      res[o].faceIds_[1] += this->nVerts_;
-      res[o].faceIds_[2] += this->nVerts_;
+      triangles[i].fillTriangle(i, offsets, triangulation);
     }
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp for
 #endif // TTK_ENABLE_OPENMP
     for(SimplexId i = 0; i < this->nTetra_; ++i) {
-      const auto o = this->nVerts_ + this->nEdges_ + this->nTri_ + i;
-      res[o].fillTetra(i, o, offset, triangulation);
-      res[o].faceIds_[0] += this->nVerts_ + this->nEdges_;
-      res[o].faceIds_[1] += this->nVerts_ + this->nEdges_;
-      res[o].faceIds_[2] += this->nVerts_ + this->nEdges_;
-      res[o].faceIds_[3] += this->nVerts_ + this->nEdges_;
+      tetras[i].fillTetra(i, offsets, triangulation);
     }
   }
 
-  TTK_PSORT(this->threadNumber_, res.begin(), res.end());
+  TTK_PSORT(this->threadNumber_, verts.begin(), verts.end());
+  TTK_PSORT(this->threadNumber_, edges.begin(), edges.end());
+  TTK_PSORT(this->threadNumber_, triangles.begin(), triangles.end());
+  TTK_PSORT(this->threadNumber_, tetras.begin(), tetras.end());
+
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel num_threads(threadNumber_)
+#endif // TTK_ENABLE_OPENMP
+  {
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp for nowait
+#endif // TTK_ENABLE_OPENMP
+    for(size_t i = 0; i < verts.size(); ++i) {
+      cellsOrder[0][verts[i].id_] = i;
+    }
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp for nowait
+#endif // TTK_ENABLE_OPENMP
+    for(size_t i = 0; i < edges.size(); ++i) {
+      cellsOrder[1][edges[i].id_] = i;
+    }
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp for nowait
+#endif // TTK_ENABLE_OPENMP
+    for(size_t i = 0; i < triangles.size(); ++i) {
+      cellsOrder[2][triangles[i].id_] = i;
+    }
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp for
+#endif // TTK_ENABLE_OPENMP
+    for(size_t i = 0; i < tetras.size(); ++i) {
+      cellsOrder[3][tetras[i].id_] = i;
+    }
+  }
 
   this->printMsg(
     "Computed filtration order", 1.0, tm.getElapsedTime(), this->threadNumber_);
-
-  return res;
 }
