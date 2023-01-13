@@ -21,14 +21,14 @@ ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
         return filtOrder[getCellId(c.dim_ - 1, a)]
                < filtOrder[getCellId(c.dim_ - 1, b)];
       })};
-    const auto pTau{getCellId(c.dim_ - 1, tau)};
-    const auto partnerTau{partners[pTau]};
+    const auto cTau{getCellId(c.dim_ - 1, tau)};
+    const auto partnerTau{partners[cTau]};
     if(partnerTau == -1) {
-      partners[c.cellId_] = pTau;
-      partners[pTau] = c.cellId_;
+      partners[c.cellId_] = cTau;
+      partners[cTau] = c.cellId_;
       return tau;
     }
-    addCellBoundary(filtration[filtOrder[partnerTau]], boundary);
+    this->addCellBoundary(filtration[filtOrder[partnerTau]], boundary);
   }
 
   return -1;
@@ -60,7 +60,7 @@ int ttk::PersistentSimplexPairs::pairCells(
 
     // store the boundary cells
     VisitedMask vm{boundaries[c.dim_ - 1], visitedIds};
-    eliminateBoundaries(c, vm, partners, filtration, filtOrder);
+    const auto paired = this->eliminateBoundaries(c, vm, partners, filtration, filtOrder);
 
     if(filtration.size() > 10 && i % (filtration.size() / 10) == 0) {
       this->printMsg(
