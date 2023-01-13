@@ -7,8 +7,9 @@ ttk::PersistentSimplexPairs::PersistentSimplexPairs() {
 ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
   const Simplex &c,
   VisitedMask &boundary,
+  const std::vector<Simplex> &filtration,
   const std::vector<SimplexId> &filtOrder,
-  const std::vector<const Simplex *> &partners) const {
+  const std::vector<SimplexId> &partners) const {
 
   this->addCellBoundary(c, boundary);
 
@@ -21,10 +22,10 @@ ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
                < filtOrder[getCellId(c.dim_ - 1, b)];
       })};
     const auto partnerTau{partners[getCellId(c.dim_ - 1, tau)]};
-    if(partnerTau == nullptr) {
+    if(partnerTau == -1) {
       return tau;
     }
-    addCellBoundary(*partnerTau, boundary);
+    addCellBoundary(filtration[filtOrder[partnerTau]], boundary);
   }
 
   return -1;
@@ -39,7 +40,7 @@ int ttk::PersistentSimplexPairs::pairCells(
   // for VisitedMask
   std::vector<SimplexId> visitedIds{};
   // paired simplices
-  std::vector<const Simplex *> partners(filtration.size());
+  std::vector<SimplexId> partners(filtration.size(), -1);
 
   Timer tm{};
 
@@ -57,11 +58,12 @@ int ttk::PersistentSimplexPairs::pairCells(
     // store the boundary cells
     VisitedMask vm{boundaries[c.dim_ - 1], visitedIds};
 
-    const auto partner = eliminateBoundaries(c, vm, filtOrder, partners);
+    const auto partner
+      = eliminateBoundaries(c, vm, filtration, filtOrder, partners);
     if(partner != -1) {
       const auto &pc{filtration[filtOrder[getCellId(c.dim_ - 1, partner)]]};
-      partners[c.cellId_] = &pc;
-      partners[pc.cellId_] = &c;
+      partners[c.cellId_] = pc.cellId_;
+      partners[pc.cellId_] = c.cellId_;
     }
 
     if(filtration.size() > 10 && i % (filtration.size() / 10) == 0) {
@@ -75,11 +77,11 @@ int ttk::PersistentSimplexPairs::pairCells(
   std::vector<bool> paired(partners.size(), false);
 
   for(size_t i = 0; i < partners.size(); ++i) {
-    if(paired[i] || partners[i] == nullptr) {
+    if(paired[i] || partners[i] == -1) {
       continue;
     }
-    const auto &pc{*partners[i]};
-    const auto &c{*partners[pc.cellId_]};
+    const auto &c{filtration[filtOrder[i]]};
+    const auto &pc{filtration[filtOrder[partners[i]]]};
 
     // skill zero-persistence pairs
     if(c.vertsOrder_[0] == pc.vertsOrder_[0]) {
@@ -104,20 +106,20 @@ int ttk::PersistentSimplexPairs::pairCells(
 
   // get infinite pairs
   for(SimplexId i = 0; i < this->nVerts_; ++i) {
-    if(partners[i] == nullptr) {
+    if(partners[i] == -1) {
       pairs.emplace_back(i, -1, 0);
     }
   }
   if(this->nTri_ > 0) {
     for(SimplexId i = 0; i < this->nEdges_; ++i) {
-      if(partners[i + this->nVerts_] == nullptr) {
+      if(partners[i + this->nVerts_] == -1) {
         pairs.emplace_back(i, -1, 1);
       }
     }
   }
   if(this->nTetra_ > 0) {
     for(SimplexId i = 0; i < this->nTri_; ++i) {
-      if(partners[i + this->nVerts_ + this->nEdges_] == nullptr) {
+      if(partners[i + this->nVerts_ + this->nEdges_] == -1) {
         pairs.emplace_back(i, -1, 2);
       }
     }
