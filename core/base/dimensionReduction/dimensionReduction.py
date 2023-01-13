@@ -77,6 +77,7 @@ def doIt(X, method, ncomponents, nneighbors, njobs, rstate, params):
                 eps=mdsParams[4],
                 dissimilarity=mdsParams[5],
                 n_jobs=njobs,
+                normalized_stress="auto",
             )
             Y = mds.fit_transform(X)
         elif method == 3:
