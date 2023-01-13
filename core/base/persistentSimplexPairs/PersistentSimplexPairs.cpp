@@ -7,9 +7,9 @@ ttk::PersistentSimplexPairs::PersistentSimplexPairs() {
 ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
   const Simplex &c,
   VisitedMask &boundary,
+  std::vector<SimplexId> &partners,
   const std::vector<Simplex> &filtration,
-  const std::vector<SimplexId> &filtOrder,
-  const std::vector<SimplexId> &partners) const {
+  const std::vector<SimplexId> &filtOrder) const {
 
   this->addCellBoundary(c, boundary);
 
@@ -21,8 +21,11 @@ ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
         return filtOrder[getCellId(c.dim_ - 1, a)]
                < filtOrder[getCellId(c.dim_ - 1, b)];
       })};
-    const auto partnerTau{partners[getCellId(c.dim_ - 1, tau)]};
+    const auto pTau{getCellId(c.dim_ - 1, tau)};
+    const auto partnerTau{partners[pTau]};
     if(partnerTau == -1) {
+      partners[c.cellId_] = pTau;
+      partners[pTau] = c.cellId_;
       return tau;
     }
     addCellBoundary(filtration[filtOrder[partnerTau]], boundary);
@@ -57,14 +60,7 @@ int ttk::PersistentSimplexPairs::pairCells(
 
     // store the boundary cells
     VisitedMask vm{boundaries[c.dim_ - 1], visitedIds};
-
-    const auto partner
-      = eliminateBoundaries(c, vm, filtration, filtOrder, partners);
-    if(partner != -1) {
-      const auto &pc{filtration[filtOrder[getCellId(c.dim_ - 1, partner)]]};
-      partners[c.cellId_] = pc.cellId_;
-      partners[pc.cellId_] = c.cellId_;
-    }
+    eliminateBoundaries(c, vm, partners, filtration, filtOrder);
 
     if(filtration.size() > 10 && i % (filtration.size() / 10) == 0) {
       this->printMsg(

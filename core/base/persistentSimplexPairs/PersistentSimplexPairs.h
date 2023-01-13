@@ -179,11 +179,12 @@ namespace ttk {
       return -1;
     }
 
-    SimplexId eliminateBoundaries(const Simplex &c,
-                                  VisitedMask &boundary,
-                                  const std::vector<Simplex> &filtration,
-                                  const std::vector<SimplexId> &filtOrder,
-                                  const std::vector<SimplexId> &partners) const;
+    SimplexId
+      eliminateBoundaries(const Simplex &c,
+                          VisitedMask &boundary,
+                          std::vector<SimplexId> &partners,
+                          const std::vector<Simplex> &filtration,
+                          const std::vector<SimplexId> &filtOrder) const;
 
     int pairCells(std::vector<PersistencePair> &pairs,
                   std::array<std::vector<bool>, 3> &boundaries,
