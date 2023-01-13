@@ -143,20 +143,13 @@ namespace ttk {
     };
 
     template <typename triangulationType>
-    void computeCellsOrder(std::array<std::vector<SimplexId>, 4> &cellsOrder,
+    void computeCellsOrder(std::vector<VertexSimplex> &verts,
+                           std::vector<EdgeSimplex> &edges,
+                           std::vector<TriangleSimplex> &triangles,
+                           std::vector<TetraSimplex> &tetras,
+                           std::array<std::vector<SimplexId>, 4> &cellsOrder,
                            const SimplexId *const offset,
                            const triangulationType &triangulation) const;
-
-    inline void addCellBoundary(const Simplex &c, VisitedMask &boundary) const {
-      for(SimplexId i = 0; i < c.dim_ + 1; ++i) {
-        const auto f{c.faceIds_[i]};
-        if(!boundary.isVisited_[f]) {
-          boundary.insert(f);
-        } else {
-          boundary.remove(f);
-        }
-      }
-    }
 
     inline SimplexId getCellId(const SimplexId cdim,
                                const SimplexId cid) const {
@@ -172,16 +165,98 @@ namespace ttk {
       return -1;
     }
 
+    template <typename triangulationType>
+    int pairCells(std::vector<PersistencePair> &pairs,
+                  std::vector<VertexSimplex> &verts,
+                  std::vector<EdgeSimplex> &edges,
+                  std::vector<TriangleSimplex> &triangles,
+                  std::vector<TetraSimplex> &tetras,
+                  const std::array<std::vector<SimplexId>, 4> &cellsOrder,
+                  const triangulationType &triangulation) const;
+
+    template <typename triangulationType,
+              typename Container0,
+              typename Container1>
+    void
+      pairCellsPerDim(std::vector<PersistencePair> &pairs,
+                      std::vector<Container0> &sortedFaces,
+                      std::vector<Container1> &sortedCells,
+                      std::vector<SimplexId> &visitedIds,
+                      std::vector<bool> &isVisited,
+                      std::vector<SimplexId> &partners,
+                      std::array<std::vector<bool>, 4> &pairedSimplices,
+                      const int dim,
+                      const std::array<std::vector<SimplexId>, 4> &cellsOrder,
+                      const triangulationType &triangulation) const {
+      isVisited.resize(sortedFaces.size(), false);
+      partners.resize(sortedFaces.size());
+      std::fill(partners.begin(), partners.end(), -1);
+      for(size_t j = 0; j < sortedCells.size(); ++j) {
+        VisitedMask vm{isVisited, visitedIds};
+        const auto &c{sortedCells[j]};
+        const auto tau = this->eliminateBoundaries(
+          c.id_, dim, vm, partners, cellsOrder[dim - 1], triangulation);
+        if(tau != -1) {
+          const auto &pc{sortedFaces[cellsOrder[dim - 1][tau]]};
+          pairedSimplices[dim - 1][pc.id_] = true;
+          pairedSimplices[dim][c.id_] = true;
+          // only record pairs with non-null persistence
+          if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
+            pairs.emplace_back(pc.id_, c.id_, dim - 1);
+          }
+        }
+      }
+    }
+
+    template <typename triangulationType>
     SimplexId
-      eliminateBoundaries(const Simplex &c,
+      eliminateBoundaries(const SimplexId c,
+                          const int dim,
                           VisitedMask &boundary,
                           std::vector<SimplexId> &partners,
-                          const std::vector<Simplex> &filtration,
-                          const std::vector<SimplexId> &filtOrder) const;
+                          const std::vector<SimplexId> &facesOrder,
+                          const triangulationType &triangulation) const {
+      const auto addBoundaryEl
+        = [&triangulation, &dim, &boundary](const SimplexId a, const int lid) {
+            SimplexId s{};
+            if(dim == 1) {
+              triangulation.getEdgeVertex(a, lid, s);
+            } else if(dim == 2) {
+              triangulation.getTriangleEdge(a, lid, s);
+            } else if(dim == 3) {
+              triangulation.getCellTriangle(a, lid, s);
+            }
+            if(!boundary.isVisited_[s]) {
+              boundary.insert(s);
+            } else {
+              boundary.remove(s);
+            }
+          };
 
-    int pairCells(std::vector<PersistencePair> &pairs,
-                  const std::vector<Simplex> &filtration,
-                  const std::vector<SimplexId> &filtOrder) const;
+      const auto addBoundary = [&addBoundaryEl, &dim](const SimplexId a) {
+        for(int i = 0; i < dim + 1; ++i) {
+          addBoundaryEl(a, i);
+        }
+      };
+      addBoundary(c);
+
+      while(!boundary.visitedIds_.empty()) {
+        // youngest cell on boundary
+        const auto tau{*std::max_element(
+          boundary.visitedIds_.begin(), boundary.visitedIds_.end(),
+          [&facesOrder](const SimplexId a, const SimplexId b) {
+            return facesOrder[a] < facesOrder[b];
+          })};
+        const auto partnerTau{partners[tau]};
+        if(partnerTau == -1) {
+          partners[tau] = c;
+          return tau;
+        }
+        addBoundary(partnerTau);
+      }
+
+      return -1;
+    }
 
     SimplexId nVerts_{0};
     SimplexId nEdges_{0};
@@ -192,6 +267,82 @@ namespace ttk {
 } // namespace ttk
 
 template <typename triangulationType>
+int ttk::PersistentSimplexPairs::pairCells(
+  std::vector<PersistencePair> &pairs,
+  std::vector<VertexSimplex> &verts,
+  std::vector<EdgeSimplex> &edges,
+  std::vector<TriangleSimplex> &triangles,
+  std::vector<TetraSimplex> &tetras,
+  const std::array<std::vector<SimplexId>, 4> &cellsOrder,
+  const triangulationType &triangulation) const {
+
+  // for VisitedMask
+  std::vector<SimplexId> visitedIds{};
+  std::vector<bool> isVisited{};
+  // paired simplices
+  std::vector<SimplexId> partners{};
+
+  const auto dim{triangulation.getDimensionality()};
+
+  std::array<std::vector<bool>, 4> pairedSimplices{};
+  pairedSimplices[0].resize(this->nVerts_, false);
+  if(dim > 0) {
+    pairedSimplices[1].resize(this->nEdges_, false);
+  }
+  if(dim > 1) {
+    pairedSimplices[2].resize(this->nTri_, false);
+  }
+  if(dim > 2) {
+    pairedSimplices[3].resize(this->nTetra_, false);
+  }
+
+  {
+    Timer tm{};
+    const auto nPairs{pairs.size()};
+    this->pairCellsPerDim(pairs, verts, edges, visitedIds, isVisited, partners,
+                          pairedSimplices, 1, cellsOrder, triangulation);
+    this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
+                     + " pairs of dimension 0",
+                   1.0, tm.getElapsedTime(), 1);
+  }
+  if(dim > 1) {
+    Timer tm{};
+    const auto nPairs{pairs.size()};
+    this->pairCellsPerDim(pairs, edges, triangles, visitedIds, isVisited,
+                          partners, pairedSimplices, 2, cellsOrder,
+                          triangulation);
+    this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
+                     + " pairs of dimension 1",
+                   1.0, tm.getElapsedTime(), 1);
+  }
+  if(dim > 2) {
+    Timer tm{};
+    const auto nPairs{pairs.size()};
+    this->pairCellsPerDim(pairs, triangles, tetras, visitedIds, isVisited,
+                          partners, pairedSimplices, 3, cellsOrder,
+                          triangulation);
+    this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
+                     + " pairs of dimension 2",
+                   1.0, tm.getElapsedTime(), 1);
+  }
+
+  Timer tm{};
+  const auto nPairs{pairs.size()};
+  for(size_t i = 0; i < pairedSimplices.size(); ++i) {
+    for(size_t j = 0; j < pairedSimplices[i].size(); ++j) {
+      if(!pairedSimplices[i][j]) {
+        pairs.emplace_back(j, -1, i);
+      }
+    }
+  }
+  this->printMsg(
+    "Detected " + std::to_string(pairs.size() - nPairs) + " infinite pairs",
+    1.0, tm.getElapsedTime(), 1);
+
+  return 0;
+}
+
+template <typename triangulationType>
 int ttk::PersistentSimplexPairs::computePersistencePairs(
   std::vector<ttk::PersistentSimplexPairs::PersistencePair> &pairs,
   const SimplexId *const orderField,
@@ -199,21 +350,16 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
 
   Timer tm{};
 
-  // every simplex in the triangulation, sorted by filtration
-  const auto filtration
-    = this->computeFiltrationOrder(orderField, triangulation);
+  std::array<std::vector<SimplexId>, 4> cellsOrder{};
+  std::vector<VertexSimplex> verts{};
+  std::vector<EdgeSimplex> edges{};
+  std::vector<TriangleSimplex> triangles{};
+  std::vector<TetraSimplex> tetras{};
 
-  // simplex id -> filtration order
-  std::vector<SimplexId> filtOrder(filtration.size());
-
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
-#endif // TTK_ENABLE_OPENMP
-  for(size_t i = 0; i < filtration.size(); ++i) {
-    filtOrder[filtration[i].cellId_] = i;
-  }
-
-  this->pairCells(pairs, filtration, filtOrder);
+  this->computeCellsOrder(
+    verts, edges, triangles, tetras, cellsOrder, orderField, triangulation);
+  this->pairCells(
+    pairs, verts, edges, triangles, tetras, cellsOrder, triangulation);
 
   this->printMsg("Computed " + std::to_string(pairs.size())
                    + " persistence pair" + (pairs.size() > 1 ? "s" : ""),
@@ -224,6 +370,10 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
 
 template <typename triangulationType>
 void ttk::PersistentSimplexPairs::computeCellsOrder(
+  std::vector<VertexSimplex> &verts,
+  std::vector<EdgeSimplex> &edges,
+  std::vector<TriangleSimplex> &triangles,
+  std::vector<TetraSimplex> &tetras,
   std::array<std::vector<SimplexId>, 4> &cellsOrder,
   const SimplexId *const offsets,
   const triangulationType &triangulation) const {
@@ -234,11 +384,10 @@ void ttk::PersistentSimplexPairs::computeCellsOrder(
   cellsOrder[1].resize(this->nEdges_);
   cellsOrder[2].resize(this->nTri_);
   cellsOrder[3].resize(this->nTetra_);
-
-  std::vector<VertexSimplex> verts(this->nVerts_);
-  std::vector<EdgeSimplex> edges(this->nEdges_);
-  std::vector<TriangleSimplex> triangles(this->nTri_);
-  std::vector<TetraSimplex> tetras(this->nTetra_);
+  verts.resize(this->nVerts_);
+  edges.resize(this->nEdges_);
+  triangles.resize(this->nTri_);
+  tetras.resize(this->nTetra_);
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel num_threads(threadNumber_)
