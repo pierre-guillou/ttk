@@ -187,7 +187,6 @@ namespace ttk {
                           const std::vector<SimplexId> &filtOrder) const;
 
     int pairCells(std::vector<PersistencePair> &pairs,
-                  std::array<std::vector<bool>, 3> &boundaries,
                   const std::vector<Simplex> &filtration,
                   const std::vector<SimplexId> &filtOrder) const;
 
@@ -211,11 +210,6 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
   const auto filtration
     = this->computeFiltrationOrder(orderField, triangulation);
 
-  std::array<std::vector<bool>, 3> boundaries{};
-  boundaries[0].resize(this->nVerts_, false);
-  boundaries[1].resize(this->nEdges_, false);
-  boundaries[2].resize(this->nTri_, false);
-
   // simplex id -> filtration order
   std::vector<SimplexId> filtOrder(filtration.size());
 
@@ -226,7 +220,7 @@ int ttk::PersistentSimplexPairs::computePersistencePairs(
     filtOrder[filtration[i].cellId_] = i;
   }
 
-  this->pairCells(pairs, boundaries, filtration, filtOrder);
+  this->pairCells(pairs, filtration, filtOrder);
 
   this->printMsg("Computed " + std::to_string(pairs.size())
                    + " persistence pair" + (pairs.size() > 1 ? "s" : ""),
@@ -271,6 +265,9 @@ std::vector<ttk::PersistentSimplexPairs::Simplex>
     for(SimplexId i = 0; i < this->nTri_; ++i) {
       const auto o = this->nVerts_ + this->nEdges_ + i;
       res[o].fillTriangle(i, o, offset, triangulation);
+      res[o].faceIds_[0] += this->nVerts_;
+      res[o].faceIds_[1] += this->nVerts_;
+      res[o].faceIds_[2] += this->nVerts_;
     }
 
 #ifdef TTK_ENABLE_OPENMP
@@ -279,6 +276,10 @@ std::vector<ttk::PersistentSimplexPairs::Simplex>
     for(SimplexId i = 0; i < this->nTetra_; ++i) {
       const auto o = this->nVerts_ + this->nEdges_ + this->nTri_ + i;
       res[o].fillTetra(i, o, offset, triangulation);
+      res[o].faceIds_[0] += this->nVerts_ + this->nEdges_;
+      res[o].faceIds_[1] += this->nVerts_ + this->nEdges_;
+      res[o].faceIds_[2] += this->nVerts_ + this->nEdges_;
+      res[o].faceIds_[3] += this->nVerts_ + this->nEdges_;
     }
   }
 

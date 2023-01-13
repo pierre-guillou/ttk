@@ -17,15 +17,13 @@ ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
     // youngest cell on boundary
     const auto tau{*std::max_element(
       boundary.visitedIds_.begin(), boundary.visitedIds_.end(),
-      [&filtOrder, &c, this](const SimplexId a, const SimplexId b) {
-        return filtOrder[getCellId(c.dim_ - 1, a)]
-               < filtOrder[getCellId(c.dim_ - 1, b)];
+      [&filtOrder](const SimplexId a, const SimplexId b) {
+        return filtOrder[a] < filtOrder[b];
       })};
-    const auto cTau{getCellId(c.dim_ - 1, tau)};
-    const auto partnerTau{partners[cTau]};
+    const auto partnerTau{partners[tau]};
     if(partnerTau == -1) {
-      partners[c.cellId_] = cTau;
-      partners[cTau] = c.cellId_;
+      partners[c.cellId_] = tau;
+      partners[tau] = c.cellId_;
       return tau;
     }
     this->addCellBoundary(filtration[filtOrder[partnerTau]], boundary);
@@ -36,12 +34,12 @@ ttk::SimplexId ttk::PersistentSimplexPairs::eliminateBoundaries(
 
 int ttk::PersistentSimplexPairs::pairCells(
   std::vector<PersistencePair> &pairs,
-  std::array<std::vector<bool>, 3> &boundaries,
   const std::vector<Simplex> &filtration,
   const std::vector<SimplexId> &filtOrder) const {
 
   // for VisitedMask
   std::vector<SimplexId> visitedIds{};
+  std::vector<bool> isVisited(filtration.size(), false);
   // paired simplices
   std::vector<SimplexId> partners(filtration.size(), -1);
 
@@ -59,15 +57,14 @@ int ttk::PersistentSimplexPairs::pairCells(
     }
 
     // store the boundary cells
-    VisitedMask vm{boundaries[c.dim_ - 1], visitedIds};
+    VisitedMask vm{isVisited, visitedIds};
     const auto tau
       = this->eliminateBoundaries(c, vm, partners, filtration, filtOrder);
     if(tau != -1) {
-      const auto cTau{getCellId(c.dim_ - 1, tau)};
-      const auto pc{filtration[filtOrder[cTau]]};
+      const auto pc{filtration[filtOrder[tau]]};
       // only record pairs with non-null persistence
       if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
-        pairs.emplace_back(tau, c.id_, c.dim_ - 1);
+        pairs.emplace_back(pc.id_, c.id_, c.dim_ - 1);
       }
     }
 
