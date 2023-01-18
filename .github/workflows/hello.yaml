@@ -69,6 +69,24 @@ jobs:
         run: |
           ttk-paraview-headless.exe /S
 
+      - name: Test Python imports
+        continue-on-error: true
+        shell: cmd
+        run: |
+          set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          echo "pvpython"
+          pvpython --version
+          echo "pvpython vtk"
+          pvpython -m vtk
+          echo "pvpython simple
+          pvpython -m paraview.simple
+          echo "python"
+          python --version
+          echo "python vtk"
+          python -m vtk
+          echo "python simple
+          python -m paraview.simple
+
       - name: Create & configure TTK build directory
         shell: cmd
         run: |
