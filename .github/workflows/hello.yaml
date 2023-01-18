@@ -169,7 +169,7 @@ jobs:
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
           cd %GITHUB_WORKSPACE%\examples\python
-          python example.py ..\data\inputData.vtu
+          pvpython example.py ..\data\inputData.vtu
 
       - name: Test pvpython example
         continue-on-error: true
@@ -194,7 +194,7 @@ jobs:
         name: Checkout ttk-data
 
       - name: Resample large datasets
-        shell: python
+        shell: pvpython {0}
         working-directory: ./ttk-data
         run: |
           from paraview import simple
