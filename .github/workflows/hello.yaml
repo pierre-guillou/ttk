@@ -42,6 +42,12 @@ jobs:
         shell: bash
         run: |
           rm -rf C:/hostedtoolcache/windows/Python
+          ls -l "$CONDA_ROOT"
+          echo "\n\n"
+          ls -l "$CONDA_ROOT/bin"
+          echo "\n\n"
+          rm -rf "C:/Program Files/Amazon/AWSCLIV2"
+          find /c/ -name python39.dll
 
       - name: Fetch archived ccache
         continue-on-error: true
@@ -86,6 +92,8 @@ jobs:
           python -m vtk
           echo "python simple
           python -m paraview.simple
+          cd "C:\Program Files"
+          dir python39.dll /s
 
       - name: Create & configure TTK build directory
         shell: cmd
@@ -204,7 +212,7 @@ jobs:
               rsi.SamplingDimensions = [128, 128, 128]
               simple.SaveData(ds, rsi)
         env:
-          PYTHONPATH: ${{ env.PV_DIR }}\bin\Lib\site-packages
+          PYTHONPATH: ${{ env.PV_DIR }}\bin\Lib\site-packages;${{ env.CONDA_ROOT }}\Lib
 
       - name: Run ttk-data Python scripts
         continue-on-error: true
@@ -213,7 +221,7 @@ jobs:
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
           set PV_PLUGIN_PATH=%TTK_DIR%\bin\plugins
           cd ttk-data
-          python -u python\run.py
+          pvpython -u python\run.py
 
       - name: Test ttk-data Python scripts results [NOT ENFORCED]
         continue-on-error: true
