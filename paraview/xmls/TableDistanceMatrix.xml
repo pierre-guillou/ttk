@@ -40,6 +40,7 @@
         label="Select Fields with a Regexp"
         command="SetSelectFieldsWithRegexp"
         number_of_elements="1"
+        panel_visibility="advanced"
         default_values="0">
         <BooleanDomain name="bool"/>
         <Documentation>
