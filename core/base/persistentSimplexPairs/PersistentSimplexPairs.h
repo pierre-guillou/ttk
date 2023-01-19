@@ -179,8 +179,8 @@ namespace ttk {
               typename Container1>
     void
       pairCellsPerDim(std::vector<PersistencePair> &pairs,
-                      std::vector<Container0> &sortedFaces,
-                      std::vector<Container1> &sortedCells,
+                      const std::vector<Container0> &sortedFaces,
+                      const std::vector<Container1> &sortedCells,
                       std::vector<bool> &isVisited,
                       std::vector<SimplexId> &partners,
                       std::array<std::vector<bool>, 4> &pairedSimplices,
@@ -310,52 +310,66 @@ int ttk::PersistentSimplexPairs::pairCells(
   const std::array<std::vector<SimplexId>, 4> &cellsOrder,
   const triangulationType &triangulation) const {
 
-  // for VisitedMask
-  std::vector<bool> isVisited{};
-  // paired simplices
-  std::vector<SimplexId> partners{};
-
   const auto dim{triangulation.getDimensionality()};
+  std::array<std::vector<PersistencePair>, 3> pairsPerDim{};
 
   std::array<std::vector<bool>, 4> pairedSimplices{};
+  std::array<std::vector<bool>, 3> isVisited{};
   pairedSimplices[0].resize(this->nVerts_, false);
+  isVisited[0].resize(this->nVerts_, false);
   if(dim > 0) {
     pairedSimplices[1].resize(this->nEdges_, false);
+    isVisited[1].resize(this->nEdges_, false);
   }
   if(dim > 1) {
     pairedSimplices[2].resize(this->nTri_, false);
+    isVisited[2].resize(this->nTri_, false);
   }
   if(dim > 2) {
     pairedSimplices[3].resize(this->nTetra_, false);
   }
 
+#pragma omp parallel num_threads(this->threadNumber_)
+#pragma omp sections
   {
-    Timer tm{};
-    const auto nPairs{pairs.size()};
-    this->pairCellsPerDim(pairs, verts, edges, isVisited, partners,
-                          pairedSimplices, 1, cellsOrder, triangulation);
-    this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
-                     + " pairs of dimension 0",
-                   1.0, tm.getElapsedTime(), 1);
+#pragma omp section
+    {
+      Timer tm{};
+      std::vector<SimplexId> partners{};
+      this->pairCellsPerDim(pairsPerDim[0], verts, edges, isVisited[0],
+                            partners, pairedSimplices, 1, cellsOrder,
+                            triangulation);
+      this->printMsg("Computed " + std::to_string(pairsPerDim[0].size())
+                       + " pairs of dimension 0",
+                     1.0, tm.getElapsedTime(), 1);
+    }
+#pragma omp section
+    if(dim > 1) {
+      Timer tm{};
+      std::vector<SimplexId> partners{};
+      this->pairCellsPerDim(pairsPerDim[1], edges, triangles, isVisited[1],
+                            partners, pairedSimplices, 2, cellsOrder,
+                            triangulation);
+      this->printMsg("Computed " + std::to_string(pairsPerDim[1].size())
+                       + " pairs of dimension 1",
+                     1.0, tm.getElapsedTime(), 1);
+    }
+#pragma omp section
+    if(dim > 2) {
+      Timer tm{};
+      std::vector<SimplexId> partners{};
+      this->pairCellsPerDim(pairsPerDim[2], triangles, tetras, isVisited[2],
+                            partners, pairedSimplices, 3, cellsOrder,
+                            triangulation);
+      this->printMsg("Computed " + std::to_string(pairsPerDim[2].size())
+                       + " pairs of dimension 2",
+                     1.0, tm.getElapsedTime(), 1);
+    }
   }
-  if(dim > 1) {
-    Timer tm{};
-    const auto nPairs{pairs.size()};
-    this->pairCellsPerDim(pairs, edges, triangles, isVisited, partners,
-                          pairedSimplices, 2, cellsOrder, triangulation);
-    this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
-                     + " pairs of dimension 1",
-                   1.0, tm.getElapsedTime(), 1);
-  }
-  if(dim > 2) {
-    Timer tm{};
-    const auto nPairs{pairs.size()};
-    this->pairCellsPerDim(pairs, triangles, tetras, isVisited, partners,
-                          pairedSimplices, 3, cellsOrder, triangulation);
-    this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
-                     + " pairs of dimension 2",
-                   1.0, tm.getElapsedTime(), 1);
-  }
+
+  pairs = std::move(pairsPerDim[0]);
+  pairs.insert(pairs.end(), pairsPerDim[2].begin(), pairsPerDim[2].end());
+  pairs.insert(pairs.end(), pairsPerDim[1].begin(), pairsPerDim[1].end());
 
   Timer tm{};
   const auto nPairs{pairs.size()};
