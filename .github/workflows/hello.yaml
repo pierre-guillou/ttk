@@ -85,13 +85,11 @@ jobs:
           echo "pvpython simple
           pvpython -m paraview.simple
           echo "python"
-          python --version
+          python -m sysconfig
           echo "python vtk"
           python -m vtk
           echo "python simple
           python -m paraview.simple
-          cd "C:\Program Files"
-          dir python39.dll /s
 
       - name: Create & configure TTK build directory
         shell: cmd
