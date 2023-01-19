@@ -181,21 +181,23 @@ namespace ttk {
       pairCellsPerDim(std::vector<PersistencePair> &pairs,
                       std::vector<Container0> &sortedFaces,
                       std::vector<Container1> &sortedCells,
-                      std::vector<SimplexId> &visitedIds,
                       std::vector<bool> &isVisited,
                       std::vector<SimplexId> &partners,
                       std::array<std::vector<bool>, 4> &pairedSimplices,
                       const int dim,
                       const std::array<std::vector<SimplexId>, 4> &cellsOrder,
                       const triangulationType &triangulation) const {
+
       isVisited.resize(sortedFaces.size(), false);
       partners.resize(sortedFaces.size());
       std::fill(partners.begin(), partners.end(), -1);
+      std::vector<std::vector<SimplexId>> boundaries(sortedCells.size());
+
       for(size_t j = 0; j < sortedCells.size(); ++j) {
-        VisitedMask vm{isVisited, visitedIds};
         const auto &c{sortedCells[j]};
         const auto tau = this->eliminateBoundaries(
-          c.id_, dim, vm, partners, cellsOrder[dim - 1], triangulation);
+          c.id_, dim, isVisited, boundaries, partners, cellsOrder[dim - 1],
+          triangulation);
         if(tau != -1) {
           const auto &pc{sortedFaces[cellsOrder[dim - 1][tau]]};
           pairedSimplices[dim - 1][pc.id_] = true;
@@ -212,10 +214,13 @@ namespace ttk {
     SimplexId
       eliminateBoundaries(const SimplexId c,
                           const int dim,
-                          VisitedMask &boundary,
+                          std::vector<bool> &isVisited,
+                          std::vector<std::vector<SimplexId>> &boundaries,
                           std::vector<SimplexId> &partners,
                           const std::vector<SimplexId> &facesOrder,
                           const triangulationType &triangulation) const {
+
+      VisitedMask boundary{isVisited, boundaries[c]};
       const auto addBoundaryEl
         = [&triangulation, &dim, &boundary](const SimplexId a, const int lid) {
             SimplexId s{};
@@ -252,7 +257,18 @@ namespace ttk {
           partners[tau] = c;
           return tau;
         }
-        addBoundary(partnerTau);
+        if(boundaries[partnerTau].empty()) {
+          addBoundary(partnerTau);
+        } else {
+          // merge boundaries
+          for(const auto s : boundaries[partnerTau]) {
+            if(!boundary.isVisited_[s]) {
+              boundary.insert(s);
+            } else {
+              boundary.remove(s);
+            }
+          }
+        }
       }
 
       return -1;
@@ -277,7 +293,6 @@ int ttk::PersistentSimplexPairs::pairCells(
   const triangulationType &triangulation) const {
 
   // for VisitedMask
-  std::vector<SimplexId> visitedIds{};
   std::vector<bool> isVisited{};
   // paired simplices
   std::vector<SimplexId> partners{};
@@ -299,7 +314,7 @@ int ttk::PersistentSimplexPairs::pairCells(
   {
     Timer tm{};
     const auto nPairs{pairs.size()};
-    this->pairCellsPerDim(pairs, verts, edges, visitedIds, isVisited, partners,
+    this->pairCellsPerDim(pairs, verts, edges, isVisited, partners,
                           pairedSimplices, 1, cellsOrder, triangulation);
     this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
                      + " pairs of dimension 0",
@@ -308,9 +323,8 @@ int ttk::PersistentSimplexPairs::pairCells(
   if(dim > 1) {
     Timer tm{};
     const auto nPairs{pairs.size()};
-    this->pairCellsPerDim(pairs, edges, triangles, visitedIds, isVisited,
-                          partners, pairedSimplices, 2, cellsOrder,
-                          triangulation);
+    this->pairCellsPerDim(pairs, edges, triangles, isVisited, partners,
+                          pairedSimplices, 2, cellsOrder, triangulation);
     this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
                      + " pairs of dimension 1",
                    1.0, tm.getElapsedTime(), 1);
@@ -318,9 +332,8 @@ int ttk::PersistentSimplexPairs::pairCells(
   if(dim > 2) {
     Timer tm{};
     const auto nPairs{pairs.size()};
-    this->pairCellsPerDim(pairs, triangles, tetras, visitedIds, isVisited,
-                          partners, pairedSimplices, 3, cellsOrder,
-                          triangulation);
+    this->pairCellsPerDim(pairs, triangles, tetras, isVisited, partners,
+                          pairedSimplices, 3, cellsOrder, triangulation);
     this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
                      + " pairs of dimension 2",
                    1.0, tm.getElapsedTime(), 1);
