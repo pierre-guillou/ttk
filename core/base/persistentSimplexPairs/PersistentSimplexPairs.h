@@ -13,9 +13,9 @@
 
 #include <AbstractTriangulation.h>
 #include <Debug.h>
-#include <VisitedMask.h>
 
 #include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -191,13 +191,17 @@ namespace ttk {
       isVisited.resize(sortedFaces.size(), false);
       partners.resize(sortedFaces.size());
       std::fill(partners.begin(), partners.end(), -1);
-      std::vector<std::vector<SimplexId>> boundaries(sortedCells.size());
+      const auto cmp
+        = [&cellsOrder, &dim](const SimplexId a, const SimplexId b) {
+            return cellsOrder[dim - 1][a] > cellsOrder[dim - 1][b];
+          };
+      using Container = std::set<SimplexId, decltype(cmp)>;
+      std::vector<Container> boundaries(sortedCells.size(), Container(cmp));
 
       for(size_t j = 0; j < sortedCells.size(); ++j) {
         const auto &c{sortedCells[j]};
         const auto tau = this->eliminateBoundaries(
-          c.id_, dim, isVisited, boundaries, partners, cellsOrder[dim - 1],
-          triangulation);
+          c.id_, dim, isVisited, boundaries, partners, triangulation);
         if(tau != -1) {
           const auto &pc{sortedFaces[cellsOrder[dim - 1][tau]]};
           pairedSimplices[dim - 1][pc.id_] = true;
@@ -210,33 +214,45 @@ namespace ttk {
       }
     }
 
-    template <typename triangulationType>
+    template <typename triangulationType, typename Container>
     SimplexId
       eliminateBoundaries(const SimplexId c,
                           const int dim,
                           std::vector<bool> &isVisited,
-                          std::vector<std::vector<SimplexId>> &boundaries,
+                          std::vector<Container> &boundaries,
                           std::vector<SimplexId> &partners,
-                          const std::vector<SimplexId> &facesOrder,
                           const triangulationType &triangulation) const {
 
-      VisitedMask boundary{isVisited, boundaries[c]};
-      const auto addBoundaryEl
-        = [&triangulation, &dim, &boundary](const SimplexId a, const int lid) {
-            SimplexId s{};
-            if(dim == 1) {
-              triangulation.getEdgeVertex(a, lid, s);
-            } else if(dim == 2) {
-              triangulation.getTriangleEdge(a, lid, s);
-            } else if(dim == 3) {
-              triangulation.getCellTriangle(a, lid, s);
-            }
-            if(!boundary.isVisited_[s]) {
-              boundary.insert(s);
-            } else {
-              boundary.remove(s);
-            }
-          };
+      auto &boundary{boundaries[c]};
+      const auto expandBoundary = [&boundary, &isVisited](const SimplexId s) {
+        if(!isVisited[s]) {
+          boundary.emplace(s);
+          isVisited[s] = true;
+        } else {
+          const auto it{boundary.find(s)};
+          boundary.erase(it);
+          isVisited[s] = false;
+        }
+      };
+
+      const auto clearBoundary = [&boundary, &isVisited]() {
+        for(const auto e : boundary) {
+          isVisited[e] = false;
+        }
+      };
+
+      const auto addBoundaryEl = [&triangulation, &dim, &expandBoundary](
+                                   const SimplexId a, const int lid) {
+        SimplexId s{};
+        if(dim == 1) {
+          triangulation.getEdgeVertex(a, lid, s);
+        } else if(dim == 2) {
+          triangulation.getTriangleEdge(a, lid, s);
+        } else if(dim == 3) {
+          triangulation.getCellTriangle(a, lid, s);
+        }
+        expandBoundary(s);
+      };
 
       const auto addBoundary = [&addBoundaryEl, &dim](const SimplexId a) {
         for(int i = 0; i < dim + 1; ++i) {
@@ -245,16 +261,13 @@ namespace ttk {
       };
       addBoundary(c);
 
-      while(!boundary.visitedIds_.empty()) {
+      while(!boundary.empty()) {
         // youngest cell on boundary
-        const auto tau{*std::max_element(
-          boundary.visitedIds_.begin(), boundary.visitedIds_.end(),
-          [&facesOrder](const SimplexId a, const SimplexId b) {
-            return facesOrder[a] < facesOrder[b];
-          })};
+        const auto tau{*boundary.begin()};
         const auto partnerTau{partners[tau]};
         if(partnerTau == -1) {
           partners[tau] = c;
+          clearBoundary();
           return tau;
         }
         if(boundaries[partnerTau].empty()) {
@@ -262,15 +275,12 @@ namespace ttk {
         } else {
           // merge boundaries
           for(const auto s : boundaries[partnerTau]) {
-            if(!boundary.isVisited_[s]) {
-              boundary.insert(s);
-            } else {
-              boundary.remove(s);
-            }
+            expandBoundary(s);
           }
         }
       }
 
+      clearBoundary();
       return -1;
     }
 
