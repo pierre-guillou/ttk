@@ -206,10 +206,18 @@ namespace ttk {
           const auto &pc{sortedFaces[cellsOrder[dim - 1][tau]]};
           pairedSimplices[dim - 1][pc.id_] = true;
           pairedSimplices[dim][c.id_] = true;
-          // only record pairs with non-null persistence
-          if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
-            pairs.emplace_back(pc.id_, c.id_, dim - 1);
-          }
+        }
+      }
+
+      for(size_t i = 0; i < partners.size(); ++i) {
+        if(partners[i] == -1) {
+          continue;
+        }
+        const auto &c{sortedFaces[cellsOrder[dim - 1][i]]};
+        const auto &pc{sortedCells[cellsOrder[dim][partners[i]]]};
+        // only record pairs with non-null persistence
+        if(c.vertsOrder_[0] != pc.vertsOrder_[0]) {
+          pairs.emplace_back(i, partners[i], dim - 1);
         }
       }
     }
