@@ -184,6 +184,7 @@ namespace ttk {
                       std::vector<bool> &isVisited,
                       std::vector<SimplexId> &partners,
                       std::array<std::vector<bool>, 4> &pairedSimplices,
+                      std::array<std::vector<Lock>, 4> &cellLocks,
                       const int dim,
                       const std::array<std::vector<SimplexId>, 4> &cellsOrder,
                       const triangulationType &triangulation) const {
@@ -198,10 +199,15 @@ namespace ttk {
       using Container = std::set<SimplexId, decltype(cmp)>;
       std::vector<Container> boundaries(sortedCells.size(), Container(cmp));
 
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp parallel for num_threads(threadNumber_) schedule(dynamic) \
+  firstprivate(isVisited)
+#endif // TTK_ENABLE_OPENMP
       for(size_t j = 0; j < sortedCells.size(); ++j) {
         const auto &c{sortedCells[j]};
         const auto tau = this->eliminateBoundaries(
-          c.id_, dim, isVisited, boundaries, partners, triangulation);
+          c.id_, dim, isVisited, boundaries, partners, cellLocks[dim - 1],
+          cellLocks[dim], cellsOrder[dim], triangulation);
         if(tau != -1) {
           const auto &pc{sortedFaces[cellsOrder[dim - 1][tau]]};
           pairedSimplices[dim - 1][pc.id_] = true;
@@ -229,6 +235,9 @@ namespace ttk {
                           std::vector<bool> &isVisited,
                           std::vector<Container> &boundaries,
                           std::vector<SimplexId> &partners,
+                          std::vector<Lock> &lowLocks,
+                          std::vector<Lock> &highLocks,
+                          const std::vector<SimplexId> &cellsOrder,
                           const triangulationType &triangulation) const {
 
       auto &boundary{boundaries[c]};
@@ -267,28 +276,75 @@ namespace ttk {
           addBoundaryEl(a, i);
         }
       };
+      highLocks[c].lock();
       addBoundary(c);
 
       while(!boundary.empty()) {
         // youngest cell on boundary
         const auto tau{*boundary.begin()};
-        const auto partnerTau{partners[tau]};
+        auto partnerTau{partners[tau]};
         if(partnerTau == -1) {
-          partners[tau] = c;
-          clearBoundary();
-          return tau;
+          do {
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp atomic read
+#endif // TTK_ENABLE_OPENMP
+            partnerTau = partners[tau];
+            if(partnerTau == -1 || boundaries[partnerTau].empty()) {
+              break;
+            }
+          } while(*boundaries[partnerTau].begin() != tau);
         }
-        if(boundaries[partnerTau].empty()) {
-          addBoundary(partnerTau);
-        } else {
-          // merge boundaries
-          for(const auto s : boundaries[partnerTau]) {
-            expandBoundary(s);
+
+        if(partnerTau == -1) {
+          lowLocks[tau].lock();
+          const auto cap = partners[tau];
+          if(partners[tau] == -1) {
+            partners[tau] = c;
+          }
+          lowLocks[tau].unlock();
+
+          clearBoundary();
+          highLocks[c].unlock();
+          if(cap == -1) {
+            return tau;
+          } else {
+            return this->eliminateBoundaries(c, dim, isVisited, boundaries,
+                                             partners, lowLocks, highLocks,
+                                             cellsOrder, triangulation);
+          }
+        }
+
+        if(cellsOrder[partnerTau] < cellsOrder[c]) {
+          highLocks[partnerTau].lock();
+          if(boundaries[partnerTau].empty()) {
+            addBoundary(partnerTau);
+          } else {
+            // merge boundaries
+            for(const auto s : boundaries[partnerTau]) {
+              expandBoundary(s);
+            }
+          }
+          highLocks[partnerTau].unlock();
+        } else if(cellsOrder[partnerTau] > cellsOrder[c]) {
+
+          lowLocks[tau].lock();
+          const auto cap = partners[tau];
+          if(partners[tau] == partnerTau) {
+            partners[tau] = c;
+          }
+          lowLocks[tau].unlock();
+          if(cap == partnerTau) {
+            clearBoundary();
+            highLocks[c].unlock();
+            return this->eliminateBoundaries(
+              partnerTau, dim, isVisited, boundaries, partners, lowLocks,
+              highLocks, cellsOrder, triangulation);
           }
         }
       }
 
       clearBoundary();
+      highLocks[c].unlock();
       return -1;
     }
 
@@ -318,22 +374,28 @@ int ttk::PersistentSimplexPairs::pairCells(
   const auto dim{triangulation.getDimensionality()};
 
   std::array<std::vector<bool>, 4> pairedSimplices{};
+  std::array<std::vector<Lock>, 4> cellLocks{};
   pairedSimplices[0].resize(this->nVerts_, false);
+  cellLocks[0] = std::vector<Lock>(this->nVerts_);
   if(dim > 0) {
     pairedSimplices[1].resize(this->nEdges_, false);
+    cellLocks[1] = std::vector<Lock>(this->nEdges_);
   }
   if(dim > 1) {
     pairedSimplices[2].resize(this->nTri_, false);
+    cellLocks[2] = std::vector<Lock>(this->nTri_);
   }
   if(dim > 2) {
     pairedSimplices[3].resize(this->nTetra_, false);
+    cellLocks[3] = std::vector<Lock>(this->nTetra_);
   }
 
   {
     Timer tm{};
     const auto nPairs{pairs.size()};
     this->pairCellsPerDim(pairs, verts, edges, isVisited, partners,
-                          pairedSimplices, 1, cellsOrder, triangulation);
+                          pairedSimplices, cellLocks, 1, cellsOrder,
+                          triangulation);
     this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
                      + " pairs of dimension 0",
                    1.0, tm.getElapsedTime(), 1);
@@ -342,7 +404,8 @@ int ttk::PersistentSimplexPairs::pairCells(
     Timer tm{};
     const auto nPairs{pairs.size()};
     this->pairCellsPerDim(pairs, edges, triangles, isVisited, partners,
-                          pairedSimplices, 2, cellsOrder, triangulation);
+                          pairedSimplices, cellLocks, 2, cellsOrder,
+                          triangulation);
     this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
                      + " pairs of dimension 1",
                    1.0, tm.getElapsedTime(), 1);
@@ -351,7 +414,8 @@ int ttk::PersistentSimplexPairs::pairCells(
     Timer tm{};
     const auto nPairs{pairs.size()};
     this->pairCellsPerDim(pairs, triangles, tetras, isVisited, partners,
-                          pairedSimplices, 3, cellsOrder, triangulation);
+                          pairedSimplices, cellLocks, 3, cellsOrder,
+                          triangulation);
     this->printMsg("Computed " + std::to_string(pairs.size() - nPairs)
                      + " pairs of dimension 2",
                    1.0, tm.getElapsedTime(), 1);
