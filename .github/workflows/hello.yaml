@@ -21,6 +21,7 @@ jobs:
       TTK_DIR: C:\Program Files (x86)\ttk
       CONDA_ROOT: C:\Miniconda
       SCCACHE_CACHE_SIZE: 200M
+      PARAVIEW_LOG_PLUGIN_VERBOSITY: INFO
     steps:
       - uses: actions/checkout@v3
         name: Checkout TTK source code
@@ -78,6 +79,8 @@ jobs:
         shell: cmd
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          echo "env vars"
+          set
           echo "pvpython"
           pvpython --version
           echo "pvpython vtk"
