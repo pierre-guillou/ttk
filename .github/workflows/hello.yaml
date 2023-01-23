@@ -41,7 +41,8 @@ jobs:
       - name: Remove hosted Python
         shell: bash
         run: |
-          rm -rf C:/hostedtoolcache/windows/Python
+          rm -rf C:/hostedtoolcache/windows
+          rm -rf "C:/Program Files/Amazon/"
           ls -l "$CONDA_ROOT"
           echo "\n\n"
           ls -l "$CONDA_ROOT/bin"
