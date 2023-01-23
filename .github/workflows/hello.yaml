@@ -21,7 +21,6 @@ jobs:
       TTK_DIR: C:\Program Files (x86)\ttk
       CONDA_ROOT: C:\Miniconda
       SCCACHE_CACHE_SIZE: 200M
-      PARAVIEW_LOG_PLUGIN_VERBOSITY: INFO
     steps:
       - uses: actions/checkout@v3
         name: Checkout TTK source code
@@ -185,7 +184,7 @@ jobs:
           cd %GITHUB_WORKSPACE%\examples\python
           python example.py ..\data\inputData.vtu
 
-      - name: Test Python example
+      - name: Test Python example with bash
         continue-on-error: true
         shell: bash
         run: |
@@ -194,7 +193,6 @@ jobs:
           python example.py ../data/inputData.vtu
 
       - name: Test pvpython example
-        continue-on-error: true
         shell: cmd
         run: |
           set PYTHONPATH=%CONDA_ROOT%\Lib
@@ -244,3 +242,17 @@ jobs:
           cd ttk-data
           type python\res.json
           FC python\hashes\windows.json python\res.json
+
+      - name: Archive cache
+        shell: bash
+        run: |
+          sccache -s
+          cd /c/Users/runneradmin/AppData/Local/Mozilla/sccache
+          tar czf ttk-sccache.tar.gz cache
+
+      - name: Upload sccache archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: ttk-sccache-windows
+          path: C:\Users\runneradmin\AppData\Local\Mozilla\sccache\ttk-sccache.tar.gz
+          retention-days: 2
