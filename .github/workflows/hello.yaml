@@ -84,6 +84,7 @@ jobs:
           set
           echo "pvpython"
           pvpython --version
+          pvpython -m sysconfig
           echo "pvpython vtk"
           pvpython -m vtk
           echo "pvpython simple
