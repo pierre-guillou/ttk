@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies with conda
         shell: bash
         run: |
-          conda install -c conda-forge boost glew
+          conda install -c conda-forge boost glew conda=4.14
           # add sccache to PATH
           echo "$CONDA_ROOT/bin" >> $GITHUB_PATH
           # add TTK & ParaView install folders to PATH
