@@ -164,6 +164,9 @@ jobs:
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
           cd %GITHUB_WORKSPACE%\examples\python
+          dir "%TTK_DIR%\bin\Lib\site-packages"
+          set %PYTHONPATH%
+          set %PATH%
           python example.py ..\data\inputData.vtu
 
       - name: Test Python example with call
