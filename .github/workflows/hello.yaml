@@ -166,6 +166,24 @@ jobs:
           cd %GITHUB_WORKSPACE%\examples\python
           python example.py ..\data\inputData.vtu
 
+      - name: Test Python example with call
+        continue-on-error: true
+        shell: cmd
+        run: |
+          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          cd %GITHUB_WORKSPACE%\examples\python
+          python example.py ..\data\inputData.vtu
+
+
+      - name: Test Python example with pvpython
+        continue-on-error: true
+        shell: cmd
+        run: |
+          set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          cd %GITHUB_WORKSPACE%\examples\python
+          pvpython example.py ..\data\inputData.vtu
+
       - name: Test Python example with bash
         continue-on-error: true
         shell: bash
