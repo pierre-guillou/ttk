@@ -74,7 +74,6 @@ jobs:
         shell: cmd
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
-          set PV_PLUGIN_PATH=%TTK_DIR%\bin\plugins
           echo "env vars"
           set
           echo "pvpython"
