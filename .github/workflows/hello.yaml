@@ -170,8 +170,12 @@ jobs:
       - name: ldd
         shell: bash
         run: |
-          echo "dll"
-          ldd "$TTK_DIR/bin/ttkWebSocketIO.dll"
+          echo "vtk"
+          ldd "$TTK_DIR/bin/ttkDimensionReduction.dll"
+          echo "base"
+          ldd "$TTK_DIR/bin/ttkBasedimensionReduction.dll"
+          echo "pvpython"
+          ldd "$PV_DIR/bin/pvpython"
 
       - name: Test Python example
         continue-on-error: true
