@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies with conda
         shell: bash
         run: |
-          conda install -c conda-forge boost glew \
-            ninja sccache
+         conda install -c conda-forge boost glew eigen spectralib zfp \
+            scikit-learn openmp graphviz ninja websocketpp sccache
           # add sccache to PATH
           echo "$CONDA_ROOT/bin" >> $GITHUB_PATH
           # add TTK & ParaView install folders to PATH
@@ -115,7 +115,6 @@ jobs:
             -DTTK_ENABLE_KAMIKAZE=TRUE ^
             -DTTK_ENABLE_CPU_OPTIMIZATION=FALSE ^
             -DTTK_ENABLE_SHARED_BASE_LIBRARIES=TRUE ^
-            -DTTK_ENABLE_SCIKIT_LEARN=FALSE ^
             -DTTK_ENABLE_ZLIB=FALSE ^
             -DTTK_ENABLE_ZFP=FALSE ^
             -DTTK_ENABLE_SQLITE3=FALSE ^
