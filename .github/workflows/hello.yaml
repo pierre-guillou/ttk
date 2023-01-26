@@ -30,7 +30,8 @@ jobs:
       - name: Install dependencies with conda
         shell: bash
         run: |
-          conda install -c conda-forge boost glew conda=4.14
+          conda install -c conda-forge boost glew \
+            ninja sccache
           # add sccache to PATH
           echo "$CONDA_ROOT/bin" >> $GITHUB_PATH
           # add TTK & ParaView install folders to PATH
@@ -105,6 +106,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_POLICY_DEFAULT_CMP0092=NEW ^
             -DBUILD_SHARED_LIBS:BOOL=TRUE ^
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache ^
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ^
             -DPython3_ROOT_DIR="%CONDA_ROOT%" ^
             -DTTK_BUILD_PARAVIEW_PLUGINS=TRUE ^
             -DTTK_BUILD_VTK_WRAPPERS=TRUE ^
@@ -116,9 +119,17 @@ jobs:
             -DTTK_ENABLE_ZLIB=FALSE ^
             -DTTK_ENABLE_ZFP=FALSE ^
             -DTTK_ENABLE_SQLITE3=FALSE ^
+            -DTTK_TIME_TARGETS=ON ^
             -DTTK_IMPLICIT_PRECONDITIONS_THRESHOLD=64*64*64 ^
-            -G"Visual Studio 17 2022" ^
+            -GNinja ^
             ..
+        env:
+          CXXFLAGS: -Werror
+
+      - name: Fix clang-cl OpenMP flags in build.ninja
+        shell: bash
+        run: |
+          sed -i 's/-Xclang -fopenmp/-openmp/' build/build.ninja
 
       - name: Build & install TTK
         shell: cmd
