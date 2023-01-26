@@ -43,11 +43,6 @@ template <class dataTypeU, class dataTypeV>
 int ttkJacobiSet::dispatch(const dataTypeU *const uField,
                            const dataTypeV *const vField,
                            ttk::Triangulation *const triangulation) {
-  ttkTemplateMacro(
-    triangulation->getType(),
-    this->execute(jacobiSet_, uField, vField,
-                  *static_cast<TTK_TT *>(triangulation->getData()),
-                  &isPareto_));
   return 0;
 }
 

@@ -129,13 +129,6 @@ int ttkTopologicalCompression::RequestData(vtkInformation *ttkNotUsed(request),
   this->relToAbsZFPTolerance(this->ZFPTolerance, sfRange);
 
   // Call TopologicalCompression
-  ttkVtkTemplateMacro(
-    inputScalarField->GetDataType(), triangulation->getType(),
-    this->execute(
-      static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(inputScalarField)),
-      static_cast<ttk::SimplexId *>(ttkUtils::GetVoidPointer(inputOffsets)),
-      static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(outputScalarField)),
-      *static_cast<TTK_TT *>(triangulation->getData())));
 
   for(ttk::SimplexId i = 0; i < vertexNumber; ++i)
     outputOffsetField->SetTuple1(i, this->compressedOffsets_[i]);

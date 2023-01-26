@@ -121,9 +121,6 @@ int ttkTopologicalCompressionReader::RequestData(
   this->preconditionTriangulation(triangulation);
 
   int status{0};
-  ttkTemplateMacro(triangulation->getType(),
-                   status = this->ReadFromFile(
-                     fp, *static_cast<TTK_TT *>(triangulation->getData())));
   if(status != 0) {
     vtkWarningMacro("Failure when reading compressed TTK file");
   }

@@ -234,10 +234,6 @@ int ttkTrackingFromFields::RequestData(vtkInformation *ttkNotUsed(request),
 
   int status = 0;
   if(useTTKMethod) {
-    ttkVtkTemplateMacro(
-      inputScalarFields[0]->GetDataType(), triangulation->getType(),
-      (status = this->trackWithPersistenceMatching<VTK_TT, TTK_TT>(
-         output, fieldNumber, (TTK_TT *)triangulation->getData())));
   } else {
     this->printMsg("The specified matching method is not supported.");
   }

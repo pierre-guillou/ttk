@@ -136,9 +136,6 @@ int ttkMergeTreePrincipalGeodesics::run(
   vtkInformationVector *outputVector,
   std::vector<vtkSmartPointer<vtkMultiBlockDataSet>> &inputTrees,
   std::vector<vtkSmartPointer<vtkMultiBlockDataSet>> &inputTrees2) {
-  if(not isDataVisualizationFilled())
-    runCompute<dataType>(outputVector, inputTrees, inputTrees2);
-  runOutput<dataType>(outputVector, inputTrees, inputTrees2);
   return 1;
 }
 

@@ -1081,10 +1081,6 @@ void ttkContourForests::getTree() {
   this->setSimplificationMethod(simplificationType_);
   this->setSimplificationThreshold(simplificationThreshold_);
   // build
-  ttkVtkTemplateMacro(vtkInputScalars_->GetDataType(),
-                      triangulation_->getType(),
-                      (this->build<VTK_TT, TTK_TT *>(
-                        static_cast<TTK_TT *>(triangulation_->getData()))));
 
   // what is done is no longer to be done
   toComputeContourTree_ = false;

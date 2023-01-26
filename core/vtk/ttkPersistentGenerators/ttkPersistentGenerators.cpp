@@ -203,11 +203,5 @@ int ttkPersistentGenerators::RequestData(vtkInformation *ttkNotUsed(request),
     return 0;
   }
 
-  ttkTemplateMacro(
-    triangulation->getType(),
-    this->dispatch(output, inputScalars,
-                   ttkUtils::GetPointer<SimplexId>(offsetField),
-                   *static_cast<TTK_TT *>(triangulation->getData())));
-
   return 1;
 }
