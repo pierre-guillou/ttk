@@ -672,6 +672,11 @@ int ttk::Mapper::reEmbedMapper(
   Matrix centroidsDistMat(compArcs.size(), compArcs.size());
   for(size_t i = 0; i < compArcs.size(); ++i) {
     for(const auto el : compArcs[i]) {
+      // TODO what matrix to be reduced?
+      // - distance matrix between centroids?
+      // - adjacency matrix from arcs? (current)
+      // - distance matrix masked by adjacency matrix?
+      // - keep 0? replace with high values?
       centroidsDistMat.get(i, el) = 1.0;
       centroidsDistMat.get(el, i) = 1.0;
     }
@@ -680,6 +685,7 @@ int ttk::Mapper::reEmbedMapper(
   // 5. get an embedding of the distance matrix between the centroids
   std::vector<std::vector<double>> embedCentroids{};
   this->reduceMatrix(embedCentroids, centroidsDistMat, true,
+                     // TODO check DimensionReduction algorithm
                      ttk::DimensionReduction::METHOD::SE);
 
 #ifdef TTK_ENABLE_OPENMP
@@ -759,6 +765,7 @@ int ttk::Mapper::reEmbedMapper(
 #endif // TTK_ENABLE_OPENMP
     for(size_t j = 0; j < embedCentroids.size(); ++j) {
       for(auto &coords : embedConnComp[j]) {
+        // TODO expose the 0.4 hard-coded here in the ParaView GUI?
         coords *= 0.4 * maxDistNeigh / compDiag;
         coords += embedCentroids[j][i];
       }
