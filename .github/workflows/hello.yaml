@@ -99,6 +99,11 @@ jobs:
           set CC=clang-cl.exe
           set CXX=clang-cl.exe
           call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          dir "%PV_DIR%\bin\Lib\site-packages\paraview\modules"
+          dumpbin /dependents "%PV_DIR%\bin\Lib\site-packages\paraview\modules\vtkRemotingCore.pyd"
+          dir "%PV_DIR%\bin"
+          dumpbin /dependents "%PV_DIR%\bin\vtkRemotingCore-pv5.11.dll"
+
           sccache --stop-server
           sccache --start-server
           mkdir build
