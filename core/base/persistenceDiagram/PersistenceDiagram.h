@@ -393,8 +393,6 @@ int ttk::PersistenceDiagram::execute(std::vector<PersistencePair> &CTDiagram,
     case BACKEND::PROGRESSIVE_TOPOLOGY:
     case BACKEND::APPROXIMATE_TOPOLOGY:
     case BACKEND::FTM:
-      executeFTM(CTDiagram, inputScalars, inputOffsets, triangulation);
-      break;
     default:
       printErr("No method was selected");
   }
