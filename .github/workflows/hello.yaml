@@ -91,6 +91,7 @@ jobs:
           python -m vtk
           echo "python simple
           python -m paraview.simple
+          dir "%CONDA_ROOT%"
 
       - name: Create & configure TTK build directory
         shell: cmd
