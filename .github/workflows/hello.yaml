@@ -192,6 +192,7 @@ jobs:
         shell: cmd
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          set PYTHONVERBOSE=1
           set PATH=%PV_DIR%\bin;%TTK_DIR%\bin;%CONDA_ROOT%
           cd %GITHUB_WORKSPACE%\examples\python
           dir "%TTK_DIR%\bin\Lib\site-packages"
@@ -208,6 +209,7 @@ jobs:
           set PATH=%PV_DIR%\bin;%TTK_DIR%\bin;%CONDA_ROOT%
           cd %GITHUB_WORKSPACE%\examples\python
           python example.py ..\data\inputData.vtu
+          pvpython example.py ..\data\inputData.vtua
 
 
       - name: Test Python example with pvpython
