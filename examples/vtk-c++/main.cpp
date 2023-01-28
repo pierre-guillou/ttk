@@ -25,7 +25,6 @@
 #include <ttkTopologicalSimplification.h>
 
 #include <vtkNew.h>
-#include <vtkTableWriter.h>
 #include <vtkThreshold.h>
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridReader.h>
@@ -89,11 +88,6 @@ int main(int argc, char **argv) {
     0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "data");
 
   // 8. saving the output data
-  vtkNew<vtkTableWriter> curveWriter{};
-  curveWriter->SetInputConnection(curve->GetOutputPort());
-  curveWriter->SetFileName("curve.vtk");
-  curveWriter->Write();
-
   vtkNew<vtkXMLPolyDataWriter> sepWriter{};
   sepWriter->SetInputConnection(morseSmaleComplex->GetOutputPort(1));
   sepWriter->SetFileName("separatrices.vtp");
