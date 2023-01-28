@@ -24,6 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         name: Checkout TTK source code
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
       - uses: s-weigand/setup-conda@v1
 
@@ -41,7 +44,7 @@ jobs:
       - name: Remove hosted Python
         shell: bash
         run: |
-          rm -rf C:/hostedtoolcache/windows/Python
+          # rm -rf C:/hostedtoolcache/windows/Python
           ls -l "$CONDA_ROOT"
 
       - name: Fetch archived ccache
