@@ -177,16 +177,6 @@ jobs:
           cmake --build . --config Release --parallel
           ttkExample-vtk-c++.exe -i ..\..\data\inputData.vtu
 
-      - name: ldd
-        shell: bash
-        run: |
-          echo "vtk"
-          ldd "$TTK_DIR/bin/ttkDimensionReduction.dll"
-          echo "base"
-          ldd "$TTK_DIR/bin/ttkBasedimensionReduction.dll"
-          echo "pvpython"
-          ldd "$PV_DIR/bin/pvpython"
-
       - name: Test Python example
         continue-on-error: true
         shell: cmd
