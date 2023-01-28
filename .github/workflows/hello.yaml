@@ -75,6 +75,7 @@ jobs:
         shell: cmd
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          set PATH=%PV_DIR%\bin;%CONDA_ROOT%
           echo "env vars"
           set
           echo "pvpython"
@@ -182,6 +183,7 @@ jobs:
         shell: cmd
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          set PATH=%PV_DIR%\bin;%TTK_DIR%\bin;%CONDA_ROOT%
           cd %GITHUB_WORKSPACE%\examples\python
           dir "%TTK_DIR%\bin\Lib\site-packages"
           set %PYTHONPATH%
@@ -194,6 +196,7 @@ jobs:
         run: |
           call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          set PATH=%PV_DIR%\bin;%TTK_DIR%\bin;%CONDA_ROOT%
           cd %GITHUB_WORKSPACE%\examples\python
           python example.py ..\data\inputData.vtu
 
@@ -203,6 +206,7 @@ jobs:
         shell: cmd
         run: |
           set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+          set PATH=%PV_DIR%\bin;%TTK_DIR%\bin;%CONDA_ROOT%
           cd %GITHUB_WORKSPACE%\examples\python
           pvpython example.py ..\data\inputData.vtu
 
@@ -211,6 +215,7 @@ jobs:
         shell: bash
         run: |
           export PYTHONPATH="$PV_DIR/bin/Lib/site-packages:$TTK_DIR/bin/Lib/site-packages:$CONDA_ROOT/Lib"
+          export PATH="$PV_DIR/bin:$TTK_DIR/bin:$CONDA_ROOT"
           cd $GITHUB_WORKSPACE/examples/python
           python example.py ../data/inputData.vtu
 
