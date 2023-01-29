@@ -44,8 +44,6 @@
       ttk::Triangulation::Type::PERIODIC, ttk::PeriodicNoPreconditions, call); \
     ttkTemplateMacroCase(ttk::Triangulation::Type::HYBRID_PERIODIC,            \
                          ttk::PeriodicWithPreconditions, call);                \
-    ttkTemplateMacroCase(                                                      \
-      ttk::Triangulation::Type::COMPACT, ttk::CompactTriangulation, call);     \
   }
 
 namespace ttk {

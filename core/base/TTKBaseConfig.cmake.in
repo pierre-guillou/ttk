@@ -1,8 +1,5 @@
 include(CMakeFindDependencyMacro)
 
-# Boost is a required dependency
-find_dependency(Boost REQUIRED)
-
 # Was TTK built with optional dependencies?
 
 if (@TTK_ENABLE_MPI@)

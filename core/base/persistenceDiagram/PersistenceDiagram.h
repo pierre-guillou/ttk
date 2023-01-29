@@ -134,7 +134,6 @@
 // base code includes
 #include <ApproximateTopology.h>
 #include <DiscreteMorseSandwich.h>
-#include <FTMTreePP.h>
 #include <PersistenceDiagramUtils.h>
 #include <PersistentSimplexPairs.h>
 #include <ProgressiveTopology.h>
@@ -183,19 +182,8 @@ namespace ttk {
                                 const scalarType *const scalars,
                                 const triangulationType *triangulation);
 
-    ttk::CriticalType getNodeType(ftm::FTMTree_MT *tree,
-                                  ftm::TreeType treeType,
-                                  const SimplexId vertexId) const;
-
     void sortPersistenceDiagram(std::vector<PersistencePair> &diagram,
                                 const SimplexId *const offsets) const;
-
-    template <typename scalarType>
-    int computeCTPersistenceDiagram(
-      ftm::FTMTreePP &tree,
-      const std::vector<
-        std::tuple<ttk::SimplexId, ttk::SimplexId, scalarType, bool>> &pairs,
-      std::vector<PersistencePair> &diagram) const;
 
     /**
      * @pre For this function to behave correctly in the absence of
@@ -249,13 +237,6 @@ namespace ttk {
       preconditionTriangulation(AbstractTriangulation *triangulation) {
       if(triangulation) {
         triangulation->preconditionBoundaryVertices();
-        if(this->BackEnd == BACKEND::FTM
-           || this->BackEnd == BACKEND::PROGRESSIVE_TOPOLOGY
-           || this->BackEnd == BACKEND::APPROXIMATE_TOPOLOGY) {
-          contourTree_.setDebugLevel(debugLevel_);
-          contourTree_.setThreadNumber(threadNumber_);
-          contourTree_.preconditionTriangulation(triangulation);
-        }
         if(this->BackEnd == BACKEND::DISCRETE_MORSE_SANDWICH) {
           dms_.setDebugLevel(debugLevel_);
           dms_.setThreadNumber(threadNumber_);
@@ -284,7 +265,6 @@ namespace ttk {
 
   protected:
     bool IgnoreBoundary{false};
-    ftm::FTMTreePP contourTree_{};
     dcg::DiscreteGradient dcg_{};
     PersistentSimplexPairs psp_{};
     DiscreteMorseSandwich dms_{};
@@ -307,48 +287,6 @@ namespace ttk {
     double Epsilon;
   };
 } // namespace ttk
-
-template <typename scalarType>
-int ttk::PersistenceDiagram::computeCTPersistenceDiagram(
-  ftm::FTMTreePP &tree,
-  const std::vector<
-    std::tuple<ttk::SimplexId, ttk::SimplexId, scalarType, bool>> &pairs,
-  std::vector<PersistencePair> &diagram) const {
-
-  const ttk::SimplexId numberOfPairs = pairs.size();
-  diagram.resize(numberOfPairs);
-  for(ttk::SimplexId i = 0; i < numberOfPairs; ++i) {
-    const ttk::SimplexId v0 = std::get<0>(pairs[i]);
-    const ttk::SimplexId v1 = std::get<1>(pairs[i]);
-    const bool type = std::get<3>(pairs[i]);
-
-    if(type == true) {
-      diagram[i] = PersistencePair{
-        CriticalVertex{
-          v0, getNodeType(tree.getJoinTree(), ftm::TreeType::Join, v0), {}, {}},
-        CriticalVertex{
-          v1, getNodeType(tree.getJoinTree(), ftm::TreeType::Join, v1), {}, {}},
-        0, true};
-    } else {
-      diagram[i] = PersistencePair{
-        CriticalVertex{
-          v1,
-          getNodeType(tree.getSplitTree(), ftm::TreeType::Split, v1),
-          {},
-          {}},
-        CriticalVertex{
-          v0,
-          getNodeType(tree.getSplitTree(), ftm::TreeType::Split, v0),
-          {},
-          {}},
-        2, true};
-    }
-  }
-
-  diagram.back().isFinite = false; // global extrema pair is infinite
-
-  return 0;
-}
 
 template <typename scalarType, typename triangulationType>
 void ttk::PersistenceDiagram::augmentPersistenceDiagram(
@@ -638,60 +576,6 @@ int ttk::PersistenceDiagram::executeProgressiveTopology(
         false});
     }
   }
-
-  return 0;
-}
-
-template <typename scalarType, class triangulationType>
-int ttk::PersistenceDiagram::executeFTM(
-  std::vector<PersistencePair> &CTDiagram,
-  const scalarType *inputScalars,
-  const SimplexId *inputOffsets,
-  const triangulationType *triangulation) {
-
-  contourTree_.setVertexScalars(inputScalars);
-  contourTree_.setTreeType(ftm::TreeType::Join_Split);
-  contourTree_.setVertexSoSoffsets(inputOffsets);
-  contourTree_.setSegmentation(false);
-  contourTree_.build<scalarType>(triangulation);
-
-  // get persistence pairs
-  std::vector<std::tuple<ttk::SimplexId, ttk::SimplexId, scalarType>> JTPairs;
-  std::vector<std::tuple<ttk::SimplexId, ttk::SimplexId, scalarType>> STPairs;
-  contourTree_.computePersistencePairs<scalarType>(JTPairs, true);
-  contourTree_.computePersistencePairs<scalarType>(STPairs, false);
-
-  // merge pairs
-  const auto JTSize = JTPairs.size();
-  const auto STSize = STPairs.size();
-  std::vector<std::tuple<ttk::SimplexId, ttk::SimplexId, scalarType, bool>>
-    CTPairs(JTSize + STSize);
-  for(size_t i = 0; i < JTSize; ++i) {
-    const auto &x = JTPairs[i];
-    CTPairs[i]
-      = std::make_tuple(std::get<0>(x), std::get<1>(x), std::get<2>(x), true);
-  }
-  for(size_t i = 0; i < STSize; ++i) {
-    const auto &x = STPairs[i];
-    CTPairs[JTSize + i]
-      = std::make_tuple(std::get<0>(x), std::get<1>(x), std::get<2>(x), false);
-  }
-
-  // remove the last pair which is present two times (global extrema pair)
-  if(!CTPairs.empty()) {
-    auto cmp =
-      [](
-        const std::tuple<ttk::SimplexId, ttk::SimplexId, scalarType, bool> &a,
-        const std::tuple<ttk::SimplexId, ttk::SimplexId, scalarType, bool> &b) {
-        return std::get<2>(a) < std::get<2>(b);
-      };
-
-    std::sort(CTPairs.begin(), CTPairs.end(), cmp);
-    CTPairs.erase(CTPairs.end() - 1);
-  }
-
-  // get persistence diagrams
-  computeCTPersistenceDiagram<scalarType>(contourTree_, CTPairs, CTDiagram);
 
   return 0;
 }

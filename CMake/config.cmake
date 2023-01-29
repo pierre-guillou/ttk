@@ -176,6 +176,39 @@ endif()
   message(STATUS "Improper Python/NumPy setup. Disabling scikit-learn support in TTK.")
 
   option(TTK_ENABLE_OPENMP "Enable OpenMP support" FALSE)
+if(TTK_ENABLE_OPENMP)
+  find_package(OpenMP REQUIRED)
+  if(OpenMP_CXX_FOUND)
+    option(TTK_ENABLE_OMP_PRIORITY
+      "Gives tasks priority, high perf improvement"
+      OFF
+      )
+    if(OpenMP_CXX_VERSION_MAJOR GREATER_EQUAL 4
+        AND OpenMP_CXX_VERSION_MINOR GREATER_EQUAL 5)
+      set(TTK_ENABLE_OMP_PRIORITY
+        OFF
+        CACHE
+        BOOL
+        "Enable priorities on opnemp tasks"
+        FORCE
+        )
+    endif()
+
+    mark_as_advanced(TTK_ENABLE_OMP_PRIORITY)
+
+  endif()
+else()
+  if(TTK_ENABLE_OMP_PRIORITY)
+    # priorities are only meaningful when openmp is on
+    set(TTK_ENABLE_OMP_PRIORITY
+      OFF
+      CACHE
+      BOOL
+      "Enable priorities on opnemp tasks"
+      FORCE
+      )
+  endif()
+endif()
 
 # --- Install path
 

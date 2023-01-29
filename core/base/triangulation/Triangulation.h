@@ -36,7 +36,6 @@
 
 // base code includes
 #include <AbstractTriangulation.h>
-#include <CompactTriangulation.h>
 #include <ExplicitTriangulation.h>
 #include <ImplicitTriangulation.h>
 #include <PeriodicImplicitTriangulation.h>
@@ -61,7 +60,6 @@ namespace ttk {
       HYBRID_IMPLICIT,
       PERIODIC,
       HYBRID_PERIODIC,
-      COMPACT
     };
 
     /**
@@ -1263,8 +1261,6 @@ namespace ttk {
         return Triangulation::Type::IMPLICIT;
       else if(abstractTriangulation_ == &implicitPreconditionsTriangulation_)
         return Triangulation::Type::HYBRID_IMPLICIT;
-      else if(abstractTriangulation_ == &compactTriangulation_)
-        return Triangulation::Type::COMPACT;
       else if(abstractTriangulation_ == &periodicImplicitTriangulation_)
         return Triangulation::Type::PERIODIC;
       else
@@ -2602,7 +2598,6 @@ namespace ttk {
     /// Tune the debug level (default: 0)
     inline int setDebugLevel(const int &debugLevel) override {
       explicitTriangulation_.setDebugLevel(debugLevel);
-      compactTriangulation_.setDebugLevel(debugLevel);
       implicitTriangulation_.setDebugLevel(debugLevel);
       implicitPreconditionsTriangulation_.setDebugLevel(debugLevel);
       periodicImplicitTriangulation_.setDebugLevel(debugLevel);
@@ -2612,10 +2607,7 @@ namespace ttk {
     }
 
     // Set the cache size
-    inline int setCacheSize(const float &ratio) {
-      if(abstractTriangulation_ == &compactTriangulation_) {
-        compactTriangulation_.initCache(ratio);
-      }
+    inline int setCacheSize(const float &) {
       return 0;
     }
 
@@ -2648,13 +2640,10 @@ namespace ttk {
         cellNumber, connectivity, offset);
     }
 
-    inline int setStellarInputCells(const SimplexId &cellNumber,
-                                    const LongSimplexId *connectivity,
-                                    const LongSimplexId *offset) {
-      abstractTriangulation_ = &compactTriangulation_;
-      gridDimensions_[0] = gridDimensions_[1] = gridDimensions_[2] = -1;
-      return compactTriangulation_.setInputCells(
-        cellNumber, connectivity, offset);
+    inline int setStellarInputCells(const SimplexId &,
+                                    const LongSimplexId *,
+                                    const LongSimplexId *) {
+      return 0;
     }
 #else
     /// Set the input cells for the triangulation.
@@ -2826,15 +2815,12 @@ namespace ttk {
         pointNumber, pointSet, doublePrecision);
     }
 
-    inline int setStellarInputPoints(const SimplexId &pointNumber,
-                                     const void *pointSet,
-                                     const int *indexArray,
-                                     const bool &doublePrecision = false) {
+    inline int setStellarInputPoints(const SimplexId &,
+                                     const void *,
+                                     const int *,
+                                     const bool &) {
 
-      abstractTriangulation_ = &compactTriangulation_;
-      gridDimensions_[0] = gridDimensions_[1] = gridDimensions_[2] = -1;
-      return compactTriangulation_.setInputPoints(
-        pointNumber, pointSet, indexArray, doublePrecision);
+      return 0;
     }
 
     /// Tune the number of active threads (default: number of logical cores)
@@ -2844,7 +2830,6 @@ namespace ttk {
       implicitPreconditionsTriangulation_.setThreadNumber(threadNumber);
       periodicImplicitTriangulation_.setThreadNumber(threadNumber);
       periodicPreconditionsTriangulation_.setThreadNumber(threadNumber);
-      compactTriangulation_.setThreadNumber(threadNumber);
       threadNumber_ = threadNumber;
       return 0;
     }
@@ -2857,7 +2842,6 @@ namespace ttk {
       implicitPreconditionsTriangulation_.setWrapper(wrapper);
       periodicImplicitTriangulation_.setWrapper(wrapper);
       periodicPreconditionsTriangulation_.setWrapper(wrapper);
-      compactTriangulation_.setWrapper(wrapper);
       return 0;
     }
 
@@ -2921,6 +2905,5 @@ namespace ttk {
     ImplicitWithPreconditions implicitPreconditionsTriangulation_;
     PeriodicNoPreconditions periodicImplicitTriangulation_;
     PeriodicWithPreconditions periodicPreconditionsTriangulation_;
-    CompactTriangulation compactTriangulation_;
   };
 } // namespace ttk

@@ -1,5 +1,4 @@
 #include <ThreeSkeleton.h>
-#include <boost/container/small_vector.hpp>
 
 using namespace ttk;
 
@@ -137,9 +136,8 @@ int ThreeSkeleton::buildCellNeighborsFromVertices(
            ttk::debug::LineMode::REPLACE);
 
   const SimplexId cellNumber = cellArray.getNbCells();
-  using boost::container::small_vector;
   // for each cell/tetra, a vector of neighbors
-  std::vector<small_vector<SimplexId, 4>> neighbors(cellNumber);
+  std::vector<std::vector<SimplexId>> neighbors(cellNumber);
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_)

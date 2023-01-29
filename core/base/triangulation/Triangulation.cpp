@@ -13,8 +13,7 @@ Triangulation::Triangulation(const Triangulation &rhs)
   : AbstractTriangulation(rhs), abstractTriangulation_{nullptr},
     explicitTriangulation_{rhs.explicitTriangulation_},
     implicitTriangulation_{rhs.implicitTriangulation_},
-    periodicImplicitTriangulation_{rhs.periodicImplicitTriangulation_},
-    compactTriangulation_{rhs.compactTriangulation_} {
+    periodicImplicitTriangulation_{rhs.periodicImplicitTriangulation_} {
 
   gridDimensions_ = rhs.gridDimensions_;
   hasPeriodicBoundaries_ = rhs.hasPeriodicBoundaries_;
@@ -22,9 +21,6 @@ Triangulation::Triangulation(const Triangulation &rhs)
   switch(rhs.getType()) {
     case Type::EXPLICIT:
       this->abstractTriangulation_ = &this->explicitTriangulation_;
-      break;
-    case Type::COMPACT:
-      this->abstractTriangulation_ = &this->compactTriangulation_;
       break;
     case Type::IMPLICIT:
       this->abstractTriangulation_ = &this->implicitTriangulation_;
@@ -48,8 +44,7 @@ Triangulation::Triangulation(Triangulation &&rhs) noexcept
                                        rhs.explicitTriangulation_)},
     implicitTriangulation_{std::move(rhs.implicitTriangulation_)},
     periodicImplicitTriangulation_{
-      std::move(rhs.periodicImplicitTriangulation_)},
-    compactTriangulation_{std::move(rhs.compactTriangulation_)} {
+      std::move(rhs.periodicImplicitTriangulation_)} {
 
   gridDimensions_ = rhs.gridDimensions_;
   hasPeriodicBoundaries_ = rhs.hasPeriodicBoundaries_;
@@ -57,9 +52,6 @@ Triangulation::Triangulation(Triangulation &&rhs) noexcept
   switch(rhs.getType()) {
     case Type::EXPLICIT:
       this->abstractTriangulation_ = &this->explicitTriangulation_;
-      break;
-    case Type::COMPACT:
-      this->abstractTriangulation_ = &this->compactTriangulation_;
       break;
     case Type::IMPLICIT:
       this->abstractTriangulation_ = &this->implicitTriangulation_;
@@ -85,15 +77,11 @@ Triangulation &Triangulation::operator=(const Triangulation &rhs) {
     explicitTriangulation_ = rhs.explicitTriangulation_;
     implicitTriangulation_ = rhs.implicitTriangulation_;
     periodicImplicitTriangulation_ = rhs.periodicImplicitTriangulation_;
-    compactTriangulation_ = rhs.compactTriangulation_;
     hasPeriodicBoundaries_ = rhs.hasPeriodicBoundaries_;
 
     switch(rhs.getType()) {
       case Type::EXPLICIT:
         this->abstractTriangulation_ = &this->explicitTriangulation_;
-        break;
-      case Type::COMPACT:
-        this->abstractTriangulation_ = &this->compactTriangulation_;
         break;
       case Type::IMPLICIT:
         this->abstractTriangulation_ = &this->implicitTriangulation_;
@@ -122,15 +110,11 @@ Triangulation &Triangulation::operator=(Triangulation &&rhs) noexcept {
     implicitTriangulation_ = std::move(rhs.implicitTriangulation_);
     periodicImplicitTriangulation_
       = std::move(rhs.periodicImplicitTriangulation_);
-    compactTriangulation_ = std::move(rhs.compactTriangulation_);
     hasPeriodicBoundaries_ = rhs.hasPeriodicBoundaries_;
 
     switch(rhs.getType()) {
       case Type::EXPLICIT:
         this->abstractTriangulation_ = &this->explicitTriangulation_;
-        break;
-      case Type::COMPACT:
-        this->abstractTriangulation_ = &this->compactTriangulation_;
         break;
       case Type::IMPLICIT:
         this->abstractTriangulation_ = &this->implicitTriangulation_;

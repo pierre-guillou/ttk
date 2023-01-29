@@ -1,5 +1,4 @@
 #include <TwoSkeleton.h>
-#include <boost/container/small_vector.hpp>
 
 using namespace ttk;
 
@@ -88,9 +87,8 @@ int TwoSkeleton::buildCellNeighborsFromVertices(
     "Building cell neighbors", 0, 0, threadNumber_, debug::LineMode::REPLACE);
 
   const SimplexId cellNumber = cellArray.getNbCells();
-  using boost::container::small_vector;
   // for each cell/triangle, a vector of neighbors
-  std::vector<small_vector<SimplexId, 3>> neighbors(cellNumber);
+  std::vector<std::vector<SimplexId>> neighbors(cellNumber);
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(threadNumber_)
@@ -278,9 +276,8 @@ int TwoSkeleton::buildTriangleList(
     }
   };
 
-  using boost::container::small_vector;
   // for each vertex, a vector of TriangleData
-  std::vector<small_vector<TriangleData, 8>> triangleTable(vertexNumber);
+  std::vector<std::vector<TriangleData>> triangleTable(vertexNumber);
 
   SimplexId nTriangles{};
 

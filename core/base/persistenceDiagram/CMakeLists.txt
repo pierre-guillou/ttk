@@ -6,7 +6,6 @@ ttk_add_base_library(persistenceDiagram
     PersistenceDiagramUtils.h
   DEPENDS
     triangulation
-    ftmTreePP
     persistentSimplexPairs
     progressiveTopology
     approximateTopology

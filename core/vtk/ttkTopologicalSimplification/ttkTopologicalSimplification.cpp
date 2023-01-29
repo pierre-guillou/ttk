@@ -12,8 +12,6 @@
 #include <ttkTopologicalSimplification.h>
 #include <ttkUtils.h>
 
-#include <LocalizedTopologicalSimplification.h>
-
 vtkStandardNewMacro(ttkTopologicalSimplification);
 
 ttkTopologicalSimplification::ttkTopologicalSimplification() {
@@ -117,23 +115,7 @@ int ttkTopologicalSimplification::RequestData(
   // (the switch would then happen in the base code)
   int ret{};
   if(this->UseLTS) {
-    ttk::lts::LocalizedTopologicalSimplification lts{};
-    lts.setDebugLevel(this->debugLevel_);
-    lts.setThreadNumber(this->threadNumber_);
 
-    lts.preconditionTriangulation(triangulation);
-
-    ttkVtkTemplateMacro(
-      inputScalars->GetDataType(), triangulation->getType(),
-      (ret = lts.removeUnauthorizedExtrema<VTK_TT, ttk::SimplexId, TTK_TT>(
-         ttkUtils::GetPointer<VTK_TT>(outputScalars),
-         ttkUtils::GetPointer<SimplexId>(outputOrder),
-
-         static_cast<TTK_TT *>(triangulation->getData()), identifiers,
-         numberOfConstraints, this->AddPerturbation)));
-
-    // TODO: fix convention in original ttk module
-    ret = !ret;
   } else {
     switch(inputScalars->GetDataType()) {
       vtkTemplateMacro(

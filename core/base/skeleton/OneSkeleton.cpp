@@ -1,5 +1,4 @@
 #include <OneSkeleton.h>
-#include <boost/container/small_vector.hpp>
 
 using namespace ttk;
 
@@ -229,9 +228,8 @@ int OneSkeleton::buildEdgeList(
     }
   };
 
-  using boost::container::small_vector;
   // for each vertex, a vector of EdgeData
-  std::vector<small_vector<EdgeData, 8>> edgeTable(vertexNumber);
+  std::vector<std::vector<EdgeData>> edgeTable(vertexNumber);
 
   const int timeBuckets = std::min<ttk::SimplexId>(10, cellNumber);
   SimplexId edgeCount{};
