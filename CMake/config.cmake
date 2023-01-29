@@ -47,7 +47,7 @@ endif()
 
 if(TTK_BUILD_PARAVIEW_PLUGINS OR TTK_BUILD_VTK_WRAPPERS)
   # Find ParaView, otherwise VTK
-  find_package(ParaView)
+  SET(ParaView_FOUND FALSE)
   if(ParaView_FOUND)
     # handle version manually so we do not have to include
     # files from VTK / ParaView in the code.

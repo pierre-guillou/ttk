@@ -99,7 +99,7 @@ jobs:
       - name: Create & configure TTK build directory
         shell: cmd
         run: |
-          set CMAKE_PREFIX_PATH=%CONDA_ROOT%\Library\lib\cmake;%CONDA_ROOT%\Library\share\eigen3\cmake;%CONDA_ROOT%\Library\cmake;%ProgramFiles%\TTK-ParaView\lib\cmake
+          set CMAKE_PREFIX_PATH=%CONDA_ROOT%\Library\lib\cmake;%CONDA_ROOT%\Library\share\eigen3\cmake;%CONDA_ROOT%\Library\cmake;%ProgramFiles%\TTK-ParaView\lib\cmake\paraview-5.11
           set CC=clang-cl.exe
           set CXX=clang-cl.exe
           call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
@@ -119,7 +119,7 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=sccache ^
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ^
             -DPython3_ROOT_DIR="%CONDA_ROOT%" ^
-            -DTTK_BUILD_PARAVIEW_PLUGINS=TRUE ^
+            -DTTK_BUILD_PARAVIEW_PLUGINS=OFF ^
             -DTTK_BUILD_VTK_WRAPPERS=TRUE ^
             -DTTK_BUILD_STANDALONE_APPS=TRUE ^
             -DTTK_ENABLE_KAMIKAZE=OFF ^
@@ -172,7 +172,7 @@ jobs:
           set CC=clang-cl.exe
           set CXX=clang-cl.exe
           call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          set CMAKE_PREFIX_PATH=%TTK_DIR%\lib\cmake;%PV_DIR%\lib\cmake
+          set CMAKE_PREFIX_PATH=%TTK_DIR%\lib\cmake;%PV_DIR%\lib\cmake\paraview-5.11
           cd %GITHUB_WORKSPACE%\examples\vtk-c++
           mkdir build
           cd build
