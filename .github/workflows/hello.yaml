@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PV_TAG: 5.11.0-headless
+  PV_TAG: 5.10.1-headless
   PV_REPO: pierre-guillou/paraview-ttk
 
 jobs:
@@ -33,8 +33,8 @@ jobs:
       - name: Install dependencies with conda
         shell: bash
         run: |
-         conda install -c conda-forge boost glew eigen spectralib zfp \
-            scikit-learn openmp graphviz ninja websocketpp sccache
+         conda install -c conda-forge glew \
+            openmp ninja sccache python=3.9
           # add sccache to PATH
           echo "$CONDA_ROOT/bin" >> $GITHUB_PATH
           # add TTK & ParaView install folders to PATH
@@ -99,14 +99,14 @@ jobs:
       - name: Create & configure TTK build directory
         shell: cmd
         run: |
-          set CMAKE_PREFIX_PATH=%CONDA_ROOT%\Library\lib\cmake;%CONDA_ROOT%\Library\share\eigen3\cmake;%CONDA_ROOT%\Library\cmake;%ProgramFiles%\TTK-ParaView\lib\cmake\paraview-5.11
+          set CMAKE_PREFIX_PATH=%CONDA_ROOT%\Library\lib\cmake;%CONDA_ROOT%\Library\share\eigen3\cmake;%CONDA_ROOT%\Library\cmake;%ProgramFiles%\TTK-ParaView\lib\cmake\paraview-5.10
           set CC=clang-cl.exe
           set CXX=clang-cl.exe
           call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           dir "%PV_DIR%\bin\Lib\site-packages\paraview\modules"
           dumpbin /dependents "%PV_DIR%\bin\Lib\site-packages\paraview\modules\vtkRemotingCore.pyd"
           dir "%PV_DIR%\bin"
-          dumpbin /dependents "%PV_DIR%\bin\vtkRemotingCore-pv5.11.dll"
+          dumpbin /dependents "%PV_DIR%\bin\vtkRemotingCore-pv5.10.dll"
 
           sccache --stop-server
           sccache --start-server
@@ -172,7 +172,7 @@ jobs:
           set CC=clang-cl.exe
           set CXX=clang-cl.exe
           call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          set CMAKE_PREFIX_PATH=%TTK_DIR%\lib\cmake;%PV_DIR%\lib\cmake\paraview-5.11
+          set CMAKE_PREFIX_PATH=%TTK_DIR%\lib\cmake;%PV_DIR%\lib\cmake\paraview-5.10
           cd %GITHUB_WORKSPACE%\examples\vtk-c++
           mkdir build
           cd build
