@@ -151,143 +151,31 @@ endif()
 
 # optional packages
 
-find_package(ZLIB QUIET)
-if(ZLIB_FOUND)
-  option(TTK_ENABLE_ZLIB "Enable Zlib support" ON)
-  message(STATUS "Found Zlib ${ZLIB_VERSION_STRING} (${ZLIB_LIBRARIES})")
-else()
   option(TTK_ENABLE_ZLIB "Enable Zlib support" OFF)
   message(STATUS "Zlib not found, disabling Zlib support in TTK.")
-endif()
 
-find_package(EMBREE 3.4 QUIET)
-if(EMBREE_FOUND)
-  option(TTK_ENABLE_EMBREE "Enable embree raytracing for ttkCinemaImaging" ON)
-  message(STATUS "Found Embree ${EMBREE_VERSION} (${EMBREE_LIBRARY})")
-else()
   option(TTK_ENABLE_EMBREE "Enable embree raytracing for ttkCinemaImaging" OFF)
   message(STATUS "EMBREE library not found, disabling embree support in TTK.")
-endif()
 
-find_package(Graphviz QUIET)
-if(Graphviz_FOUND)
-  option(TTK_ENABLE_GRAPHVIZ "Enable GraphViz support" ON)
-  message(STATUS "Found GraphViz (${Graphviz_CGRAPH_LIBRARY})")
-else()
   option(TTK_ENABLE_GRAPHVIZ "Enable GraphViz support" OFF)
   message(STATUS "GraphViz not found, disabling GraphViz support in TTK.")
-endif()
 
-find_package(SQLite3 QUIET)
-if(SQLite3_FOUND)
-  option(TTK_ENABLE_SQLITE3 "Enable SQLITE3 support" ON)
-  message(STATUS "Found SQLite3 ${SQLite3_VERSION} (${SQLite3_LIBRARIES})")
-else()
   option(TTK_ENABLE_SQLITE3 "Enable SQLITE3 support" OFF)
   message(STATUS "SQLite3 not found, disabling SQLite3 support in TTK.")
-endif()
 
-find_package(ZFP QUIET)
-if(ZFP_INCLUDE_DIRS)
-  option(TTK_ENABLE_ZFP "Enable ZFP support" ON)
-  get_property(ZFP_LIB TARGET ${ZFP_LIBRARIES} PROPERTY IMPORTED_LOCATION_RELEASE)
-  message(STATUS "Found ZFP ${ZFP_VERSION} (${ZFP_LIB})")
-else()
   option(TTK_ENABLE_ZFP "Enable ZFP support" OFF)
   message(STATUS "ZFP not found, disabling ZFP support in TTK.")
-endif()
-if(NOT TTK_ENABLE_ZFP)
-  # we do not want ZFP targets to remains if ZFP disable.
-  # a bit hacky but there is no clean way to remove the corresponding targets
-  unset(ZFP_DIR CACHE)
-  find_package(ZFP QUIET)
-endif()
 
-find_package(Eigen3 3.3 QUIET NO_MODULE)
-if(EIGEN3_FOUND)
-  option(TTK_ENABLE_EIGEN "Enable Eigen3 support" ON)
-  message(STATUS "Found Eigen ${Eigen3_VERSION} (${EIGEN3_INCLUDE_DIR})")
-
-  find_package(Spectra 1.0.0 QUIET)
-  if(Spectra_FOUND)
-    option(TTK_ENABLE_SPECTRA "Enable Spectra support" ON)
-    get_property(SPECTRA_INCLUDES TARGET Spectra::Spectra PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-    message(STATUS "Found Spectra ${Spectra_VERSION} (${SPECTRA_INCLUDES})")
-  else()
-    option(TTK_ENABLE_SPECTRA "Enable Spectra support" OFF)
-    message(STATUS "Spectra >=1.0.0 not found, disabling Spectra support in TTK.")
-  endif()
-else()
   option(TTK_ENABLE_EIGEN "Enable Eigen3 support" OFF)
   message(STATUS "Eigen not found, disabling Eigen support in TTK.")
 
   option(TTK_ENABLE_SPECTRA "Enable Spectra support" OFF)
   message(STATUS "Spectra not found, disabling Spectra support in TTK.")
-endif()
 
-find_package(Python3 COMPONENTS Development NumPy QUIET)
-if(Python3_FOUND AND Python3_NumPy_FOUND)
-  include_directories(SYSTEM ${Python3_INCLUDE_DIRS})
-  set(TTK_PYTHON_MAJOR_VERSION "${Python3_VERSION_MAJOR}"
-    CACHE INTERNAL "TTK_PYTHON_MAJOR_VERSION")
-  set(TTK_PYTHON_MINOR_VERSION "${Python3_VERSION_MINOR}"
-    CACHE INTERNAL "TTK_PYTHON_MINOR_VERSION")
-
-  option(TTK_ENABLE_SCIKIT_LEARN "Enable scikit-learn support" ON)
-  message(STATUS "Found Python ${Python3_VERSION} (${Python3_EXECUTABLE})")
-else()
   option(TTK_ENABLE_SCIKIT_LEARN "Enable scikit-learn support" OFF)
   message(STATUS "Improper Python/NumPy setup. Disabling scikit-learn support in TTK.")
-endif()
 
-if(MSVC)
   option(TTK_ENABLE_OPENMP "Enable OpenMP support" FALSE)
-else()
-  option(TTK_ENABLE_OPENMP "Enable OpenMP support" TRUE)
-endif()
-if(TTK_ENABLE_OPENMP)
-  find_package(OpenMP REQUIRED)
-  if(OpenMP_CXX_FOUND)
-    option(TTK_ENABLE_OMP_PRIORITY
-      "Gives tasks priority, high perf improvement"
-      OFF
-      )
-    if(OpenMP_CXX_VERSION_MAJOR GREATER_EQUAL 4
-        AND OpenMP_CXX_VERSION_MINOR GREATER_EQUAL 5)
-      set(TTK_ENABLE_OMP_PRIORITY
-        OFF
-        CACHE
-        BOOL
-        "Enable priorities on opnemp tasks"
-        FORCE
-        )
-    endif()
-
-    mark_as_advanced(TTK_ENABLE_OMP_PRIORITY)
-
-  endif()
-else()
-  if(TTK_ENABLE_OMP_PRIORITY)
-    # priorities are only meaningful when openmp is on
-    set(TTK_ENABLE_OMP_PRIORITY
-      OFF
-      CACHE
-      BOOL
-      "Enable priorities on opnemp tasks"
-      FORCE
-      )
-  endif()
-endif()
-
-
-find_package(WEBSOCKETPP QUIET)
-if(WEBSOCKETPP_FOUND)
-  option(TTK_ENABLE_WEBSOCKETPP "Enable WebSocketIO module" ON)
-  message(STATUS "Found WebSocketPP ${WEBSOCKETPP_VERSION} (${WEBSOCKETPP_INCLUDE_DIR}), enabling WebSocketIO module in TTK.")
-else()
-  option(TTK_ENABLE_WEBSOCKETPP "Enable WebSocketIO module" OFF)
-  message(STATUS "WebSocketPP not found, disabling WebSocketIO module in TTK.")
-endif()
 
 # --- Install path
 
