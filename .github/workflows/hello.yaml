@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies with conda
         shell: bash
         run: |
-          conda install -c conda-forge glew \
-            openmp ninja sccache python=3.9
+          conda install -c conda-forge boost glew eigen spectralib zfp \
+            scikit-learn openmp graphviz ninja websocketpp sccache python=3.9.13
           # add sccache to PATH
           echo "$CONDA_ROOT/bin" >> $GITHUB_PATH
           # add TTK & ParaView install folders to PATH
