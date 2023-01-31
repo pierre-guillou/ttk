@@ -44,7 +44,8 @@ jobs:
       - name: Remove hosted Python
         shell: bash
         run: |
-          # rm -rf C:/hostedtoolcache/windows/Python
+          rm -rf C:/hostedtoolcache/windows/Python
+          rm -rf "C:/Program Files/Amazon/AWSCLIV2"
           ls -l "$CONDA_ROOT"
 
       - name: Fetch archived ccache
