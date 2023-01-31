@@ -717,6 +717,15 @@ int ttk::Mapper::reEmbedMapper(
       continue;
     }
 
+    if(connCompVertsStrict[i].size() == 1) {
+      // lock point to centroid
+      for(size_t k = 0; k < 3; ++k) {
+        outputPointsCoords[3 * connCompVertsStrict[i][0] + k]
+          = compBaryCoords[i][k];
+      }
+      continue;
+    }
+
     Matrix distMatConnComp{};
     std::vector<std::vector<double>> embedConnComp{};
     this->extractSubDistMat(distMatConnComp, connCompVertsStrict[i], distMat);
