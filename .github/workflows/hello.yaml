@@ -28,6 +28,8 @@ jobs:
     - name: Check dirs
       shell: bash
       run: |
+        which pulumi
+        pulumi version
         echo "hostedtoolcache"
         ls -alh C:/hostedtoolcache
         echo "hostedtoolcache/windows"
