@@ -55,7 +55,9 @@ jobs:
     - name: Remove hosted Python
       shell: bash
       run: |
-        rm -rf C:/hostedtoolcache/windows/Python
+        rm -rf C:/hostedtoolcache/windows/
+        rm -rf C:/ProgramData/chocolatey
+        rm -rf "C:/Program Files/Amazon"
 
     - name: Fetch archived ccache
       continue-on-error: true
