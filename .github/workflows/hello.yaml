@@ -25,6 +25,18 @@ jobs:
     - uses: actions/checkout@v3
       name: Checkout TTK source code
 
+    - name: Check dirs
+      shell: bash
+      run: |
+        echo "hostedtoolcache"
+        ls -alh C:/hostedtoolcache
+        echo "hostedtoolcache/windows"
+        ls -alh C:/hostedtoolcache/windows
+        echo "progfiles"
+        ls -alh "C:/Program Files"
+        echo "progfilesx86"
+        ls -alh "C:/Program Files (x86)"
+
     - uses: s-weigand/setup-conda@v1
 
     - name: Install dependencies with conda
