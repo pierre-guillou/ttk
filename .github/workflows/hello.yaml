@@ -28,10 +28,8 @@ jobs:
     - name: Check dirs
       shell: bash
       run: |
-        which pulumi
-        pulumi version
-        echo "hostedtoolcache"
-        ls -alh C:/hostedtoolcache
+        echo "progdata"
+        ls -alh C:/ProgramData
         echo "hostedtoolcache/windows"
         ls -alh C:/hostedtoolcache/windows
         echo "progfiles"
@@ -55,9 +53,15 @@ jobs:
     - name: Remove hosted Python
       shell: bash
       run: |
-        rm -rf C:/hostedtoolcache/windows/
+        rm -rf C:/hostedtoolcache/windows/Python
         rm -rf C:/ProgramData/chocolatey
         rm -rf "C:/Program Files/Amazon"
+        rm -rf "C:/Program Files/GitHub CLI"
+        rm -rf "C:/Program Files/Google"
+        rm -rf "C:/Program Files/Azure Cosmos DB Emulator"
+        rm -rf "C:/Program Files/ImageMagick-7.1.0-Q16-HDRI"
+        rm -rf "C:/Program Files (x86)/pipx"
+        rm -rf "C:/Program Files (x86)/pipx_bin"
 
     - name: Fetch archived ccache
       continue-on-error: true
