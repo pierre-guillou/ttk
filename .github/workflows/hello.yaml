@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PV_TAG: v5.11.0-headless
-  PV_REPO: topology-tool-kit/ttk-paraview
+  PV_TAG: 5.11.0-headless
+  PV_REPO: pierre-guillou/paraview-ttk
 
 jobs:
   test-build-windows:
@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           conda install -c conda-forge boost glew eigen spectralib zfp \
-            scikit-learn openmp graphviz ninja websocketpp sccache python=3.9.13=h6244533_2 zlib
+            scikit-learn openmp graphviz ninja websocketpp sccache zlib
           # add sccache to PATH
           echo "$CONDA_ROOT/bin" >> $GITHUB_PATH
           # add TTK & ParaView install folders to PATH
