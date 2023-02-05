@@ -50,19 +50,6 @@ jobs:
         echo "$PV_DIR/bin" >> $GITHUB_PATH
         echo "$TTK_DIR/bin" >> $GITHUB_PATH
 
-    - name: Remove hosted Python
-      shell: bash
-      run: |
-        rm -rf C:/hostedtoolcache/windows/Python
-        rm -rf C:/ProgramData/chocolatey
-        rm -rf "C:/Program Files/Amazon"
-        rm -rf "C:/Program Files/GitHub CLI"
-        rm -rf "C:/Program Files/Google"
-        rm -rf "C:/Program Files/Azure Cosmos DB Emulator"
-        rm -rf "C:/Program Files/ImageMagick-7.1.0-Q16-HDRI"
-        rm -rf "C:/Program Files (x86)/pipx"
-        rm -rf "C:/Program Files (x86)/pipx_bin"
-
     - name: Fetch archived ccache
       continue-on-error: true
       run: |
