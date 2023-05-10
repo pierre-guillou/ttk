@@ -96,10 +96,7 @@ int ttkMeshSubdivision::RequestData(vtkInformation *ttkNotUsed(request),
       }
 
       newCells[j].resize(cell->GetNumberOfPoints());
-      newCellData[j].resize(cell->GetNumberOfPoints());
-      for(int k = 0; k < (int)newCellData[j].size(); k++) {
-        newCellData[j][k] = cellValues;
-      }
+      newCellData[j].resize(cell->GetNumberOfPoints(), cellValues);
 
       newPoints[j].resize(cell->GetNumberOfPoints() + cell->GetNumberOfEdges()
                           + cell->GetNumberOfFaces() + 1);
