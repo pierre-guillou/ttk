@@ -462,14 +462,14 @@ jobs:
     - name: Test Python example
       shell: cmd
       run: |
-        set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib
+        set PYTHONPATH=%PV_DIR%\bin\Lib\site-packages;%TTK_DIR%\bin\Lib\site-packages;%CONDA_ROOT%\Lib;%CONDA_ROOT%\DLLs
         cd %GITHUB_WORKSPACE%\examples\python
         python example.py ..\data\inputData.vtu
 
     - name: Test pvpython example
       shell: cmd
       run: |
-        set PYTHONPATH=%CONDA_ROOT%\Lib
+        set PYTHONPATH=%CONDA_ROOT%\Lib;%CONDA_ROOT%\DLLs
         set PV_PLUGIN_PATH=%TTK_DIR%\bin\plugins
         cd %GITHUB_WORKSPACE%\examples\pvpython
         pvpython.exe example.py ..\data\inputData.vtu
