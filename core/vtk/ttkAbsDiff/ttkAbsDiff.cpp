@@ -35,6 +35,40 @@ int ttkAbsDiff::FillOutputPortInformation(int port, vtkInformation *info) {
   return 0;
 }
 
+template <typename ArrT, typename Func>
+void ttkAbsDiff::compute(ArrT res,
+                         const ArrT arr0,
+                         const ArrT arr1,
+                         const Func &f) {
+  for(int j = 0; j < res->GetNumberOfTuples(); ++j) {
+    res->SetTuple1(j, f(arr0->GetTuple1(j), arr1->GetTuple1(j)));
+  }
+}
+
+template <typename ArrT>
+void ttkAbsDiff::dispatch(ArrT res, const ArrT arr0, const ArrT arr1) {
+
+  const auto absdiff
+    = [](const double a, const double b) { return std::abs(b - a); };
+
+  const auto ratio = [](const double a, const double b) { return b / a; };
+
+  const auto reldiff
+    = [](const double a, const double b) { return std::abs((b - a) / a); };
+
+  switch(this->Function) {
+    case FUNCTION::ABSDIFF:
+      this->compute(res, arr0, arr1, absdiff);
+      break;
+    case FUNCTION::RATIO:
+      this->compute(res, arr0, arr1, ratio);
+      break;
+    case FUNCTION::RELDIFF:
+      this->compute(res, arr0, arr1, reldiff);
+      break;
+  }
+}
+
 int ttkAbsDiff::RequestData(vtkInformation *ttkNotUsed(request),
                             vtkInformationVector **inputVector,
                             vtkInformationVector *outputVector) {
@@ -81,8 +115,6 @@ int ttkAbsDiff::RequestData(vtkInformation *ttkNotUsed(request),
   }
 
   output->DeepCopy(input0);
-  const auto absdiff
-    = [](const double a, const double b) { return std::abs(b - a); };
 
   for(int i = 0; i < output->GetPointData()->GetNumberOfArrays(); ++i) {
     const auto arrname = output->GetPointData()->GetArrayName(i);
@@ -93,9 +125,8 @@ int ttkAbsDiff::RequestData(vtkInformation *ttkNotUsed(request),
     }
     const auto arr0 = input0->GetPointData()->GetArray(arrname);
     const auto arr1 = input1->GetPointData()->GetArray(arrname);
-    for(int j = 0; j < res->GetNumberOfTuples(); ++j) {
-      res->SetTuple1(j, absdiff(arr0->GetTuple1(j), arr1->GetTuple1(j)));
-    }
+
+    this->dispatch(res, arr0, arr1);
   }
 
   for(int i = 0; i < output->GetCellData()->GetNumberOfArrays(); ++i) {
@@ -107,9 +138,8 @@ int ttkAbsDiff::RequestData(vtkInformation *ttkNotUsed(request),
     }
     const auto arr0 = input0->GetCellData()->GetArray(arrname);
     const auto arr1 = input1->GetCellData()->GetArray(arrname);
-    for(int j = 0; j < res->GetNumberOfTuples(); ++j) {
-      res->SetTuple1(j, absdiff(arr0->GetTuple1(j), arr1->GetTuple1(j)));
-    }
+
+    this->dispatch(res, arr0, arr1);
   }
 
   return 1;
