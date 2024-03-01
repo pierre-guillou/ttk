@@ -120,7 +120,8 @@ int ttkAbsDiff::RequestData(vtkInformation *ttkNotUsed(request),
     const auto arrname = output->GetPointData()->GetArrayName(i);
     const auto res = output->GetPointData()->GetArray(i);
     if(res->GetNumberOfComponents() != 1) {
-      // skip vector fields
+      // remove vector fields
+      output->GetPointData()->RemoveArray(i);
       continue;
     }
     const auto arr0 = input0->GetPointData()->GetArray(arrname);
@@ -133,7 +134,8 @@ int ttkAbsDiff::RequestData(vtkInformation *ttkNotUsed(request),
     const auto arrname = output->GetCellData()->GetArrayName(i);
     const auto res = output->GetCellData()->GetArray(i);
     if(res->GetNumberOfComponents() != 1) {
-      // skip vector fields
+      // remove vector fields
+      output->GetCellData()->RemoveArray(i);
       continue;
     }
     const auto arr0 = input0->GetCellData()->GetArray(arrname);
