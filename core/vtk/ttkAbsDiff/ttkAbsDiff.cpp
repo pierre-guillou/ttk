@@ -51,10 +51,12 @@ void ttkAbsDiff::dispatch(ArrT res, const ArrT arr0, const ArrT arr1) {
   const auto absdiff
     = [](const double a, const double b) { return std::abs(b - a); };
 
-  const auto ratio = [](const double a, const double b) { return b / a; };
+  const auto ratio
+    = [](const double a, const double b) { return (b == a) ? 0.0 : b / a; };
 
-  const auto reldiff
-    = [](const double a, const double b) { return std::abs((b - a) / a); };
+  const auto reldiff = [](const double a, const double b) {
+    return (b == a) ? 0.0 : std::abs((b - a) / a);
+  };
 
   switch(this->Function) {
     case FUNCTION::ABSDIFF:
