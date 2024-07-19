@@ -13,10 +13,10 @@
 // main routine
 template <typename T, class TriangulationType>
 int ttk::EigenField::execute(const TriangulationType &triangulation,
-                             T *const outputFieldPointer,
+                             T *const outputEigenFunctions,
                              const unsigned int eigenNumber,
                              bool computeStatistics,
-                             T *const outputStatistics) const {
+                             T *const outputStats) const {
 
 #if defined(TTK_ENABLE_EIGEN) && defined(TTK_ENABLE_SPECTRA)
 
@@ -78,26 +78,13 @@ int ttk::EigenField::execute(const TriangulationType &triangulation,
       break;
   }
 
-  DMat eigenvectors = solver.eigenvectors();
+  Eigen::Map<DMat>(outputEigenFunctions, eigenNumber, vertexNumber)
+    = solver.eigenvectors().transpose();
 
-  auto outputEigenFunctions = static_cast<T *>(outputFieldPointer);
-
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
-#endif // TTK_ENABLE_OPENMP
-  for(SimplexId i = 0; i < vertexNumber; ++i) {
-    for(size_t j = 0; j < eigenNumber; ++j) {
-      // cannot avoid copy here...
-      outputEigenFunctions[i * eigenNumber + j] = eigenvectors(i, j);
-    }
-  }
-
-  if(computeStatistics && outputStatistics != nullptr) {
+  if(computeStatistics && outputStats != nullptr) {
 
     // number of statistics components
     const int statsComp = 4;
-
-    auto outputStats = static_cast<T *>(outputStatistics);
 
     // compute statistics on eigenfunctions
 #ifdef TTK_ENABLE_OPENMP

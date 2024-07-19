@@ -176,16 +176,9 @@ int ttk::HarmonicField::execute(const TriangulationType &triangulation,
   }
 
   // convert to dense Eigen matrix
-  Eigen::Matrix<T, Eigen::Dynamic, 1> solDense(sol);
-
-  // copy solver solution into output array
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(threadNumber_)
-#endif // TTK_ENABLE_OPENMP
-  for(SimplexId i = 0; i < vertexNumber; ++i) {
-    // cannot avoid copy here...
-    outputScalarField[i] = -solDense(i, 0);
-  }
+  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>> solDense(
+    outputScalarField, vertexNumber, 1);
+  solDense = -1.0 * sol;
 
   this->printMsg("Complete", 1.0, tm.getElapsedTime(), this->threadNumber_);
 
