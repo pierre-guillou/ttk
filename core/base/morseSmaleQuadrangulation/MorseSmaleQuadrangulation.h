@@ -1056,7 +1056,7 @@ int ttk::MorseSmaleQuadrangulation::execute(
   int const ret = quadrangulate(ndegen, triangulation);
 
   if(ret == 0) {
-    subdivise(triangulation);
+    return 0;
   } else {
     // clean, log & early return
     clearData();
