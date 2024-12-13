@@ -312,6 +312,8 @@ jobs:
         # pvpython does not embed the correct PYTHONPATH
         echo "PYTHONPATH=/usr/local/lib/python3.12/site-packages:$PYTHONPATH" >> $GITHUB_ENV
         pvpython -m pip install --break-system-packages scikit-learn
+        # pvpython is expecting a vtkpython executable at this path
+        sudo ln -s /usr/local/bin/pvpython /Library/Frameworks/Python.framework/Versions/3.12/vtkpython
 
     - name: Set compilers as environment variables
       run: |
@@ -380,7 +382,7 @@ jobs:
       if: steps.validate.outcome == 'failure'
       uses: actions/upload-artifact@v4
       with:
-        name: screenshots-macOS.tar.gz
+        name: screenshots-${{ matrix.os }}.tar.gz
         path: ttk-data/tests/screenshots.tar.gz
         retention-days: 10
 
