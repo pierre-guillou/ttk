@@ -353,6 +353,7 @@ jobs:
       run: |
         # pvpython does not embed the correct PYTHONPATH
         echo "PYTHONPATH=/usr/local/lib/python3.12/site-packages:$PYTHONPATH" >> $GITHUB_ENV
+        sudo ln -s /usr/local/bin/pvpython /Library/Frameworks/Python.framework/Versions/3.12/vtkpython
 
     - name: Run TTK tests
       uses: ./.github/actions/test-ttk-unix
@@ -363,8 +364,6 @@ jobs:
         ref: "dev"
         path: "ttk-data"
       name: Checkout ttk-data
-
-    - run: curl -sSf https://sshx.io/get | sh -s run
 
     - name: Run ttk-data states [NOT ENFORCED]
       id: validate
