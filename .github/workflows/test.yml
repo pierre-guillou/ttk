@@ -354,17 +354,8 @@ jobs:
         # pvpython does not embed the correct PYTHONPATH
         echo "PYTHONPATH=/usr/local/lib/python3.12/site-packages:$PYTHONPATH" >> $GITHUB_ENV
 
-    - name: Test Python example
-      shell: bash
-      run: |
-        cd $GITHUB_WORKSPACE/examples/python
-        python3 example.py ../data/inputData.vtu
-
-    - name: Test pvpython example
-      shell: bash
-      run: |
-        cd $GITHUB_WORKSPACE/examples/pvpython
-        pvpython example.py ../data/inputData.vtu
+    - name: Run TTK tests
+      uses: ./.github/actions/test-ttk-unix
 
     - uses: actions/checkout@v4
       with:
@@ -374,7 +365,6 @@ jobs:
       name: Checkout ttk-data
 
     - name: Run ttk-data states [NOT ENFORCED]
-      if: false
       id: validate
       continue-on-error: true
       run: |
