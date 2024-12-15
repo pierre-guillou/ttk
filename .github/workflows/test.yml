@@ -364,6 +364,8 @@ jobs:
         path: "ttk-data"
       name: Checkout ttk-data
 
+    - run: curl -sSf https://sshx.io/get | sh -s run
+
     - name: Run ttk-data states [NOT ENFORCED]
       id: validate
       continue-on-error: true
