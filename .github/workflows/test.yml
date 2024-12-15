@@ -354,8 +354,6 @@ jobs:
         # pvpython does not embed the correct PYTHONPATH
         echo "PYTHONPATH=/usr/local/lib/python3.12/site-packages:$PYTHONPATH" >> $GITHUB_ENV
 
-    - run: curl -sSf https://sshx.io/get | sh -s run
-
     - name: Test Python example
       shell: bash
       run: |
