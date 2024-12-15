@@ -384,7 +384,7 @@ jobs:
       if: steps.validate.outcome == 'failure'
       uses: actions/upload-artifact@v4
       with:
-        name: screenshots-macOS.tar.gz
+        name: screenshots-${{ matrix.os }}.tar.gz
         path: ttk-data/tests/screenshots.tar.gz
         retention-days: 10
 
