@@ -7,6 +7,8 @@ on:
 env:
   PV_TAG: v6.0.1-headless
   PV_REPO: topology-tool-kit/ttk-paraview
+  CC: clang
+  CXX: clang++
   CMAKE_GENERATOR: Ninja
   CMAKE_BUILD_TYPE: Release
   CMAKE_CC_COMPILER_LAUNCHER: sccache
@@ -40,9 +42,13 @@ jobs:
       run: |
         # ParaView dependencies
         brew install --cask xquartz
-        brew install ninja open-mpi libomp
+        brew install ninja open-mpi llvm
         # TTK dependencies
         brew install boost cgal eigen graphviz spectra sqlite numpy qhull
+        echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+        # Fix brew LLVM libc++ includes
+        echo "SDKROOT=$(xcrun --show-sdk-path)" >> $GITHUB_ENV
+        echo "LDFLAGS=-L/opt/homebrew/opt/llvm/lib/c++" >> $GITHUB_ENV
 
     - name: Run sccache-cache
       uses: mozilla-actions/sccache-action@v0.0.9
@@ -74,12 +80,6 @@ jobs:
         cd build
         cmake \
           -DCMAKE_COMPILE_WARNING_AS_ERROR=ON \
-          -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include" \
-          -DOpenMP_C_LIB_NAMES="omp" \
-          -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include" \
-          -DOpenMP_CXX_LIB_NAMES="omp" \
-          -DOpenMP_omp_LIBRARY=/opt/homebrew/opt/libomp/lib/libomp.dylib \
-          -DCMAKE_EXE_LINKER_FLAGS="-L/opt/homebrew/opt/libomp/lib -lomp" \
           -DTTK_BUILD_PARAVIEW_PLUGINS=TRUE \
           -DTTK_BUILD_VTK_WRAPPERS=TRUE \
           -DTTK_BUILD_STANDALONE_APPS=TRUE \
