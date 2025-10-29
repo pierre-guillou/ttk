@@ -102,7 +102,7 @@ jobs:
         sudo cmake --build . --target install
 
     - name: Run TTK tests
-      uses: ./.github/actions/test-ttk-ubuntu
+      uses: ./.github/actions/test-ttk-unix
 
     - name: Upload TTK .deb package for fast install in tests
       uses: actions/upload-artifact@v4
