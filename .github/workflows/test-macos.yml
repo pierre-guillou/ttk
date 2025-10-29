@@ -98,7 +98,7 @@ jobs:
         sudo cmake --build . --target install
 
     - name: Run TTK tests
-      uses: ./.github/actions/test-ttk-macos
+      uses: ./.github/actions/test-ttk-unix
 
     - uses: actions/checkout@v4
       with:
