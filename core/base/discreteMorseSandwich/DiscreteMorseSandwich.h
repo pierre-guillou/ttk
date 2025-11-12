@@ -330,6 +330,7 @@ namespace ttk {
      * @param[in] s2Mapping From triangle id to compact id
      *   in @p s2Boundaries and @p s2Locks
      * @param[in] partners Get 2-saddles paired to 1-saddles on boundary
+     * @param[in] s1Locks Vector of locks over 1-saddles
      * @param[in] s2Locks Vector of locks over 2-saddles
      * @param[in] triangulation Simplicial complex
      *
@@ -343,6 +344,7 @@ namespace ttk {
                                   const std::vector<SimplexId> &s2Mapping,
                                   const std::vector<SimplexId> &s1Mapping,
                                   std::vector<SimplexId> &partners,
+                                  std::vector<Lock> &s1Locks,
                                   std::vector<Lock> &s2Locks,
                                   const triangulationType &triangulation) const;
 
@@ -782,6 +784,7 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
   const std::vector<SimplexId> &s2Mapping,
   const std::vector<SimplexId> &s1Mapping,
   std::vector<SimplexId> &partners,
+  std::vector<Lock> &s1Locks,
   std::vector<Lock> &s2Locks,
   const triangulationType &triangulation) const {
 
@@ -848,16 +851,13 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
       // tau is critical and not paired
 
       // compare-and-swap from "Towards Lockfree Persistent Homology"
-      SimplexId cap{-1};
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp atomic compare capture
-#endif // TTK_ENABLE_OPENMP
-      {
-        cap = partners[tau];
-        if(partners[tau] == -1) {
-          partners[tau] = s2;
-        }
+      // using locks over 1-saddles instead of atomics (OpenMP compatibility)
+      s1Locks[s1Mapping[tau]].lock();
+      const auto cap = partners[tau];
+      if(partners[tau] == -1) {
+        partners[tau] = s2;
       }
+      s1Locks[s1Mapping[tau]].unlock();
 
       // cleanup before exiting
       clearOnBoundary();
@@ -865,9 +865,9 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
       if(cap == -1) {
         return tau;
       } else {
-        return this->eliminateBoundariesSandwich(s2, onBoundary, s2Boundaries,
-                                                 s2Mapping, s1Mapping, partners,
-                                                 s2Locks, triangulation);
+        return this->eliminateBoundariesSandwich(
+          s2, onBoundary, s2Boundaries, s2Mapping, s1Mapping, partners, s1Locks,
+          s2Locks, triangulation);
       }
 
     } else {
@@ -892,16 +892,12 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
 
           // compare-and-swap from "Towards Lockfree Persistent
           // Homology" using locks over 1-saddles
-          SimplexId cap{-1};
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp atomic compare capture
-#endif // TTK_ENABLE_OPENMP
-          {
-            cap = partners[tau];
-            if(partners[tau] == pTau) {
-              partners[tau] = s2;
-            }
+          s1Locks[s1Mapping[tau]].lock();
+          const auto cap = partners[tau];
+          if(partners[tau] == pTau) {
+            partners[tau] = s2;
           }
+          s1Locks[s1Mapping[tau]].unlock();
 
           if(cap == pTau) {
             // cleanup before exiting
@@ -909,7 +905,7 @@ SimplexId ttk::DiscreteMorseSandwich::eliminateBoundariesSandwich(
             s2Locks[s2Mapping[s2]].unlock();
             return this->eliminateBoundariesSandwich(
               pTau, onBoundary, s2Boundaries, s2Mapping, s1Mapping, partners,
-              s2Locks, triangulation);
+              s1Locks, s2Locks, triangulation);
           }
         }
       } else { // pTau is a regular triangle
@@ -994,6 +990,8 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
     s1Mapping[saddles1[i]] = i;
   }
 
+  // one lock per 1-saddle
+  std::vector<Lock> s1Locks(saddles1.size());
   // one lock per 2-saddle
   std::vector<Lock> s2Locks(saddles2.size());
 
@@ -1007,8 +1005,8 @@ void ttk::DiscreteMorseSandwich::getSaddleSaddlePairs(
     // 2-saddles sorted in increasing order
     const auto s2 = saddles2[i];
     this->eliminateBoundariesSandwich(s2, onBoundary, s2Boundaries, s2Mapping,
-                                      s1Mapping, edgeTrianglePartner, s2Locks,
-                                      triangulation);
+                                      s1Mapping, edgeTrianglePartner, s1Locks,
+                                      s2Locks, triangulation);
   }
 
   Timer tmseq{};
