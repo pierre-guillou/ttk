@@ -42,18 +42,16 @@ static double EpsilonDBL{ttk::Geometry::powInt(10.0, -DBL_DIG + 2)};
 
 // Normalizes a given vector.
 template <typename T>
-static void
-  computeUnitVector(const T *coordOrig, const T *coordDest, T *coordVect);
+void computeUnitVector(const T *coordOrig, const T *coordDest, T *coordVect);
 
 // Rotates the first argument by angle around center.
 template <typename T>
-static void rotate(T *ptToRotate, const T *center, double angle);
+void rotate(T *ptToRotate, const T *center, double angle);
 
 // Rotate the set of points by the given angle, considering the given center as
 // center of the rotation.
 template <typename T>
-static void
-  rotatePolygon(std::vector<T> &coords, T *centerCoords, const double angle);
+void rotatePolygon(std::vector<T> &coords, T *centerCoords, const double angle);
 
 // Real call to the convex hull engine: either Qhull or Boost.
 bool computeConvexHull_aux(const std::vector<double> &coords,
@@ -972,7 +970,7 @@ namespace ttk {
 } // namespace ttk
 
 template <typename T>
-static void
+void
   computeUnitVector(const T *coordOrig, const T *coordDest, T *coordVect) {
   T tmp[2] = {coordDest[0] - coordOrig[0], coordDest[1] - coordOrig[1]};
   T dist = sqrt(tmp[0] * tmp[0] + tmp[1] * tmp[1]);
@@ -986,7 +984,7 @@ static void
 }
 
 template <typename T>
-static void rotate(T *ptToRotate, const T *center, double angle) {
+void rotate(T *ptToRotate, const T *center, double angle) {
   const double &xCtr = center[0], &yCtr = center[1];
   T &xPt = ptToRotate[0], &yPt = ptToRotate[1];
   const double dx = xPt - xCtr, dy = yPt - yCtr;
@@ -995,7 +993,7 @@ static void rotate(T *ptToRotate, const T *center, double angle) {
 }
 
 template <typename T>
-static void
+void
   rotatePolygon(std::vector<T> &coords, T *centerCoords, const double angle) {
   double xCenter = centerCoords[0], yCenter = centerCoords[1];
   size_t nbPoint = coords.size() / 2;
